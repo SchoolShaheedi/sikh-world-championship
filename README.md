@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sikh World Championship — web app
 
-## Getting Started
+Mobile-first Next.js app. Multi-event by design: an event is data, not code.
 
-First, run the development server:
+## Run it
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/data/org.ts            Brand config — name, contacts, socials, safeguarding leads
+src/data/events/           One file per event. Add a file, add it to index.ts, done.
+src/data/avatars.ts        Player card avatar definitions
+src/lib/types.ts           Domain model — read this first
+src/lib/bracket.ts         Seeding, bracket generation, advancing winners
+src/lib/store.ts           Registration storage (DEV ONLY — see docs/DATA-LAYER.md)
+src/components/            Logo, Avatar, PlayerCard, TrophyCabinet, BracketView, SignupForm
+src/app/                   Routes
+```
 
-## Learn More
+## Routes
 
-To learn more about Next.js, take a look at the following resources:
+| Route | What it is |
+|---|---|
+| `/` | Organisation homepage |
+| `/events` | All events, upcoming and past |
+| `/events/[slug]` | Event details, rules, prizes |
+| `/events/[slug]/signup` | Registration form |
+| `/events/[slug]/bracket` | Live bracket (demo data for now) |
+| `/players` | Player card + trophy cabinet preview |
+| `/safeguarding` | Safety policy — parents read this before signing kids up |
+| `/about`, `/sponsors`, `/volunteer` | Org pages |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Things worth knowing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Division is derived from date of birth**, never chosen. Nobody can enter the wrong
+  age group.
+- **The guardian section appears automatically** when the DOB makes the player under 18.
+- **Capacity is enforced per division** (32 each). Overflow goes to a waitlist with a
+  queue position; `promoteFromWaitlist()` moves people up when someone withdraws.
+- **Photos are optional.** Avatars are the default, drawn as SVG — no image assets.
+- **Storage is a JSON file right now.** Read `docs/DATA-LAYER.md` before going live.

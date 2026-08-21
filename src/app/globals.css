@@ -1,26 +1,85 @@
 @import "tailwindcss";
 
+/**
+ * Sikh World Championship — design tokens.
+ * Dark-first: this is an esports brand, and the bracket lives on a projector in a hall.
+ * Kesri (saffron) is the accent, deep midnight the ground, gold reserved for trophies.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --swc-ink:        #070B14;
+  --swc-surface:    #0E1626;
+  --swc-surface-2:  #16203A;
+  --swc-line:       #24304F;
+
+  --swc-text:       #EEF2FB;
+  --swc-muted:      #93A2C4;
+
+  --swc-kesri:      #F2842B;
+  --swc-kesri-soft: #FFA857;
+  --swc-royal:      #2C6FE0;
+  --swc-gold:       #D8B45A;
+  --swc-silver:     #C2CBDA;
+  --swc-bronze:     #B0764A;
+  --swc-green-ok:   #2E9E6B;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink:       var(--swc-ink);
+  --color-surface:   var(--swc-surface);
+  --color-surface2:  var(--swc-surface-2);
+  --color-line:      var(--swc-line);
+  --color-body:      var(--swc-text);
+  --color-muted:     var(--swc-muted);
+  --color-kesri:     var(--swc-kesri);
+  --color-kesrisoft: var(--swc-kesri-soft);
+  --color-royal:     var(--swc-royal);
+  --color-gold:      var(--swc-gold);
+  --color-silver:    var(--swc-silver);
+  --color-bronze:    var(--swc-bronze);
+  --color-ok:        var(--swc-green-ok);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(1100px 620px at 50% -12%, #1B2C4E 0%, transparent 62%),
+    var(--swc-ink);
+  background-attachment: fixed;
+  color: var(--swc-text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Display type for headings and the player card. */
+.font-display {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Visible focus for keyboard users — a lot of these users are on phones,
+   but the admin/score-entry views are keyboard-driven all day. */
+:focus-visible {
+  outline: 2px solid var(--swc-kesri);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Horizontal scroll containers (the bracket) shouldn't drag the page sideways. */
+.scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

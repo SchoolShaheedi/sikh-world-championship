@@ -1,0 +1,39 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { currentPlayer } from "@/lib/session";
+import { createTicket } from "@/lib/support-store";
+import { categoryById, type SupportCategoryId } from "@/lib/support-types";
+
+export async function submitTicket(formData: FormData) {
+  const categoryId = String(formData.get("category"));
+  const category = categoryById(categoryId);
+  if (!category) return { error: "Pick what your message is about." };
+
+  const message = String(formData.get("message") ?? "").trim();
+  if (message.length < 10) {
+    return { error: "Tell us a bit more so we can actually help." };
+  }
+
+  // Signing in is optional here — see support-types.ts for why.
+  let playerId: string | null = null;
+  try {
+    playerId = (await currentPlayer()).id;
+  } catch {
+    playerId = null;
+  }
+
+  const ticket = await createTicket({
+    category: categoryId as SupportCategoryId,
+    urgent: category.urgent,
+    subject: String(formData.get("subject") ?? "").slice(0, 200) || category.label,
+    message: message.slice(0, 5000),
+    name: String(formData.get("name") ?? "").trim() || null,
+    email: String(formData.get("email") ?? "").trim() || null,
+    playerId,
+    fromGuardian: formData.get("fromGuardian") === "on",
+  });
+
+  revalidatePath("/moderation");
+  return { ok: true, reference: ticket.reference, urgent: category.urgent };
+}
