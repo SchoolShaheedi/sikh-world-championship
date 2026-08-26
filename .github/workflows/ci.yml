@@ -18,9 +18,9 @@ jobs:
         working-directory: 03_App/web
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -52,7 +52,7 @@ jobs:
   no-secrets-or-data:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Refuse committed data stores, env files and keys
         run: |
           # .env.example is deliberately committed — it documents the variables and
