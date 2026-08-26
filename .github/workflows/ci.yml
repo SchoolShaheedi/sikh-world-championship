@@ -29,6 +29,15 @@ jobs:
       - name: Install
         run: npm ci
 
+      # Build comes first because it generates next-env.d.ts, which is gitignored and
+      # holds the module declarations for image imports (src/data/hero-media.ts imports
+      # .png files directly). On a clean checkout `tsc --noEmit` cannot resolve those
+      # until Next has written that file, so typechecking before building fails on an
+      # otherwise healthy tree. Build typechecks too, so a real type error still stops
+      # the run here — the explicit step below just names it more clearly.
+      - name: Build
+        run: npm run build
+
       - name: Typecheck
         run: npx tsc --noEmit
 
@@ -37,9 +46,6 @@ jobs:
 
       - name: Test
         run: npm test
-
-      - name: Build
-        run: npm run build
 
   # A public repo holding a children's-data app should never gain a committed secret or a
   # stray registration file. Cheap to check, expensive to miss.
