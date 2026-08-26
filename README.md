@@ -1,48 +1,40 @@
-# Sikh World Championship — web app
+# Sikh World Championship
 
-Mobile-first Next.js app. Multi-event by design: an event is data, not code.
+Multi-event competition platform for Sikhs. **Sikh FIFA 26 Championship** is event 1.
 
-## Run it
+> This repository covers the whole project — the app, the decision log and the
+> design/research docs. `DECISIONS.md` is the running record of what was chosen and why;
+> read it before changing anything substantial.
+
+Not to be confused with `3_Sikh_Chess_Championship/` — that is a separate,
+standalone project, deliberately not an SWC event.
+
+## Layout
+
+```
+DECISIONS.md            the running decision log — read this first
+00_Docs/                BRAINSTORM, FEATURE-IDEAS, PLAYER-CARDS,
+                        CHAT-AND-SAFETY, ONLINE-PLAY-AND-CHAT
+01_Brand/               (empty — logo, palette, typography)
+02_Events/              one folder per event; Sikh FIFA 26 Championship
+                        has Rules, Marketing, Brackets, Registrations
+03_App/
+  web/                  the Next.js 16 + Tailwind 4 app
+  docs/                 DATA-LAYER.md, NEXT-STEPS.md
+04_Legal/               (empty — safeguarding policy, terms, insurance)
+05_Partners_Sponsors/   (empty)
+```
+
+Empty folders above are deliberate placeholders, not leftovers.
+
+## Running the app
 
 ```bash
-npm install
-npm run dev
+cd 03_App/web && npm install && npm run dev
 ```
 
-Then open http://localhost:3000
+## Safeguarding
 
-## Structure
-
-```
-src/data/org.ts            Brand config — name, contacts, socials, safeguarding leads
-src/data/events/           One file per event. Add a file, add it to index.ts, done.
-src/data/avatars.ts        Player card avatar definitions
-src/lib/types.ts           Domain model — read this first
-src/lib/bracket.ts         Seeding, bracket generation, advancing winners
-src/lib/store.ts           Registration storage (DEV ONLY — see docs/DATA-LAYER.md)
-src/components/            Logo, Avatar, PlayerCard, TrophyCabinet, BracketView, SignupForm
-src/app/                   Routes
-```
-
-## Routes
-
-| Route | What it is |
-|---|---|
-| `/` | Organisation homepage |
-| `/events` | All events, upcoming and past |
-| `/events/[slug]` | Event details, rules, prizes |
-| `/events/[slug]/signup` | Registration form |
-| `/events/[slug]/bracket` | Live bracket (demo data for now) |
-| `/players` | Player card + trophy cabinet preview |
-| `/safeguarding` | Safety policy — parents read this before signing kids up |
-| `/about`, `/sponsors`, `/volunteer` | Org pages |
-
-## Things worth knowing
-
-- **Division is derived from date of birth**, never chosen. Nobody can enter the wrong
-  age group.
-- **The guardian section appears automatically** when the DOB makes the player under 18.
-- **Capacity is enforced per division** (32 each). Overflow goes to a waitlist with a
-  queue position; `promoteFromWaitlist()` moves people up when someone withdraws.
-- **Photos are optional.** Avatars are the default, drawn as SVG — no image assets.
-- **Storage is a JSON file right now.** Read `docs/DATA-LAYER.md` before going live.
+The app holds guardian contacts and children's medical notes. Read
+`03_App/docs/DATA-LAYER.md` before touching the data layer, and
+`00_Docs/CHAT-AND-SAFETY.md` before touching anything player-facing.
