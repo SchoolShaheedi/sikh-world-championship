@@ -176,7 +176,12 @@ export interface Registration {
    */
   checkInToken: string;
   createdAt: string;
-  answers: Record<string, string | boolean>;
+  /**
+   * The validated sign-up answers. `string[]` is there for multi-select questions such
+   * as the medical tick-list — see src/lib/registration-schema.ts, which is the only
+   * thing allowed to produce this object.
+   */
+  answers: Record<string, string | boolean | string[]>;
 }
 
 /* ---------- Awards / trophy cabinet ---------- */

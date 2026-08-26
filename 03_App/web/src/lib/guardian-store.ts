@@ -1,6 +1,6 @@
 /**
  * Guardian approval store — DEVELOPMENT IMPLEMENTATION.
- * JSON-file backed. Replace with Supabase before launch (docs/DATA-LAYER.md).
+ * JSON-file backed. Replace with Supabase before launch (00_Docs/DATA-LAYER.md).
  * This file holds guardian email addresses, so it needs encryption at rest in production.
  */
 import { promises as fs } from "node:fs";

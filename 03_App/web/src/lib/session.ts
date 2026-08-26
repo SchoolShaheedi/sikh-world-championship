@@ -31,6 +31,23 @@ export interface SessionPlayer {
 }
 
 /**
+ * Moderator access, while auth is still a stub.
+ *
+ * DENY BY DEFAULT. This used to return `true` unconditionally, which made /moderation —
+ * the page that renders safeguarding disclosures, reporter identities and parents' email
+ * addresses — readable by anyone who typed the URL. A stub that fails open is a data
+ * breach waiting for a deploy.
+ *
+ * To work on the page locally: SWC_DEV_MODERATOR=1 npm run dev
+ * It is refused in production even if the variable is set, so the opt-in cannot escape
+ * a developer's machine. Delete this whole function when real auth lands.
+ */
+function stubModeratorAccess(): boolean {
+  if (process.env.NODE_ENV === "production") return false;
+  return process.env.SWC_DEV_MODERATOR === "1";
+}
+
+/**
  * Flip `ageBand` to "U16" (and set a guardianEmail) to see the under-16 board and the
  * guardian-consent gate while developing.
  */
@@ -51,7 +68,7 @@ export async function currentPlayer(): Promise<SessionPlayer> {
     guardianApprovedForBoard:
       ageBand === "16+" ? true : await hasApproval(id),
     guardianEmail: ageBand === "16+" ? null : "parent@example.com",
-    isModerator: true,
+    isModerator: stubModeratorAccess(),
   };
 }
 

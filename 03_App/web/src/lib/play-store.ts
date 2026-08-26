@@ -1,7 +1,7 @@
 /**
  * LFG board store — DEVELOPMENT IMPLEMENTATION, same caveats as lib/store.ts.
  * JSON-file backed so the board works end to end today. Replace with Supabase before
- * launch — see docs/DATA-LAYER.md.
+ * launch — see 00_Docs/DATA-LAYER.md.
  */
 import { promises as fs } from "node:fs";
 import path from "node:path";

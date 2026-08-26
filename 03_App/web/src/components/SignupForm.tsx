@@ -6,6 +6,48 @@ import { AVATARS } from "@/data/avatars";
 import { Avatar } from "./Avatar";
 import { PlayerCard } from "./PlayerCard";
 import { qualityFor } from "@/data/qualities";
+import {
+  guardianTier,
+  TIER_EXPLANATION,
+  GUARDIAN_DISTANCE,
+  MEDICAL_CONDITIONS,
+  MEDICAL_NONE,
+} from "@/lib/guardian-rules";
+
+/**
+ * Human names for the keys the server validates, used when a submission is rejected.
+ * Anything missing falls back to the raw key rather than hiding the error.
+ */
+const FIELD_LABELS: Record<string, string> = {
+  fullName: "Full name",
+  dob: "Date of birth",
+  email: "Email",
+  mobile: "Mobile",
+  region: "Region",
+  medicalConditions: "Medical conditions",
+  medical: "Medical detail",
+  dietary: "Dietary needs",
+  accessibility: "Accessibility needs",
+  avatarId: "Avatar",
+  guardianName: "Parent / guardian name",
+  guardianRelation: "Relationship to player",
+  guardianEmail: "Parent / guardian email",
+  guardianMobile: "Parent / guardian mobile",
+  guardianConsent: "Parent / guardian permission",
+  guardianOnSite: "Staying at the venue",
+  guardianDropOff: "Drop-off and collection",
+  guardianDistance: "How far away you'll be",
+  guardianIndependentConsent: "Permission to attend independently",
+  mayLeaveUnaccompanied: "Leaving unaccompanied",
+  guardianPhotoConsent: "Photo permission",
+  rulesAgreed: "Rules and code of conduct",
+  accountConsent: "SWC profile",
+  photoConsent: "Photo permission",
+  psnId: "PSN ID",
+  skill: "Self-rating",
+  favouriteTeam: "Favourite team",
+  ownController: "Own controller",
+};
 
 /** Age on a given date (or today if the event date isn't confirmed yet). */
 function ageOn(dob: string, on: string | null): number | null {
@@ -36,9 +78,19 @@ const inputCx =
   "mt-2 w-full rounded-xl border border-line bg-surface px-4 py-3 text-body placeholder:text-muted/60 focus:border-kesri focus:outline-none";
 
 export function SignupForm({ event }: { event: ChampionshipEvent }) {
-  const [values, setValues] = useState<Record<string, string | boolean>>({});
+  const [values, setValues] = useState<Record<string, string | boolean | string[]>>({});
   const [avatarId, setAvatarId] = useState<string>(AVATARS[0].id);
   const [submitting, setSubmitting] = useState(false);
+  /**
+   * A rejected submission. The form used to pass the response straight to `setResult`
+   * without checking the status, so a 400 rendered the success screen and told the
+   * registrant they were "number undefined in the queue". Validation is strict now, so
+   * being rejected is a normal path and has to say something useful.
+   */
+  const [failure, setFailure] = useState<null | {
+    error: string;
+    fieldErrors?: Record<string, string>;
+  }>(null);
   const [result, setResult] = useState<null | {
     status: "confirmed" | "waitlisted";
     reference: string;
@@ -47,12 +99,32 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
     waitlistPosition?: number;
   }>(null);
 
-  const set = (k: string, v: string | boolean) =>
+  const set = (k: string, v: string | boolean | string[]) =>
     setValues((prev) => ({ ...prev, [k]: v }));
 
   const dob = (values.dob as string) ?? "";
   const age = ageOn(dob, event.date);
   const isMinor = age !== null && age < 18;
+
+  /**
+   * Which guardian questions apply. Tiered rather than blanket — see
+   * src/lib/guardian-rules.ts, which the server validator reads from the same module, so
+   * the form can never ask for less than the server insists on.
+   */
+  const tier = age === null ? null : guardianTier(age);
+
+  /** Toggle one value in a multi-select answer, e.g. the medical tick-list. */
+  const toggleIn = (key: string, option: string) =>
+    setValues((prev) => {
+      const current = Array.isArray(prev[key]) ? (prev[key] as string[]) : [];
+      const next = current.includes(option)
+        ? current.filter((o) => o !== option)
+        : [...current, option];
+      // "None" is exclusive: ticking it clears the rest, and ticking anything else
+      // clears "None". Otherwise a record can say both "nothing to declare" and "asthma".
+      if (option === MEDICAL_NONE) return { ...prev, [key]: next.includes(MEDICAL_NONE) ? [MEDICAL_NONE] : [] };
+      return { ...prev, [key]: next.filter((o) => o !== MEDICAL_NONE) };
+    });
 
   /**
    * Division is derived from age, never chosen, so nobody can game it.
@@ -73,6 +145,7 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
     e.preventDefault();
     if (!division) return;
     setSubmitting(true);
+    setFailure(null);
     try {
       const res = await fetch(`/api/events/${event.slug}/register`, {
         method: "POST",
@@ -80,7 +153,19 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
         body: JSON.stringify({ ...values, avatarId, divisionId: division.id }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        setFailure({
+          error: data?.error ?? "Something went wrong. Please try again.",
+          fieldErrors: data?.fieldErrors,
+        });
+        return;
+      }
       setResult(data);
+    } catch {
+      setFailure({
+        error:
+          "We couldn't reach the server. Check your connection and try again — nothing has been submitted.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -290,6 +375,11 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
             </a>
             .
           </p>
+          {tier && tier !== "none" && (
+            <p className="mt-3 rounded-xl border border-kesri/30 bg-kesri/[0.08] p-3 text-sm text-body">
+              {TIER_EXPLANATION[tier]}
+            </p>
+          )}
 
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <label className="block">
@@ -331,31 +421,87 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
                 onChange={(e) => set("guardianMobile", e.target.value)}
               />
             </label>
-            <label className="block sm:col-span-2">
-              <Label hint="Anything our first aider should know. Leave blank if none.">
-                Medical conditions or allergies
-              </Label>
-              <textarea
-                rows={2}
-                className={inputCx}
-                value={(values.medical as string) ?? ""}
-                onChange={(e) => set("medical", e.target.value)}
-              />
-            </label>
           </div>
 
           <div className="mt-6 space-y-4">
+            <p className="text-xs tracking-[0.16em] text-muted uppercase">
+              To be completed by the parent or guardian
+            </p>
+
             <Check
               required
               checked={!!values.guardianConsent}
               onChange={(v) => set("guardianConsent", v)}
-              label="My parent or guardian knows I'm entering and gives permission for me to take part."
+              label="I am this player's parent or guardian, and I give permission for them to take part."
             />
+
+            {/* Supervision promise — one per tier, so nobody answers a question that
+                doesn't apply to their child's age. */}
+            {tier === "on-site" && (
+              <Check
+                required
+                checked={!!values.guardianOnSite}
+                onChange={(v) => set("guardianOnSite", v)}
+                label="I will stay at the venue for the whole event."
+                hint="Required for players under 12. You don't need to sit with them — there's seating, langar and the bracket on the big screen — but we need you in the building."
+              />
+            )}
+
+            {tier === "drop-off" && (
+              <>
+                <Check
+                  required
+                  checked={!!values.guardianDropOff}
+                  onChange={(v) => set("guardianDropOff", v)}
+                  label="I will drop my child off and collect them, and I'll be reachable on the number above all day."
+                  hint="Required for players aged 12 to 15. They won't be allowed to leave on their own."
+                />
+                <label className="block">
+                  <Label hint="So we know what to expect if we need to call you back to the venue.">
+                    How far away will you be during the event?
+                  </Label>
+                  <select
+                    required
+                    className={inputCx}
+                    value={(values.guardianDistance as string) ?? ""}
+                    onChange={(e) => set("guardianDistance", e.target.value)}
+                  >
+                    <option value="">Choose…</option>
+                    {GUARDIAN_DISTANCE.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </>
+            )}
+
+            {tier === "independent" && (
+              <>
+                <Check
+                  required
+                  checked={!!values.guardianIndependentConsent}
+                  onChange={(v) => set("guardianIndependentConsent", v)}
+                  label="I'm happy for them to come to the event and leave on their own, and I'll be reachable on the number above."
+                  hint="For players aged 16 and 17."
+                />
+                <Check
+                  checked={!!values.mayLeaveUnaccompanied}
+                  onChange={(v) => set("mayLeaveUnaccompanied", v)}
+                  label="They may leave the venue unaccompanied at the end of the day."
+                  hint="Optional. If you leave this, we'll expect them to be collected."
+                />
+              </>
+            )}
+
+            {/* Photo consent is the guardian's to give, not the child's — a child can't
+                agree to their own image being used. Optional either way: decision 18. */}
             <Check
-              checked={!!values.photoConsent}
-              onChange={(v) => set("photoConsent", v)}
-              label="I'm happy to appear in photos and video from the day."
-              hint="Optional — tick or leave it, either is completely fine. If you leave it, our photographers are told and you won't be filmed."
+              checked={!!values.guardianPhotoConsent}
+              onChange={(v) => set("guardianPhotoConsent", v)}
+              label="I'm happy for my child to appear in photos and video from the day."
+              hint="Completely optional, and it never affects their place. If you leave it, our photographers are told and they won't be filmed."
             />
           </div>
         </fieldset>
@@ -367,7 +513,51 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
           {isMinor ? "5." : "4."} On the day
         </legend>
 
-        <div className="grid gap-5 sm:grid-cols-2">
+        {/* Medical, dietary and accessibility together: they are the three things a
+            volunteer or first aider needs on the day, and they are asked of everyone.
+            Round 24 moved the medical questions here from the under-18 guardian section —
+            an adult with epilepsy or a severe allergy needs the first aider to know just
+            as much as a child does, and dietary allergies were already collected from
+            everyone, so asking only minors was inconsistent. Every field stays optional. */}
+            <div>
+            <Label hint="Tick anything that applies. Our first aider reads this, so 'None' is a real answer we need.">
+              Medical conditions
+            </Label>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {MEDICAL_CONDITIONS.map((c) => {
+                const selected = Array.isArray(values.medicalConditions)
+                  ? (values.medicalConditions as string[]).includes(c)
+                  : false;
+                return (
+                  <label
+                    key={c}
+                    className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line bg-surface/60 p-3 text-sm has-checked:border-kesri/60 has-checked:bg-kesri/[0.08]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={() => toggleIn("medicalConditions", c)}
+                      className="mt-0.5 h-4 w-4 accent-kesri"
+                    />
+                    <span className="text-body">{c}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+          <label className="mt-5 block">
+            <Label hint="Which inhaler, which allergy, what to do — the detail a first aider would actually need. Leave blank if nothing applies.">
+              Anything else our first aider should know
+            </Label>
+            <textarea
+              rows={2}
+              className={inputCx}
+              value={(values.medical as string) ?? ""}
+              onChange={(e) => set("medical", e.target.value)}
+            />
+          </label>
+
+        <div className="mt-5 grid gap-5 sm:grid-cols-2">
           <label className="block">
             <Label hint="Wheelchair access, quiet space, anything else — just ask.">
               Accessibility needs
@@ -417,6 +607,31 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
         </div>
       </fieldset>
 
+      {failure && (
+        <div
+          role="alert"
+          className="rounded-2xl border border-kesri/50 bg-kesri/[0.08] p-5"
+        >
+          <p className="font-semibold text-body">{failure.error}</p>
+          {failure.fieldErrors && Object.keys(failure.fieldErrors).length > 0 && (
+            <ul className="mt-3 space-y-1.5 text-sm text-muted">
+              {Object.entries(failure.fieldErrors).map(([field, message]) => (
+                <li key={field}>
+                  {/* Field keys are camelCase internally; a registrant should not have to
+                      read "guardianOnSite". */}
+                  <span className="text-body">{FIELD_LABELS[field] ?? field}</span>
+                  {" — "}
+                  {message}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-3 text-sm text-muted">
+            Nothing has been submitted yet. Fix the above and press the button again.
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-4">
         <button
           type="submit"
@@ -439,8 +654,9 @@ function EventField({
   set,
 }: {
   field: FormField;
-  values: Record<string, string | boolean>;
-  set: (k: string, v: string | boolean) => void;
+  // Shares the parent form's value bag, which holds arrays for multi-select answers.
+  values: Record<string, string | boolean | string[]>;
+  set: (k: string, v: string | boolean | string[]) => void;
 }) {
   const wide = field.type === "textarea" || field.type === "checkbox";
 

@@ -10,7 +10,7 @@
  *   - it has no concurrency safety if two people submit at the same instant
  *   - it stores guardian contact details and medical notes, which need encryption
  *     at rest and access control
- * See 03_App/docs/DATA-LAYER.md.
+ * See 00_Docs/DATA-LAYER.md.
  */
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -108,7 +108,7 @@ export async function register(input: {
   divisionId: string;
   divisionCapacity: number;
   playerId: string;
-  answers: Record<string, string | boolean>;
+  answers: Record<string, string | boolean | string[]>;
 }): Promise<RegisterResult> {
   const rows = await readAll();
 

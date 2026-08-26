@@ -1,0 +1,60 @@
+name: CI
+
+# The repo already had 104 tests over the safety-critical logic — guardian consent, age
+# segregation, registration validation — and nothing ran them on a push. Tests that only
+# run when someone remembers are tests that stop being true.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # The app is not at the repo root; see the root README for the layout.
+        working-directory: 03_App/web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: 03_App/web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  # A public repo holding a children's-data app should never gain a committed secret or a
+  # stray registration file. Cheap to check, expensive to miss.
+  no-secrets-or-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refuse committed data stores, env files and keys
+        run: |
+          # .env.example is deliberately committed — it documents the variables and
+          # holds no secrets — so it is excluded before the check, not by the pattern.
+          if git ls-files \
+              | grep -E '(^|/)\.data/|(^|/)\.env($|\.)|\.pem$|\.p12$' \
+              | grep -v '\.env\.example$' ; then
+            echo "::error::A data store, env file or key is tracked in git. Remove it and rotate anything exposed."
+            exit 1
+          fi
+          echo "No tracked data stores, env files or keys."

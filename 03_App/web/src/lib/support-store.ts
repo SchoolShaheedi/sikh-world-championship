@@ -1,6 +1,6 @@
 /**
  * Support ticket store — DEVELOPMENT IMPLEMENTATION, same caveats as the other stores.
- * Replace with Supabase before launch (docs/DATA-LAYER.md).
+ * Replace with Supabase before launch (00_Docs/DATA-LAYER.md).
  */
 import { promises as fs } from "node:fs";
 import path from "node:path";

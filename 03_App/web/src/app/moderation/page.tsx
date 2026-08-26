@@ -8,6 +8,17 @@ import { handleReport, handleTicket } from "./actions";
 
 export const metadata: Metadata = { title: "Moderation" };
 
+/**
+ * Never prerender this page.
+ *
+ * What it renders depends entirely on who is asking — it holds safeguarding disclosures,
+ * reporter identities and parents' email addresses. Next was building it as a static
+ * page, which means that once a real session exists, one visitor's queue could be baked
+ * into HTML and served to the next person. Rendering per request is the only correct
+ * behaviour for this page.
+ */
+export const dynamic = "force-dynamic";
+
 const STATUS_STYLE: Record<ReportStatus, string> = {
   open: "border-kesri/50 bg-kesri/10 text-kesri",
   investigating: "border-royal/50 bg-royal/10 text-body",

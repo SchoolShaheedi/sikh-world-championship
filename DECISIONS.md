@@ -666,3 +666,166 @@ limitation that a determined under-16 could enter their own address in the guard
 field. That is true of any email-based consent system and is not a secret worth keeping —
 but it is now publicly readable, which is a deliberate consequence of a public repo
 rather than an oversight.
+
+
+---
+
+# Round 24 (2026-08-26) — Structure standardised, safeguarding audit
+
+79. **Numbered folder scheme kept, and made real.** The root README documented
+    `01_Brand/`, `02_Events/`, `04_Legal/`, `05_Partners_Sponsors/` as "deliberate
+    placeholders" — but git does not track empty directories, so nobody who cloned the
+    repo ever saw them. Each now has a `README.md` stating what belongs in it, which
+    both makes the folder exist and documents the convention (`NN_Name`).
+80. **The two docs directories are now one.** `03_App/docs/` merged into `00_Docs/`
+    (git recorded both as renames). There was no rule for which doc went where.
+81. **Create-next-app leftovers removed** — `file.svg`, `globe.svg`, `next.svg`,
+    `vercel.svg`, `window.svg`, none referenced anywhere.
+82. **CI added** (`.github/workflows/ci.yml`): typecheck, lint, test, build, plus a job
+    that fails if a `.data/` file, an `.env` file or a key is ever tracked. 104 tests
+    existed and nothing ran them on a push.
+83. **`.env.example` added**, with a `!.env.example` exception in `.gitignore` so the
+    template commits while real env files stay ignored. Every variable has a working
+    default — the app still runs with no `.env.local` at all.
+84. **`CLAUDE.md` now carries real project guidance** instead of only importing the
+    Next.js-generated `AGENTS.md`. It lists the seven invariants and the five stubs.
+
+## Safeguarding audit — what was found
+
+85. **`/moderation` was readable by anyone.** The page gate (`if (!me.isModerator)`) was
+    correct; `session.ts` returned `isModerator: true` unconditionally, so the gate never
+    fired. Verified by fetching the page unauthenticated and reading back a planted
+    support ticket: the safeguarding disclosure, the parent's name and their email
+    address all rendered. Next was also building it as a **static** page, so with a real
+    session one visitor's queue could have been baked into HTML and served to the next
+    person.
+    Fixed two ways: `stubModeratorAccess()` now denies by default (opt in locally with
+    `SWC_DEV_MODERATOR=1`, refused outright when `NODE_ENV=production`), and the page is
+    `force-dynamic`. Re-tested: the planted ticket is gone and the page renders
+    "Moderators only". **A stub that fails open is a breach waiting for a deploy — any
+    new gate written against the session stub must default to deny.**
+86. **Only one of the two guardians was notified on a connection.** `answerRequest`
+    notified the *accepting* player's guardian only. Age segregation means both players
+    are in the same band, so if one is under 16 both are — and accepting a request
+    exchanges gamertags in *both* directions. Every connection a child initiated left
+    that child's own guardian unaware, which is the likelier direction for a child to
+    make contact.
+    Fixed by storing `fromGuardianEmail` on the request when it is sent — the same
+    reasoning as the existing `fromRegion` field, since the accepter's session is the
+    only one on hand at acceptance. Locked by
+    `src/app/play/guardian-notification.test.ts`, which fails on the old behaviour.
+87. **An under-18 could register with no guardian on record.** The endpoint required only
+    `fullName`, `dob`, `email`, `mobile`. Verified: a POST for a 10-year-old with no
+    guardian name, email or consent returned `200 confirmed`. That is a child at a
+    physical event with no consenting adult recorded, and it also breaks the board
+    consent flow, which takes the guardian email from the registration.
+88. **Arbitrary keys were persisted next to children's medical notes.** `answers` was the
+    raw request body, spread in unvalidated. Verified by injecting a key and reading it
+    back out of the store.
+    87 and 88 are both fixed by `src/lib/registration-schema.ts` (zod), which closes the
+    long-standing "TODO: full schema validation before launch". Guardian block required
+    when the registrant is under 18, consents must be truthfully given, event-specific
+    fields validated against their own `formFields` definition, unknown keys rejected
+    rather than stripped, free text length-capped, email normalised, and a mistyped
+    future year explained rather than answered with the age limit. 25 tests.
+    A note for anyone extending it: the browser form keeps all fields in one state object
+    and submits `""` for anything untouched, so optional fields must treat `""` as
+    absent. Requiring `min(1)` on them broke the real form the first time this went in.
+89. **Rate limits added** where their absence was a safeguarding problem rather than an
+    abuse problem: guardian approval emails (3/hour per child — a child clicking "ask
+    again" repeatedly makes SWC look like the harasser) and support tickets (10/10min per
+    IP — the urgent queue is where a disclosure lands, and a queue buried under generated
+    tickets is one where a real report goes unread). Both limits are deliberately loose:
+    turning away a genuine reporter is the worse failure. In-memory, so per-instance —
+    must move to the database when this deploys.
+
+## !! OPEN — the site tells parents things that are not true
+
+Not fixed, because this is public safeguarding copy and it is the owner's call.
+`/safeguarding` is the page a parent reads before deciding, and it currently states:
+
+- "Free-text chat is for players aged 16 and over." **There is no chat.** It is
+  deliberately deferred until the moderation rota is staffed and proven. Meanwhile
+  `/play` tells the same parent "There's no chat and no typing", and the guardian consent
+  screen says the same. The safeguarding page is the one that is wrong.
+- "Messages are retained so that reports can actually be investigated." There are no
+  messages, and no retention policy exists — `04_Legal/` is empty.
+- "Report and block are on every profile and every conversation." There are no
+  conversations.
+
+`/players` also markets "Chat (16+) — full messaging ... with real moderators behind it"
+and "Quick messages". Both sit under a "coming after FIFA 26" heading, which softens it,
+but together they commit SWC publicly to shipping open messaging.
+
+A published promise the software does not keep is both a safeguarding failure and a
+legal exposure. The fix is a wording decision, not a code change.
+
+## Still blocking, unchanged by this round
+
+`src/lib/notify.ts` still only logs, so the guardian notification promised on
+`/safeguarding` does not actually send — under-16 board access must not be switched on
+for real players until it does. `src/lib/session.ts` is still a stub. The stores are
+still JSON files holding unencrypted medical notes. `04_Legal/` is still empty, and that
+is the largest gap in the project: privacy notice, DPIA, retention policy and DBS checks
+are legal requirements before real registrations open, not later work.
+
+## Registration form — reviewed and extended
+
+A full form already existed; this was a review, not a build. Field set confirmed with the
+owner, and the guiding principle is data minimisation: home address, postcode, school,
+year group and gender are still **not** collected, and shouldn't be. Every field held is
+one that has to be justified in the DPIA, protected, and deleted on request.
+
+90. **Guardian presence is tiered by age, not blanket.** The owner's first instinct was a
+    parent present for every under-18. Rejected as disproportionate at the top end: it
+    would have meant planning the venue for ~110 people rather than 64 (which matters,
+    since the venue is still TBC), it is out of step with what 16–17s already do
+    independently, and it quietly excludes families who cannot spare an adult for a whole
+    Saturday — working against the point of the event. So the requirement sits where the
+    risk actually is:
+      8–11 ..... guardian stays on site for the whole event
+      12–15 .... dropped off and collected, guardian contactable, distance recorded,
+                 may not leave unaccompanied
+      16–17 .... may attend and leave independently, guardian consent on record
+    `src/lib/guardian-rules.ts` is the single source of truth; the form and the server
+    validator both read it, so the questions asked and the questions enforced cannot
+    drift apart. 12 tests.
+91. **Photo consent for under-18s is now the guardian's to give**, as a separate tick from
+    entry consent. A child cannot agree to their own image being used. Optional either
+    way — decision 18 made the photo optional for this reason, so refusing must never
+    block a place.
+92. **Medical is a structured tick-list plus a free-text detail box.** A volunteer can
+    scan it in an emergency instead of reading prose, "None" becomes an explicit answer
+    rather than a blank nobody can interpret, and structured data is far easier to
+    retention-manage than free text.
+93. **Medical questions moved out of the under-18 section and are now asked of everyone**
+    (still optional). An adult with epilepsy or a severe allergy needs the first aider to
+    know as much as a child does, and dietary allergies were already collected from
+    everyone — asking only minors was inconsistent.
+94. **Emergency contacts for over-18s: not collected.** Owner's decision. Worth checking
+    against whatever the public liability insurer requires; the fields exist in the schema
+    as optional, so making them required later is a one-line change.
+
+### Two bugs found while wiring this up
+
+95. **The form submitted `avatarId`, which the new strict schema rejected.** Caught by
+    replaying the browser's exact payload rather than a hand-written one. `avatarId` is
+    now validated against the real avatar list — an unknown id would render a broken
+    player card, and `getAvatar()` falls back silently, so a bad value would never have
+    surfaced as an error anywhere else.
+96. **The form never checked the response status.** `setResult(await res.json())` ran
+    regardless, so a 400 rendered the *success* screen and told the registrant they were
+    "number undefined in the queue" while all 64 places were still free. Pre-existing, but
+    strict validation makes rejection a normal path, so it had to be handled: field-level
+    errors are now listed under human-readable labels with "nothing has been submitted
+    yet". Related: required consents were reporting zod's "Invalid input" instead of the
+    sentence written for them, because a union rejects `undefined` before `.refine()`
+    runs. These messages go in front of a parent, so they now coerce first and the written
+    message always wins.
+
+### Open, and deliberately not changed
+
+Adult medical data is optional and self-declared. If the retention policy in `04_Legal/`
+sets a shorter life for medical fields than for the rest of a registration — which it
+probably should — the store will need to delete those fields independently rather than
+expiring the whole record.

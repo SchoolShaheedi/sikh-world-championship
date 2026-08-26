@@ -108,6 +108,18 @@ export interface GameRequest {
    */
   fromRegion: string;
   toPlayerId: string;
+  /**
+   * The REQUESTER's guardian email, captured when the request is sent.
+   *
+   * Stored for the same reason as `fromRegion`: when the request is accepted, both
+   * children have just been given each other's gamertag, so BOTH guardians must be told
+   * — but the accepting player's session is the only one on hand at that moment. Without
+   * this field the requester's guardian is never notified, which silently breaks
+   * invariant 3 above for half of all connections.
+   *
+   * Null for 16+ requesters, who have no guardian to notify.
+   */
+  fromGuardianEmail: string | null;
   proposedWindow: Window;
   note: PresetNote;
   status: RequestStatus;

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { currentPlayer } from "@/lib/session";
 import { requestApproval } from "@/lib/guardian-store";
 import { notifyGuardianApprovalRequest } from "@/lib/notify";
+import { rateLimit, LIMITS } from "@/lib/rate-limit";
 
 /**
  * An under-16 asks their guardian for board access.
@@ -20,6 +21,19 @@ export async function askGuardian(): Promise<{ ok: boolean; error?: string }> {
       ok: false,
       error:
         "We don't have a parent or guardian's email for you. Get in touch through Support and we'll add one.",
+    };
+  }
+
+  // Limited per child, not per guardian: the child is the one clicking, and a parent's
+  // inbox filling with our emails looks like harassment from SWC.
+  const { limit, windowMs } = LIMITS.guardianApproval;
+  const gate = rateLimit(`guardian-approval:${me.id}`, limit, windowMs);
+  if (!gate.ok) {
+    return {
+      ok: false,
+      error:
+        "We've already emailed your parent or guardian. Give them a little time to " +
+        "reply — you can ask again in about an hour.",
     };
   }
 

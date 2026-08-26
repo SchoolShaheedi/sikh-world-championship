@@ -104,6 +104,9 @@ export async function sendRequest(formData: FormData) {
       fromDisplayName: me.displayName,
       fromRegion: me.region,
       toPlayerId: post.playerId,
+      // Captured now so that, on acceptance, this child's guardian can be notified too —
+      // see fromGuardianEmail in play-types.ts.
+      fromGuardianEmail: me.guardianEmail,
       proposedWindow: proposedWindow as Window,
       note: note as PresetNote,
       fromGamertag: me.gamertag,
@@ -131,21 +134,41 @@ export async function answerRequest(formData: FormData) {
     accepted,
   );
 
-  // An accepted request is the moment gamertags are exchanged. If either side is under
-  // 16, their guardian is told who their child just connected with. This is the promise
-  // made on /safeguarding, so it fires here and nowhere else.
-  if (req && accepted && me.ageBand === "U16" && me.guardianEmail) {
+  // An accepted request is the moment gamertags are exchanged, in BOTH directions. Age
+  // segregation means the two players are in the same band, so if one is under 16 the
+  // other is too — and both guardians must be told. Notifying only the accepter's
+  // guardian left the requester's guardian in the dark for every connection their child
+  // started, which is the more likely direction for a child to initiate contact.
+  // This is the promise made on /safeguarding, so it fires here and nowhere else.
+  if (req && accepted) {
     const post = (await allPosts()).find((p) => p.id === req.postId);
-    await notifyGuardianOfConnection({
-      guardianEmail: me.guardianEmail,
-      childDisplayName: me.displayName,
-      // The OTHER player is the requester — the post is the child's own, so its region
-      // would name the child rather than the person they've just connected with.
-      otherPlayerName: req.fromDisplayName,
-      otherPlayerRegion: req.fromRegion,
-      game: post?.game ?? "unknown",
-      when: req.proposedWindow,
-    });
+    const game = post?.game ?? "unknown";
+
+    // The accepter's guardian: the person their child connected with is the requester.
+    if (me.ageBand === "U16" && me.guardianEmail) {
+      await notifyGuardianOfConnection({
+        guardianEmail: me.guardianEmail,
+        childDisplayName: me.displayName,
+        // The OTHER player is the requester — the post is the child's own, so its region
+        // would name the child rather than the person they've just connected with.
+        otherPlayerName: req.fromDisplayName,
+        otherPlayerRegion: req.fromRegion,
+        game,
+        when: req.proposedWindow,
+      });
+    }
+
+    // The requester's guardian: the person their child connected with is the accepter.
+    if (req.fromGuardianEmail) {
+      await notifyGuardianOfConnection({
+        guardianEmail: req.fromGuardianEmail,
+        childDisplayName: req.fromDisplayName,
+        otherPlayerName: me.displayName,
+        otherPlayerRegion: me.region,
+        game,
+        when: req.proposedWindow,
+      });
+    }
   }
 
   revalidatePath("/play");

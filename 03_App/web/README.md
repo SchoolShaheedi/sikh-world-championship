@@ -19,7 +19,7 @@ src/data/events/           One file per event. Add a file, add it to index.ts, d
 src/data/avatars.ts        Player card avatar definitions
 src/lib/types.ts           Domain model — read this first
 src/lib/bracket.ts         Seeding, bracket generation, advancing winners
-src/lib/store.ts           Registration storage (DEV ONLY — see docs/DATA-LAYER.md)
+src/lib/store.ts           Registration storage (DEV ONLY — see 00_Docs/DATA-LAYER.md)
 src/components/            Logo, Avatar, PlayerCard, TrophyCabinet, BracketView, SignupForm
 src/app/                   Routes
 ```
@@ -45,4 +45,4 @@ src/app/                   Routes
 - **Capacity is enforced per division** (32 each). Overflow goes to a waitlist with a
   queue position; `promoteFromWaitlist()` moves people up when someone withdraws.
 - **Photos are optional.** Avatars are the default, drawn as SVG — no image assets.
-- **Storage is a JSON file right now.** Read `docs/DATA-LAYER.md` before going live.
+- **Storage is a JSON file right now.** Read `00_Docs/DATA-LAYER.md` before going live.
