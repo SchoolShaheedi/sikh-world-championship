@@ -624,15 +624,45 @@ All four `quality=` usages in the codebase are now 75.
     `SchoolShaheedi` is a personal account (not an org) so the API requires a username
     rather than an email. Username confirmed by the owner before granting access.
 
-## Note: there is a SECOND, older public repo
-`Bapinder/sikh-world-championship` is public and holds the 21 August version of the app.
-It is on a different account, so it was left alone — the local remote pointing at it was
-renamed `bapinder-old` rather than deleted.
-**Worth deciding what happens to it**, or the project ends up with two public copies
-drifting apart.
+## The duplicate repo — resolved except for one manual step
+`Bapinder/sikh-world-championship` (public) held the 21 August version.
+Verified before touching anything: its HEAD `f850e6e` **is an ancestor of our history**,
+it has one branch, and zero issues, PRs, forks or stars — so nothing there is unique.
+
+**It could not be deleted from here.** This machine is authenticated as `SchoolShaheedi`,
+which has `push` but not `admin` on that repo, and the token lacks the `delete_repo`
+scope. Deleting another account's repository is not something to work around.
+
+-> Whoever owns the Bapinder account must do it:
+   https://github.com/Bapinder/sikh-world-championship/settings  → bottom of the page.
+   Archiving instead of deleting is the safer option if there is any doubt.
+
+The local remote pointing at it is kept as `bapinder-old` so nothing pushes there by
+accident. Remove it with `git remote remove bapinder-old` once the repo is gone.
 
 ## Live at the moment this was published
 The safeguarding page names "TBC" as the safeguarding lead and the contact address is
 `TBC@sikhworldchampionship.com`. Raised before publishing; owner chose public anyway,
 which is a reasonable call for a code repo. It stops being reasonable the moment the site
 itself is deployed, because that page is what parents read.
+
+
+---
+
+# Round 23 (2026-08-26) — Repo root moved, collaborators
+76. **Git root moved from `03_App/web` up to the project root.** DECISIONS.md and
+    `00_Docs/` are now inside the repository — collaborators previously got the code with
+    none of the reasoning. Git recorded 99 renames at 100% similarity, so history is
+    intact. 114 files on GitHub.
+    `03_App/web/.gitignore` still governs that subtree: git resolves leading-slash
+    patterns relative to the .gitignore that declares them, so `/node_modules` there
+    still means `03_App/web/node_modules`.
+77. **Collaborators (both admin, invitations pending): `taranjs`, `Bapinder`.**
+78. Verified after the move: types clean, 72 tests passing from the new root.
+
+## Worth knowing now that the docs are public
+`00_Docs/` and DECISIONS.md contain the honest engineering record, including the stated
+limitation that a determined under-16 could enter their own address in the guardian email
+field. That is true of any email-based consent system and is not a secret worth keeping —
+but it is now publicly readable, which is a deliberate consequence of a public repo
+rather than an oversight.
