@@ -60,12 +60,12 @@ export default function PlayersPage() {
               d: "Post what you play, when you're free, and what platform you're on. Other Sikh players send you a request. Open to every age.",
             },
             {
-              t: "Quick messages",
-              d: "Send a set message — 'gg', 'rematch?', 'I'm online now'. Simple, friendly, and safe for every age group.",
+              t: "No typing, by design",
+              d: "Posts and requests are built from fixed menus — a game, a platform, when you're free, and a note from a short list. There's no box to type into, so there's nothing a stranger can say to your child.",
             },
             {
-              t: "Chat (16+)",
-              d: "Full messaging for players aged 16 and over, with report and block on every profile and real moderators behind it.",
+              t: "Separate by age, moderated by people",
+              d: "Under-16s and 16-plus never mix. Report and block sit on every post and profile, and every report goes to a named moderator.",
             },
           ].map((c) => (
             <div key={c.t}>

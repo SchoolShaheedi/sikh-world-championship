@@ -148,8 +148,6 @@ export interface PlayerProfile {
   avatarId: string | null;
   photoUrl: string | null;
   gamertags: { platform: string; handle: string }[];
-  /** Free-text chat is 16+ only — see CHAT-AND-SAFETY.md. */
-  chatEnabled: boolean;
   joinedAt: string;
 }
 

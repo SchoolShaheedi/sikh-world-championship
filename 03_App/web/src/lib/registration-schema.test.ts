@@ -24,6 +24,10 @@ function adult(over: Record<string, unknown> = {}) {
     accountConsent: true,
     psnId: "realuser",
     skill: "Casual player",
+    // Round 25: required of every adult entrant.
+    emergencyName: "A Friend",
+    emergencyRelation: "Brother",
+    emergencyPhone: "07700 900999",
     ...over,
   };
 }
@@ -329,5 +333,51 @@ describe("field hygiene", () => {
     expect(validateRegistration(event, division, "hello").ok).toBe(false);
     expect(validateRegistration(event, division, null).ok).toBe(false);
     expect(validateRegistration(event, division, []).ok).toBe(false);
+  });
+});
+
+
+describe("emergency contact", () => {
+  it("is required of an adult entrant", () => {
+    for (const key of ["emergencyName", "emergencyRelation", "emergencyPhone"]) {
+      const body = adult();
+      delete (body as Record<string, unknown>)[key];
+      const r = validateRegistration(event, division, body);
+      expect(r.ok, `${key} should be required`).toBe(false);
+      if (r.ok) continue;
+      expect(r.fieldErrors).toHaveProperty(key);
+    }
+  });
+
+  it("rejects a phone number nobody could dial in an emergency", () => {
+    expect(
+      validateRegistration(event, division, adult({ emergencyPhone: "ask around" })).ok,
+    ).toBe(false);
+  });
+
+  it("is NOT asked of an under-18 a second time — the guardian is the contact", () => {
+    // Duplicating a child's guardian into a second set of fields would mean holding the
+    // same personal data twice for no gain.
+    for (const body of [onSite(), dropOff(), independent()]) {
+      delete (body as Record<string, unknown>).emergencyName;
+      delete (body as Record<string, unknown>).emergencyRelation;
+      delete (body as Record<string, unknown>).emergencyPhone;
+      expect(validateRegistration(event, division, body).ok).toBe(true);
+    }
+  });
+
+  it("means every accepted registration has someone to call", () => {
+    // The property that actually matters: adult -> emergency fields; minor -> guardian.
+    const adultResult = validateRegistration(event, division, adult());
+    expect(adultResult.ok).toBe(true);
+    if (adultResult.ok) {
+      expect(adultResult.answers.emergencyPhone).toBeTruthy();
+    }
+
+    const minorResult = validateRegistration(event, division, dropOff());
+    expect(minorResult.ok).toBe(true);
+    if (minorResult.ok) {
+      expect(minorResult.answers.guardianMobile).toBeTruthy();
+    }
   });
 });

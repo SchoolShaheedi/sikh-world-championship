@@ -1,38 +1,60 @@
 # 04_Legal
 
-**Nothing in here yet, and that is the biggest gap in the project.**
+Seven drafts are now in this folder, all version 0.1 and **all needing review**. They were
+written by working backwards from what the code actually does, so the field lists,
+retention targets and risk register describe this project rather than a generic template.
 
-The app already collects guardian contact details and children's medical notes, and
-event 1 is open to ages 8+. Under UK GDPR, children's personal data is a special case
-and the paperwork below is a legal requirement before the site takes a single real
-registration — not a nice-to-have for later.
+**They are drafts, not advice.** They need a read by someone qualified in UK data
+protection, and the safeguarding policy needs a read by someone with safeguarding
+qualifications. Children's data is the area where that distinction matters most.
 
-## Required before launch
+## What's here
 
-- [ ] **Privacy notice** — what is collected, why, how long it is kept, who sees it.
-      Must be written in language a child can read, not just a parent (ICO Children's
-      Code, standard 4). This is the page the sign-up form has to link to.
-- [ ] **DPIA** (Data Protection Impact Assessment) — mandatory when processing
-      children's data at scale. Document it once, update it per event.
-- [ ] **Retention and deletion policy** — how long registrations, guardian approvals,
-      chat reports and moderation records are kept, and who deletes them.
-      `00_Docs/DATA-LAYER.md` describes the store; this decides its lifespan.
-- [ ] **Safeguarding policy** — the published version of what `/safeguarding` promises.
-      That page currently names "TBC" as the safeguarding lead (`DECISIONS.md` round 22).
-- [ ] **ICO registration** — the organisation likely needs to register as a data
-      controller and pay the annual fee.
-- [ ] **DBS checks** for the safeguarding lead, the named moderators and any volunteer
-      with unsupervised access to children. These take weeks — `00_Docs/NEXT-STEPS.md`
-      flags starting them early.
-- [ ] **Public liability insurance** for the venue and the event day.
-- [ ] **Terms of use** and the moderation/reporting policy the app links to.
-- [ ] **Photography and filming consent** — separate from registration consent, and
-      genuinely optional (decision 18 made the player photo optional for this reason).
+| Document | What it is | Priority |
+|---|---|---|
+| `DPIA.md` | Data Protection Impact Assessment. **Legally required** before processing children's data, and its conclusion is currently "not yet — do not open real registrations". | **1st** |
+| `SAFEGUARDING-POLICY.md` | The formal policy behind the public `/safeguarding` page. Its named-people table is the single most important blank in the project. | **1st** |
+| `PRIVACY-NOTICE.md` | What we collect and why, with an accurate field-by-field table and a child-readable summary (ICO Children's Code). | 2nd |
+| `RETENTION-POLICY.md` | How long each store is kept. Makes the privacy notice honest — you cannot tell a parent how long you keep their child's data until you have decided. | 2nd |
+| `CODE-OF-CONDUCT.md` | The document the sign-up form's "I've read the code of conduct" tick should point at. **It currently points at nothing.** | 3rd |
+| `PHOTOGRAPHY-CONSENT.md` | Policy, the wording already in the form, and the wristband problem of honouring it on the day. | 3rd |
+| `TERMS-OF-USE.md` | Deliberately thin. Matters least; do it last. | 4th |
 
-## Why the code cannot wait for this
+## Do these three first, in this order
 
-`/safeguarding` makes public promises — guardian notification, a 24h report response,
-named moderators. `00_Docs/NEXT-STEPS.md` records that `src/lib/notify.ts` still only
-logs, so the guardian-notification promise is not yet true in code. A published promise
-the software does not keep is a safeguarding failure and a legal exposure at the same
-time.
+1. **Start the DBS checks.** They take weeks and everything else waits on them. You cannot
+   name a safeguarding lead publicly until theirs is underway.
+2. **Fill in `SAFEGUARDING-POLICY.md` section 3** — the named people. `src/data/org.ts`
+   currently says `"TBC"`, which means the live public page tells a worried parent to
+   contact "TBC". That is worse than having no page.
+3. **Work through `DPIA.md` section 5** with the safeguarding lead. It is the document that
+   tells you what to build next, in priority order, and it names four blocking items.
+
+## Registering with the ICO
+
+Processing children's personal data almost certainly means SWC must register as a data
+controller with the Information Commissioner's Office and pay the annual fee (£40–£60 for a
+small organisation). Do this at ico.org.uk/registration. It takes about fifteen minutes,
+and the registration number goes in `PRIVACY-NOTICE.md`.
+
+## Insurance
+
+Public liability cover for the event day is separate from everything above and is not
+drafted here — it is a purchase, not a document. When you get quotes, ask specifically what
+the insurer requires of you regarding under-18s, supervision ratios, DBS checks and
+emergency contacts, because their answer may change decisions already taken in
+`DECISIONS.md`.
+
+## Two things to know about these drafts
+
+**They are honest about what does not work.** The DPIA risk register records that guardian
+notification emails do not send, that data sits in unencrypted files, that nothing is ever
+deleted, and that the moderation queue was briefly readable by anyone. That is deliberate —
+a DPIA that only lists risks you have already solved is worthless, and the ICO is
+explicitly more forgiving of a documented known risk than an undocumented one.
+
+**This repository is public.** These drafts are therefore publicly readable, including
+those honest weaknesses. That is consistent with how `DECISIONS.md` already documents the
+project's limitations, but it is worth a conscious decision rather than a surprise. If you
+would rather they were private, move this folder to shared storage and leave a pointer
+here — the code does not depend on them.

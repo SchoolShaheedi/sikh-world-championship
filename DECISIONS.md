@@ -829,3 +829,73 @@ Adult medical data is optional and self-declared. If the retention policy in `04
 sets a shorter life for medical fields than for the rest of a registration — which it
 probably should — the store will need to delete those fields independently rather than
 expiring the whole record.
+
+
+---
+
+# Round 25 (2026-08-26) — Chat off for everyone, legal drafts, emergency contacts
+
+97. **No chat, for anyone, at any age. Indefinitely.** Supersedes decision 14 (open chat,
+    all ages) and decision 17 (free-text chat, 16+). Owner's call, and it makes the
+    platform easier to defend: with no free-text channel between players there is nothing
+    to moderate, nothing to filter, nothing to retain and nothing to breach. The LFG board
+    already worked entirely from fixed menus, so no feature was removed — only the promise
+    of one.
+98. **`/safeguarding` rewritten to be true.** It had claimed free-text chat for 16+,
+    retained messages, "report and block on every conversation", and that messages were
+    filtered for phone numbers and links. **None of that existed** — there was no chat, no
+    messages, and no filtering was ever written. A parent deciding whether to let their
+    child sign up was reading a description of a different product. The page now describes
+    what the code does and nothing else, and carries a comment saying every line must stay
+    true.
+    Two further claims that were also false and are now corrected: account deletion is a
+    request handled by a person, not an automated "deletion actually deletes"; and the
+    DBS-checked leads and first aider are written as commitments for an event that has not
+    happened yet, rather than as present fact.
+99. **`/players` no longer markets "Chat (16+)" or "Quick messages".** Neither existed.
+    They sat under a "coming after FIFA 26" heading, which softened it, but together they
+    committed SWC publicly to shipping open messaging. Replaced with an accurate
+    description of the fixed-menu board.
+100. Removed the unused `chatEnabled` flag from `PlayerProfile`, and corrected the comment
+     in `org.ts` calling the moderators "moderators for the 16+ chat".
+101. **Emergency contact required for every participant.** Reverses decision 94 (round 24),
+     where the owner chose to skip it for adults. For an adult that is three new required
+     fields (name, relationship, phone). **For an under-18 it is the guardian block, which
+     is already required and already holds a name, relationship and phone — so a child is
+     not asked twice.** Duplicating a child's guardian into a second set of fields would
+     mean holding the same personal data in two places for no gain.
+102. **Every validation message is now written for a person.** zod's defaults were reaching
+     parents as "Invalid input: expected string, received undefined". Required consents had
+     the same problem for a different reason — a union rejects `undefined` before
+     `.refine()` runs, so the sentence written for the field never fired.
+
+## Legal — seven drafts written, all needing review
+
+103. `04_Legal/` now holds `DPIA.md`, `SAFEGUARDING-POLICY.md`, `PRIVACY-NOTICE.md`,
+     `RETENTION-POLICY.md`, `CODE-OF-CONDUCT.md`, `PHOTOGRAPHY-CONSENT.md` and
+     `TERMS-OF-USE.md`, all version 0.1. Written by working backwards from what the code
+     actually collects, so the field tables, retention targets and risk register describe
+     this project rather than a generic template. **Drafts, not advice** — they need a read
+     by someone qualified in UK data protection, and the safeguarding policy needs a
+     safeguarding-qualified read.
+104. **The DPIA's conclusion is "do not open real registrations yet."** Four unmitigated
+     risks, each individually blocking: guardian notifications do not send; children's
+     medical notes sit in unencrypted files; nothing is ever deleted; DBS checks not
+     started. Plus the moderation rota needing real names rather than "TBC".
+105. **The retention policy exposed a gap in the store.** Medical notes should be deleted
+     ~30 days after an event while the registration itself is kept ~12 months — but the
+     store can only delete whole records, so a field-level purge is currently impossible.
+     That is the highest-priority data-layer change after the database migration itself.
+106. **Two things the sign-up form promises that do not exist yet:** the "I've read the code
+     of conduct" tick points at no document (now drafted, still needs linking), and the
+     guardian photo-consent wording promises "our photographers are told", which depends on
+     a wristband-and-briefing process nobody has built. Either build it or soften the
+     wording — do not publish a promise the event day cannot keep.
+
+## Note on publishing these
+
+The repository is public, so the drafts and the DPIA's honest risk register are publicly
+readable. That is consistent with how this log already documents the project's limitations,
+and the ICO is explicitly more forgiving of a documented known risk than an undocumented
+one — but it is a conscious choice, not an oversight. If the owner would rather they were
+private, the folder can move to shared storage; no code depends on it.

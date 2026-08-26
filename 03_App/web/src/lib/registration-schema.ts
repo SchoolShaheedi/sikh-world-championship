@@ -41,8 +41,19 @@ export function ageOnEventDay(dob: string, eventDate: string | null): number | n
   return age;
 }
 
-/** Trimmed, length-capped text. Caps exist so one request cannot bloat the store. */
-const text = (max: number) => z.string().trim().min(1).max(max);
+/**
+ * Trimmed, length-capped text. Caps exist so one request cannot bloat the store.
+ *
+ * `message` overrides zod's default, which reads "Invalid input: expected string,
+ * received undefined". These strings are shown to a registrant or a parent, so anything
+ * a person will read gets a sentence written for it.
+ */
+const text = (max: number, message?: string) =>
+  z
+    .string({ message: message ?? "This is required" })
+    .trim()
+    .min(1, message ?? "This is required")
+    .max(max);
 
 /**
  * An optional field the user left alone.
@@ -70,7 +81,7 @@ const notes = (max = 1000) => z.string().trim().max(max);
  * rejecting a valid international number is worse than accepting an odd format.
  */
 const phone = z
-  .string()
+  .string({ message: "We need a phone number" })
   .trim()
   .min(9, "That doesn't look like a phone number")
   .max(20)
@@ -82,7 +93,7 @@ const phone = z
  * as one canonical value rather than a near-duplicate of an existing registration.
  */
 const email = z
-  .string()
+  .string({ message: "We need an email address" })
   .trim()
   .toLowerCase()
   .max(254)
@@ -164,9 +175,20 @@ function fieldSchema(f: FormField): z.ZodTypeAny {
  */
 function guardianSchema(tier: GuardianTier) {
   if (tier === "none") {
-    // Round 24: adults are not asked for an emergency contact. If the public liability
-    // insurer requires one, these become required rather than newly added.
+    /**
+     * Round 25: every participant has an emergency contact on record.
+     *
+     * For an adult that is these three fields, required. For an under-18 it is the
+     * guardian block below, which is already required and already holds a name, a
+     * relationship and a phone number — so a minor is NOT asked twice. Duplicating a
+     * child's guardian into a second set of fields would mean holding the same personal
+     * data in two places for no gain, and every field held has to be justified,
+     * protected and deleted on request.
+     */
     return z.object({
+      emergencyName: text(120, "Give us a name we can call in an emergency"),
+      emergencyRelation: text(60, "How do you know them? Partner, brother, friend…"),
+      emergencyPhone: phone,
       guardianName: optional(text(120)),
       guardianRelation: optional(text(60)),
       guardianEmail: optional(email),
@@ -182,8 +204,12 @@ function guardianSchema(tier: GuardianTier) {
   }
 
   const contact = {
-    guardianName: text(120),
-    guardianRelation: text(60),
+    // Not asked of an under-18 — the guardian below IS their emergency contact.
+    emergencyName: optional(text(120)),
+    emergencyRelation: optional(text(60)),
+    emergencyPhone: optional(phone),
+    guardianName: text(120, "We need the parent or guardian's name"),
+    guardianRelation: text(60, "Are you their mother, father, carer…?"),
     guardianEmail: email,
     guardianMobile: phone,
     // Without this there is no permission to hold their data or have them attend.
@@ -253,7 +279,7 @@ function schemaFor(event: ChampionshipEvent, division: Division, age: number) {
 
   const core = z.object({
     divisionId: z.literal(division.id),
-    fullName: text(100),
+    fullName: text(100, "We need the player's full name"),
     dob: dateOfBirth,
     email,
     mobile: phone,

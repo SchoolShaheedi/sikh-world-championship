@@ -18,7 +18,11 @@ export const ORG = {
   safeguarding: {
     leadName: "TBC",
     leadEmail: "TBC",
-    /** Moderators for the 16+ chat. At least two named people. */
+    /**
+     * Named moderators who work the report and support queue. At least two real people,
+     * with a 24h response commitment — /safeguarding says so publicly.
+     * Not "moderators for chat": there is no chat (DECISIONS.md round 25).
+     */
     moderators: ["TBC", "TBC"] as string[],
   },
 } as const;

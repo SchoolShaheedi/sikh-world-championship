@@ -40,6 +40,9 @@ const FIELD_LABELS: Record<string, string> = {
   guardianIndependentConsent: "Permission to attend independently",
   mayLeaveUnaccompanied: "Leaving unaccompanied",
   guardianPhotoConsent: "Photo permission",
+  emergencyName: "Emergency contact name",
+  emergencyRelation: "Emergency contact relationship",
+  emergencyPhone: "Emergency contact phone",
   rulesAgreed: "Rules and code of conduct",
   accountConsent: "SWC profile",
   photoConsent: "Photo permission",
@@ -512,6 +515,59 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
         <legend className="font-display px-2 text-lg text-kesri">
           {isMinor ? "5." : "4."} On the day
         </legend>
+
+        {/* Emergency contact — adults only.
+            Every participant has one on record: for an under-18 it is the parent or
+            guardian captured above, so they are not asked twice. Round 25. */}
+        {!isMinor && (
+          <div className="mb-6 rounded-2xl border border-line bg-ink/20 p-5">
+            <p className="text-xs tracking-[0.16em] text-muted uppercase">
+              Emergency contact
+            </p>
+            <p className="mt-2 text-sm text-muted">
+              Someone we can call on the day if you&apos;re hurt or unwell. Not you —
+              someone who isn&apos;t at the event.
+            </p>
+            <div className="mt-4 grid gap-5 sm:grid-cols-3">
+              <label className="block">
+                <Label>Their name</Label>
+                <input
+                  required
+                  className={inputCx}
+                  value={(values.emergencyName as string) ?? ""}
+                  onChange={(e) => set("emergencyName", e.target.value)}
+                />
+              </label>
+              <label className="block">
+                <Label>Relationship to you</Label>
+                <input
+                  required
+                  placeholder="partner, brother, friend…"
+                  className={inputCx}
+                  value={(values.emergencyRelation as string) ?? ""}
+                  onChange={(e) => set("emergencyRelation", e.target.value)}
+                />
+              </label>
+              <label className="block">
+                <Label>Their phone number</Label>
+                <input
+                  required
+                  type="tel"
+                  className={inputCx}
+                  value={(values.emergencyPhone as string) ?? ""}
+                  onChange={(e) => set("emergencyPhone", e.target.value)}
+                />
+              </label>
+            </div>
+          </div>
+        )}
+
+        {isMinor && (
+          <p className="mb-6 rounded-2xl border border-line bg-ink/20 p-4 text-sm text-muted">
+            <span className="text-body">Emergency contact:</span> we&apos;ll use the parent
+            or guardian details above, so there&apos;s nothing extra to fill in here.
+          </p>
+        )}
 
         {/* Medical, dietary and accessibility together: they are the three things a
             volunteer or first aider needs on the day, and they are asked of everyone.
