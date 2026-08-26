@@ -4,26 +4,30 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Wordmark } from "./Logo";
+import { BrandLockup } from "./BrandLockup";
 import { ORG } from "@/data/org";
 
+/**
+ * "Find a game" (/play) and "Players" (/players) are hidden for now — the routes, the
+ * board, the guardian flow and their tests all still exist and work. Add the two lines
+ * back here and in the footer to bring them out of hiding.
+ */
 const NAV = [
   { href: "/events", label: "Events" },
-  { href: "/play", label: "Find a game" },
-  { href: "/players", label: "Players" },
   { href: "/about", label: "About" },
   { href: "/safeguarding", label: "Safety" },
   { href: "/support", label: "Support" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line/70 bg-ink/85 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-linesoft bg-ink/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link href="/" className="text-body" onClick={() => setOpen(false)}>
-          <Wordmark />
+          <Wordmark src={logoSrc} />
         </Link>
 
         <nav className="hidden items-center gap-1 sm:flex">
@@ -33,8 +37,10 @@ export function SiteHeader() {
               <Link
                 key={n.href}
                 href={n.href}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  active ? "bg-surface2 text-body" : "text-muted hover:text-body"
+                className={`pill px-4 py-2 text-sm font-medium transition-colors ${
+                  active
+                    ? "border border-line bg-surface2 text-body"
+                    : "text-muted hover:text-body"
                 }`}
               >
                 {n.label}
@@ -43,7 +49,7 @@ export function SiteHeader() {
           })}
           <Link
             href="/events/sikh-fifa-26/signup"
-            className="ml-2 rounded-lg bg-kesri px-4 py-2 text-sm font-bold text-ink transition-colors hover:bg-kesrisoft"
+            className="pill ml-2 bg-kesri px-5 py-2 text-sm font-bold text-ink transition-colors hover:bg-kesrisoft"
           >
             Sign up
           </Link>
@@ -54,7 +60,7 @@ export function SiteHeader() {
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-label="Menu"
-          className="rounded-lg border border-line px-3 py-2 text-sm sm:hidden"
+          className="pill border border-line px-4 py-2 text-sm sm:hidden"
         >
           {open ? "Close" : "Menu"}
         </button>
@@ -75,7 +81,7 @@ export function SiteHeader() {
           <Link
             href="/events/sikh-fifa-26/signup"
             onClick={() => setOpen(false)}
-            className="mt-4 block rounded-lg bg-kesri px-4 py-3 text-center font-bold text-ink"
+            className="mt-4 block rounded-full bg-kesri px-4 py-3 text-center font-bold text-ink"
           >
             Sign up
           </Link>
@@ -85,12 +91,16 @@ export function SiteHeader() {
   );
 }
 
-export function SiteFooter() {
+export function SiteFooter({ logoSrc = null }: { logoSrc?: string | null }) {
   return (
-    <footer className="mt-24 border-t border-line/70 bg-surface/40">
+    <footer className="mt-24 border-t border-linesoft bg-surface/40">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-3">
         <div>
-          <Wordmark />
+          {logoSrc ? (
+            <BrandLockup src={logoSrc} width={210} />
+          ) : (
+            <Wordmark />
+          )}
           <p className="mt-3 max-w-xs text-sm text-muted">{ORG.tagline}</p>
         </div>
         <div>
@@ -99,7 +109,6 @@ export function SiteFooter() {
             <li><Link href="/events" className="text-body hover:text-kesri">All events</Link></li>
             <li><Link href="/events/sikh-fifa-26" className="text-body hover:text-kesri">Sikh FIFA 26</Link></li>
             <li><Link href="/events/sikh-fifa-26/bracket" className="text-body hover:text-kesri">Live bracket</Link></li>
-            <li><Link href="/play" className="text-body hover:text-kesri">Find a game</Link></li>
             <li><Link href="/volunteer" className="text-body hover:text-kesri">Volunteer with us</Link></li>
           </ul>
         </div>

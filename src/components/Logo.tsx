@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 /**
  * Placeholder wordmark + emblem. A khanda-derived mark is deliberately NOT used as a
  * decorative logo — the khanda is a religious symbol and putting it on merch, trophies
@@ -5,7 +7,38 @@
  * "world" + "championship", no religious iconography to misuse.
  * Replace with the commissioned logo when it exists.
  */
-export function Logo({ size = 34 }: { size?: number }) {
+/**
+ * Intrinsic ratio of the supplied emblem mark (950 x 608 before downscaling).
+ * The mark is wider than it is tall, so it's sized by HEIGHT with the width following —
+ * forcing it into a square box would letterbox it and waste half the space.
+ */
+const MARK_RATIO = 950 / 608;
+
+export function Logo({
+  size = 34,
+  src = null,
+}: {
+  /** Height in px. Width follows the artwork's own ratio. */
+  size?: number;
+  /** Path to the real logo once one exists; falls back to the placeholder mark. */
+  src?: string | null;
+}) {
+  if (src) {
+    const w = Math.round(size * MARK_RATIO);
+    return (
+      <Image
+        src={src}
+        alt=""
+        width={w}
+        height={size}
+        sizes={`${w}px`}
+        quality={75}
+        className="shrink-0 object-contain"
+        style={{ height: size, width: "auto" }}
+      />
+    );
+  }
+
   return (
     <svg
       width={size}
@@ -36,10 +69,12 @@ export function Logo({ size = 34 }: { size?: number }) {
   );
 }
 
-export function Wordmark() {
+export function Wordmark({ src = null }: { src?: string | null }) {
   return (
     <span className="flex items-center gap-2.5">
-      <Logo />
+      {/* The emblem carries more detail than the old flat shield, so it needs a little
+          more height to stay legible in a 64px-tall header. */}
+      <Logo size={src ? 40 : 34} src={src} />
       <span className="font-display leading-none">
         <span className="block text-[15px] tracking-tight">Sikh World</span>
         <span className="block text-[11px] font-semibold tracking-[0.22em] text-kesri">

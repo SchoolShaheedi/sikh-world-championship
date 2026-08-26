@@ -1,5 +1,6 @@
 import { Avatar } from "./Avatar";
 import { Logo } from "./Logo";
+import { HoloCard } from "./HoloCard";
 import { qualityFor, type Quality } from "@/data/qualities";
 
 /**
@@ -80,124 +81,129 @@ export function PlayerCard({
   const firstName = name.trim().split(/\s+/)[0] || "Player";
 
   return (
-    <div
-      className="relative overflow-hidden rounded-[22px] p-[2.5px] shadow-2xl"
-      style={{ width: 292, background: t.frame }}
-    >
+    <HoloCard>
       <div
-        className="relative overflow-hidden rounded-[20px] px-4 pt-4 pb-4"
-        style={{ background: t.face }}
+        className="relative overflow-hidden rounded-[22px] p-[2.5px] shadow-2xl"
+        style={{ width: 292, background: t.frame }}
       >
-        {/* Sheen */}
         <div
-          aria-hidden
-          className="pointer-events-none absolute -top-24 -right-16 size-56 rounded-full opacity-20 blur-3xl"
-          style={{ background: t.sub }}
-        />
+          className="relative overflow-hidden rounded-[20px] px-4 pt-4 pb-4"
+          style={{ background: t.face }}
+        >
+          {/* Sheen */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-24 -right-16 size-56 rounded-full opacity-20 blur-3xl"
+            style={{ background: t.sub }}
+          />
 
-        {/* Top block: quality on the left, portrait on the right */}
-        <div className="relative flex items-start justify-between gap-2">
-          <div className="min-w-0 pt-1">
-            <p
-              className="text-[10px] font-bold tracking-[0.2em]"
-              style={{ color: t.sub }}
-            >
-              QUALITY
-            </p>
-            <p
-              className="mt-1.5 text-[19px] leading-tight"
-              style={{ color: t.ink }}
-            >
-              {q.gurmukhi}
-            </p>
-            <p
-              className="font-display mt-0.5 text-[15px] leading-tight"
-              style={{ color: t.ink }}
-            >
-              {q.name}
-            </p>
-            <p
-              className="text-[10px] font-semibold tracking-wide"
-              style={{ color: t.sub }}
-            >
-              {q.english}
-            </p>
-          </div>
-
-          <div className="-mt-1 -mr-1 shrink-0">
-            <Avatar
-              avatarId={avatarId}
-              photoUrl={photoUrl}
-              size={132}
-              alt={firstName}
-            />
-          </div>
-        </div>
-
-        {/* Name */}
-        <div className="relative mt-2 text-center">
-          <div className="h-px w-full" style={{ background: t.rule }} />
-          <p
-            className="font-display mt-2 truncate text-[21px] tracking-wide uppercase"
-            style={{ color: t.ink }}
-          >
-            {firstName}
-          </p>
-          <div className="mt-2 h-px w-full" style={{ background: t.rule }} />
-        </div>
-
-        {/* Division / region */}
-        <div className="relative mt-2.5 grid grid-cols-2 text-center">
-          <div>
-            <p
-              className="text-[9px] font-bold tracking-[0.16em]"
-              style={{ color: t.sub }}
-            >
-              DIVISION
-            </p>
-            <p className="font-display mt-0.5 text-[15px]" style={{ color: t.ink }}>
-              {division}
-            </p>
-          </div>
-          <div>
-            <p
-              className="text-[9px] font-bold tracking-[0.16em]"
-              style={{ color: t.sub }}
-            >
-              FROM
-            </p>
-            <p
-              className="font-display mt-0.5 truncate text-[15px]"
-              style={{ color: t.ink }}
-            >
-              {region || "—"}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-3 h-px w-full" style={{ background: t.rule }} />
-
-        {/* Footer */}
-        <div className="relative mt-2.5 flex items-center justify-between">
-          <div className="min-w-0">
-            {gamertag && (
+          {/* Top block: quality on the left, portrait on the right */}
+          <div className="relative flex items-start justify-between gap-2">
+            <div className="min-w-0 pt-1">
               <p
-                className="truncate text-[10px] font-semibold"
+                className="text-[10px] font-bold tracking-[0.2em]"
                 style={{ color: t.sub }}
               >
-                @{gamertag}
+                QUALITY
               </p>
-            )}
-            <p
-              className="truncate text-[8px] font-bold tracking-[0.14em] uppercase"
-              style={{ color: t.sub }}
-            >
-              {eventTitle}
-            </p>
+              <p
+                className="mt-1.5 text-[19px] leading-tight"
+                style={{ color: t.ink }}
+              >
+                {q.gurmukhi}
+              </p>
+              <p
+                className="font-display mt-0.5 text-[15px] leading-tight"
+                style={{ color: t.ink }}
+              >
+                {q.name}
+              </p>
+              <p
+                className="text-[10px] font-semibold tracking-wide"
+                style={{ color: t.sub }}
+              >
+                {q.english}
+              </p>
+            </div>
+
+            <div className="-mt-1 -mr-1 shrink-0">
+              <Avatar
+                avatarId={avatarId}
+                photoUrl={photoUrl}
+                size={132}
+                alt={firstName}
+              />
+            </div>
           </div>
-          <Logo size={22} />
+
+          {/* Name */}
+          <div className="relative mt-2 text-center">
+            <div className="h-px w-full" style={{ background: t.rule }} />
+            <p
+              className="font-display mt-2 truncate text-[21px] tracking-wide uppercase"
+              style={{ color: t.ink }}
+            >
+              {firstName}
+            </p>
+            <div className="mt-2 h-px w-full" style={{ background: t.rule }} />
+          </div>
+
+          {/* Division / region */}
+          <div className="relative mt-2.5 grid grid-cols-2 text-center">
+            <div>
+              <p
+                className="text-[9px] font-bold tracking-[0.16em]"
+                style={{ color: t.sub }}
+              >
+                DIVISION
+              </p>
+              <p
+                className="font-display mt-0.5 text-[15px]"
+                style={{ color: t.ink }}
+              >
+                {division}
+              </p>
+            </div>
+            <div>
+              <p
+                className="text-[9px] font-bold tracking-[0.16em]"
+                style={{ color: t.sub }}
+              >
+                FROM
+              </p>
+              <p
+                className="font-display mt-0.5 truncate text-[15px]"
+                style={{ color: t.ink }}
+              >
+                {region || "—"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-3 h-px w-full" style={{ background: t.rule }} />
+
+          {/* Footer */}
+          <div className="relative mt-2.5 flex items-center justify-between">
+            <div className="min-w-0">
+              {gamertag && (
+                <p
+                  className="truncate text-[10px] font-semibold"
+                  style={{ color: t.sub }}
+                >
+                  @{gamertag}
+                </p>
+              )}
+              <p
+                className="truncate text-[8px] font-bold tracking-[0.14em] uppercase"
+                style={{ color: t.sub }}
+              >
+                {eventTitle}
+              </p>
+            </div>
+            <Logo size={22} />
+          </div>
         </div>
       </div>
-    </div>
+    </HoloCard>
   );
 }

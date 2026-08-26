@@ -3,6 +3,17 @@ import crypto from "node:crypto";
 import { getEvent } from "@/data/events";
 import { register } from "@/lib/store";
 
+/** Age on the day of the event, or today if the date isn't confirmed yet. */
+function ageOnEventDay(dob: string, eventDate: string | null): number | null {
+  const birth = new Date(dob);
+  if (Number.isNaN(birth.getTime())) return null;
+  const ref = eventDate ? new Date(eventDate) : new Date();
+  let age = ref.getFullYear() - birth.getFullYear();
+  const m = ref.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && ref.getDate() < birth.getDate())) age--;
+  return age;
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ slug: string }> },
@@ -29,6 +40,23 @@ export async function POST(
         { status: 400 },
       );
     }
+  }
+
+  // Age is re-checked here, not just in the form. The form's age gate is a courtesy to
+  // the person filling it in; this is the one that actually holds.
+  const age = ageOnEventDay(String(body.dob), event.date);
+  if (age === null) {
+    return NextResponse.json({ error: "Invalid date of birth" }, { status: 400 });
+  }
+  if (age < division.minAge || age > division.maxAge) {
+    return NextResponse.json(
+      {
+        error: `This event is for ages ${division.minAge}${
+          division.maxAge === 99 ? " and over" : `–${division.maxAge}`
+        }.`,
+      },
+      { status: 400 },
+    );
   }
 
   const result = await register({

@@ -27,7 +27,10 @@ function demoEntrants(divisionId: string, n: number): Entrant[] {
   const names = [
     "Jagdeep S.", "Arjan K.", "Simran K.", "Harman S.", "Gurdeep S.", "Manveer S.",
     "Ravi S.", "Baljit K.", "Amrit S.", "Navjot K.", "Karan S.", "Prabh S.",
-    "Jasleen K.", "Sukhman S.", "Tegh S.", "Anmol K.",
+    "Jasleen K.", "Sukhman S.", "Tegh S.", "Anmol K.", "Inder S.", "Kiran K.",
+    "Manpreet S.", "Rupinder K.", "Sahib S.", "Onkar S.", "Meher K.", "Dilraj S.",
+    "Ekam S.", "Guneet K.", "Hardeep S.", "Ishar S.", "Jeevan S.", "Kamal K.",
+    "Lakhbir S.", "Mandeep K.",
   ];
   return Array.from({ length: n }, (_, i) => ({
     id: `${divisionId}-p${i}`,
@@ -69,16 +72,19 @@ export default async function BracketPage({
       <div className="mt-12 space-y-16">
         {event.divisions.map((d) => {
           const bracket = advanceWinners(
-            generateKnockout(d.id, d.name, demoEntrants(d.id, 16)),
+            generateKnockout(d.id, d.name, demoEntrants(d.id, 32)),
           );
           return (
             <section key={d.id}>
               <h2 className="font-display mb-5 text-2xl">
                 <span className="text-kesri">{d.name}</span> division
               </h2>
+              <p className="mb-5 text-sm text-muted">
+                The knockout stage — the 32 players who came through the group stage.
+              </p>
               <BracketView
                 bracket={bracket}
-                names={new Map(demoEntrants(d.id, 16).map((e) => [e.id, e.name]))}
+                names={new Map(demoEntrants(d.id, 32).map((e) => [e.id, e.name]))}
               />
             </section>
           );

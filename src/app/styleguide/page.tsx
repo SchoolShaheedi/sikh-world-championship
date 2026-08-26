@@ -3,6 +3,7 @@ import { AVATARS } from "@/data/avatars";
 import { Avatar } from "@/components/Avatar";
 import { PlayerCard, type CardTier } from "@/components/PlayerCard";
 import { QUALITIES } from "@/data/qualities";
+import { TiltToggle } from "@/components/HoloCard";
 
 export const metadata: Metadata = { title: "Styleguide" };
 
@@ -43,8 +44,12 @@ export default function StyleguidePage() {
       <h2 className="font-display mt-16 text-2xl text-kesri">Card tiers</h2>
       <p className="mt-2 max-w-2xl text-sm text-muted">
         Bronze, silver and gold as FIFA does it, plus a special card for event champions.
-        Each card draws one of the 32 Qualities.
+        Each card draws one of the 32 Qualities. Move your pointer over a card — or drag it
+        on a phone — to catch the foil.
       </p>
+      <div className="mt-4">
+        <TiltToggle />
+      </div>
       <div className="mt-6 flex flex-wrap gap-6">
         {tiers.map(([label, tier, seed]) => (
           <div key={tier}>

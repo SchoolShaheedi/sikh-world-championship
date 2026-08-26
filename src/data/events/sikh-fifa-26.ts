@@ -15,12 +15,12 @@ export const sikhFifa26: ChampionshipEvent = {
   status: "announced",
   format: "groups-then-knockout",
 
-  tagline: "64 players. Two divisions. One day. PS5.",
+  tagline: "64 players. One bracket. One champion. PS5.",
   description:
     "The first Sikh World Championship event. Sixty-four players, in one hall, on PS5 — " +
-    "group stage into knockouts, so everyone plays at least three matches. Two divisions " +
-    "with two champions: U16 and 16+. Free to enter, langar on the day, and a live bracket " +
-    "on the big screen from first whistle to final.",
+    "group stage into knockouts, so everyone plays at least three matches. One open " +
+    "division, all ages, one champion. Free to enter, langar on the day, and a live " +
+    "bracket on the big screen from first whistle to final.",
 
   date: null,        // TODO
   times: null,       // TODO — suggested 09:30–16:30
@@ -28,9 +28,12 @@ export const sikhFifa26: ChampionshipEvent = {
   detailsConfirmed: false,
 
   capacity: 64,
+  // ONE open division: everyone in the same bracket, all ages, one champion.
+  // minAge is the only judgement call here — set at 8. Change this single number to
+  // raise or lower the floor; the sign-up form reads it and turns anyone younger away
+  // with an explanation.
   divisions: [
-    { id: "u16",  name: "U16",  ageBand: "U16", minAge: 10, maxAge: 15, capacity: 32 },
-    { id: "16up", name: "16+",  ageBand: "16+", minAge: 16, maxAge: 99, capacity: 32 },
+    { id: "open", name: "Open", minAge: 8, maxAge: 99, capacity: 64 },
   ],
 
   entryFee: 0,
@@ -41,6 +44,7 @@ export const sikhFifa26: ChampionshipEvent = {
     "Kick-off mode only. No Ultimate Team, no custom squads.",
     "Teams must be equal star rating. Both players agree, or the referee assigns.",
     "6-minute halves in the group stage. The final is played with 8-minute halves.",
+    "One open division — all ages compete in the same bracket.",
     "Group stage: 16 groups of 4. Top two in each group go through to the knockouts.",
     "Knockouts are single elimination. Draws go to extra time, then penalties.",
     "Default game settings. Legacy defending off. No custom tactics carried in on a USB.",
@@ -51,7 +55,7 @@ export const sikhFifa26: ChampionshipEvent = {
   ],
 
   prizes: [
-    "Champion trophy for each division",
+    "Champion trophy",
     "Runner-up and semi-finalist trophies",
     "Medal for every player who competes",
     "Golden Boot — most goals scored across the day",

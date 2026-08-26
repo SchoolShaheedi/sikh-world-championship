@@ -41,7 +41,7 @@ export default async function EventPage({
         )}
       </div>
 
-      <h1 className="font-display mt-4 text-4xl sm:text-5xl">{event.title}</h1>
+      <h1 className="display-xl mt-4 text-[clamp(2.2rem,5.4vw,3.8rem)]">{event.title}</h1>
       <p className="mt-3 max-w-2xl text-lg text-muted">{event.description}</p>
 
       {!event.detailsConfirmed && (
@@ -80,26 +80,43 @@ export default async function EventPage({
           ["Platform", "PlayStation 5", "Consoles and screens provided"],
         ].map(([k, v, sub]) => (
           <div key={k} className="rounded-2xl border border-line bg-surface/60 p-5">
-            <dt className="text-[11px] tracking-[0.16em] text-muted uppercase">{k}</dt>
+            <dt className="micro">{k}</dt>
             <dd className="font-display mt-2 text-lg text-body">{v}</dd>
             <dd className="mt-1 text-sm text-muted">{sub}</dd>
           </div>
         ))}
       </dl>
 
-      {/* Divisions */}
+      {/* Divisions. Headline adapts so a future multi-division event needs no edit. */}
       <section className="mt-14">
-        <h2 className="font-display text-2xl">Two divisions, two champions</h2>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <h2 className="font-display text-2xl">
+          {event.divisions.length === 1
+            ? "One division, one champion"
+            : `${event.divisions.length} divisions, ${event.divisions.length} champions`}
+        </h2>
+        <div
+          className={`mt-5 grid gap-4 ${
+            event.divisions.length === 1 ? "" : "sm:grid-cols-2"
+          }`}
+        >
           {event.divisions.map((d) => (
             <div key={d.id} className="rounded-2xl border border-line bg-surface/60 p-6">
               <h3 className="font-display text-2xl text-kesri">{d.name}</h3>
               <p className="mt-1 text-sm text-muted">
-                Ages {d.minAge}–{d.maxAge === 99 ? "open" : d.maxAge} on the day of the event
+                {d.maxAge === 99
+                  ? `Open to everyone aged ${d.minAge} and over on the day`
+                  : `Ages ${d.minAge}–${d.maxAge} on the day of the event`}
               </p>
               <p className="mt-4 text-sm text-body">
                 <strong className="font-bold">{d.capacity}</strong> places
               </p>
+              {event.divisions.length === 1 && (
+                <p className="mt-4 text-sm text-muted">
+                  Everyone plays in the same bracket. The group stage seeds on how you rate
+                  yourself at sign-up, so your first matches are against players at a
+                  similar level.
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -131,10 +148,8 @@ export default async function EventPage({
           </ul>
           <p className="mt-6 rounded-xl border border-line bg-surface/60 p-4 text-sm text-muted">
             Every award also lands in your{" "}
-            <Link href="/players" className="text-kesri hover:underline">
-              SWC trophy cabinet
-            </Link>
-            {" "}— a permanent record on your profile, across every event you ever enter.
+            <span className="text-kesri">SWC trophy cabinet</span> — a permanent record on
+            your profile, across every event you ever enter.
           </p>
         </section>
       </div>

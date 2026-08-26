@@ -2,25 +2,28 @@
 
 /**
  * Sikh World Championship — design tokens.
- * Dark-first: this is an esports brand, and the bracket lives on a projector in a hall.
- * Kesri (saffron) is the accent, deep midnight the ground, gold reserved for trophies.
+ *
+ * Ground is a NEUTRAL near-black rather than navy. Counter-intuitively this makes kesri
+ * read hotter, because there's no competing blue in the background — the same reason
+ * motionsites.ai sits its colour on #121212 instead of a tinted dark.
  */
 :root {
-  --swc-ink:        #070B14;
-  --swc-surface:    #0E1626;
-  --swc-surface-2:  #16203A;
-  --swc-line:       #24304F;
+  --swc-ink:        #0B0B0C;
+  --swc-surface:    #131315;
+  --swc-surface-2:  #1B1B1E;
+  --swc-line:       #2C2C30;
+  --swc-line-soft:  #212124;
 
-  --swc-text:       #EEF2FB;
-  --swc-muted:      #93A2C4;
+  --swc-text:       #F4F4F5;
+  --swc-muted:      #9B9BA3;
 
-  --swc-kesri:      #F2842B;
-  --swc-kesri-soft: #FFA857;
+  --swc-kesri:      #FF8A2B;
+  --swc-kesri-soft: #FFB067;
   --swc-royal:      #2C6FE0;
-  --swc-gold:       #D8B45A;
+  --swc-gold:       #E5C46A;
   --swc-silver:     #C2CBDA;
   --swc-bronze:     #B0764A;
-  --swc-green-ok:   #2E9E6B;
+  --swc-green-ok:   #35B77A;
 }
 
 @theme inline {
@@ -28,6 +31,7 @@
   --color-surface:   var(--swc-surface);
   --color-surface2:  var(--swc-surface-2);
   --color-line:      var(--swc-line);
+  --color-linesoft:  var(--swc-line-soft);
   --color-body:      var(--swc-text);
   --color-muted:     var(--swc-muted);
   --color-kesri:     var(--swc-kesri);
@@ -44,22 +48,114 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(1100px 620px at 50% -12%, #1B2C4E 0%, transparent 62%),
-    var(--swc-ink);
-  background-attachment: fixed;
+  background: var(--swc-ink);
   color: var(--swc-text);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Display type for headings and the player card. */
+/* Display type. */
 .font-display {
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  font-weight: 800;
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
   letter-spacing: -0.02em;
+}
+
+/* Mono micro-labels — eyebrows, stat labels, section numbers.
+   This is the detail that reads as craft rather than just "small text". */
+.micro {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--swc-muted);
+}
+
+.font-mono-num {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   Display headline — the signature move.
+   Very heavy, uppercase, and set TIGHTER than its own font-size (0.86) so the lines
+   stack into a solid block. The negative tracking stops that block looking gappy at
+   large sizes. Nothing else on the site should use this.
+   ============================================================ */
+.display-xl {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  /* Space Grotesk tops out at 700. It carries far more character there than
+     system-ui does at 900, which was the point of the swap. */
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 0.88;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+/* Warm gradient fill for the one word that carries the emphasis. */
+.text-flare {
+  background: linear-gradient(
+    92deg,
+    var(--swc-kesri-soft) 0%,
+    var(--swc-gold) 42%,
+    var(--swc-kesri) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* Sits behind the glyphs so the gradient stays legible. */
+  filter: drop-shadow(0 0 26px rgba(255, 138, 43, 0.35));
+}
+
+/* Ambient bloom behind the hero. Pure decoration — always aria-hidden. */
+.bloom {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Pill: the shape language for every badge, chip and button.
+   SHAPE ONLY — no `display`. This class is unlayered, so Tailwind's layered `hidden` /
+   `sm:flex` utilities would lose to it and responsive show/hide would silently break.
+   (It did: the mobile Menu button appeared on desktop.) Set layout in the markup. */
+.pill {
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+/* Hairline card edge. A single subtle border does more for depth here than a shadow,
+   because there is no light source on a flat near-black ground. */
+.edge {
+  border: 1px solid var(--swc-line);
+  background: var(--swc-surface);
+}
+
+/* Scroll reveal, native — no JavaScript, no IntersectionObserver.
+   Degrades to "always visible" wherever animation-timeline isn't supported, so nothing
+   is ever stuck invisible. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal-in linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 26%;
+    }
+  }
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Visible focus for keyboard users — a lot of these users are on phones,
@@ -82,4 +178,342 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ============================================================
+   Holographic card — the FIFA-foil tilt effect.
+   Pointer/gyro position arrives as --mx/--my (percent) and --rx/--ry (degrees),
+   set from HoloCard.tsx. Everything below is compositor work: transforms, gradients
+   and blend modes only, so it stays smooth on a mid-range phone.
+   ============================================================ */
+
+.holo-scene {
+  perspective: 1000px;
+  display: inline-block;
+}
+
+.holo-card {
+  --rx: 0deg;
+  --ry: 0deg;
+  --mx: 50%;
+  --my: 50%;
+  position: relative;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style: preserve-3d;
+  transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+  border-radius: 22px;
+}
+
+/* While the pointer is on it, follow immediately — the easing above is for the
+   spring back to flat, not for tracking. */
+.holo-card.is-active {
+  transition: transform 90ms ease-out;
+}
+
+.holo-glare,
+.holo-foil {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+
+.holo-card.is-active .holo-glare {
+  opacity: 0.7;
+}
+/* Kept low on purpose. The first pass ran at 0.55 and the rainbow swamped the card —
+   you couldn't read the name or tell bronze from gold. Real foil is a sheen you catch at
+   an angle, not a coat of paint. If in doubt, go lower. */
+.holo-card.is-active .holo-foil {
+  opacity: 0.18;
+}
+
+/* Soft specular highlight tracking the pointer. */
+.holo-glare {
+  background: radial-gradient(
+    farthest-corner circle at var(--mx) var(--my),
+    rgba(255, 255, 255, 0.34) 5%,
+    rgba(255, 255, 255, 0.08) 24%,
+    rgba(0, 0, 0, 0.32) 88%
+  );
+  mix-blend-mode: overlay;
+}
+
+/* Iridescent foil. color-dodge is what makes it read as light catching the surface
+   rather than a coloured overlay painted on top. */
+.holo-foil {
+  background-image:
+    repeating-linear-gradient(
+      110deg,
+      hsl(2 100% 73%) 0%,
+      hsl(53 100% 69%) 10%,
+      hsl(93 100% 69%) 20%,
+      hsl(176 100% 76%) 30%,
+      hsl(228 100% 74%) 40%,
+      hsl(283 100% 73%) 50%,
+      hsl(2 100% 73%) 60%
+    ),
+    repeating-linear-gradient(
+      125deg,
+      rgba(0, 0, 0, 0.65) 0%,
+      rgba(255, 255, 255, 0.65) 4%,
+      rgba(0, 0, 0, 0.65) 8%
+    );
+  background-blend-mode: soft-light;
+  background-size: 260% 260%, 200% 200%;
+  background-position:
+    calc(var(--mx) * 1.2) calc(var(--my) * 1.2),
+    var(--mx) var(--my);
+  mix-blend-mode: color-dodge;
+  filter: brightness(0.5) contrast(1.35) saturate(0.85);
+}
+
+/* Reduced motion: no tilt, no foil, no shine. The card still has to look finished. */
+@media (prefers-reduced-motion: reduce) {
+  .holo-card {
+    transform: none !important;
+    transition: none !important;
+  }
+  .holo-glare,
+  .holo-foil {
+    display: none;
+  }
+}
+
+/* Coarse pointers with no hover (most phones) get a gentler foil so it isn't
+   overwhelming on a small bright screen. */
+@media (hover: none) {
+  .holo-card.is-active .holo-foil {
+    opacity: 0.14;
+  }
+}
+
+/* ============================================================
+   Cinematic hero — grid parallax, spotlight reveal, arc stats.
+   All motion is driven by CSS custom properties written from one rAF loop, so the
+   browser animates on the compositor rather than re-running React on every mouse move.
+   ============================================================ */
+
+/* Slow push-in on load. Ends at scale(1) so the image is never soft once it settles. */
+@keyframes kenBurns {
+  from {
+    transform: scale(1.12);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.ken-burns {
+  animation: kenBurns 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Staggered entrance for the hero copy. */
+@keyframes heroRise {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+.hero-rise {
+  opacity: 0;
+  animation: heroRise 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Arc stroke-draw. --len is the arc's own length, computed in TS from r × Δθ,
+   because a dasharray has to match the path or the reveal starts mid-stroke. */
+@keyframes arcDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.arc-line {
+  stroke-dasharray: var(--len);
+  stroke-dashoffset: var(--len);
+  animation: arcDraw 1.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.arc-dot {
+  opacity: 0;
+  /* Without fill-box the origin is the whole SVG, and the dot flies in from the corner. */
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: popIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+.arc-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulseRing 2.8s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+.arc-text {
+  opacity: 0;
+  animation: fadeIn 0.7s ease forwards;
+}
+
+/* Shine sweep across the primary button on hover. */
+@keyframes shineSweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Everything above is decoration. Under reduced-motion it all resolves to its end
+   state immediately rather than being removed, so nothing is left invisible. */
+@media (prefers-reduced-motion: reduce) {
+  .ken-burns,
+  .hero-rise,
+  .arc-line,
+  .arc-dot,
+  .arc-ring,
+  .arc-text {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    stroke-dashoffset: 0 !important;
+    filter: none !important;
+  }
+}
+
+
+/* ============================================================
+   Page depth — grain + ambient washes.
+   A flat near-black reads cheap at large sizes. Grain gives the surface something
+   to catch, and two very soft washes stop the lower page being an empty void.
+   Both are fixed, non-interactive, and sit under everything.
+   ============================================================ */
+.page-grain::before,
+.page-grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Grain. An inline SVG turbulence rather than a tiled PNG — no extra request,
+   and it scales to any display density. */
+.page-grain::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+}
+
+/* Two large, very low-opacity washes so the page has a light direction. */
+.page-grain::after {
+  background:
+    radial-gradient(60% 40% at 82% 18%, rgba(255, 138, 43, 0.09), transparent 70%),
+    radial-gradient(50% 40% at 8% 62%, rgba(229, 196, 106, 0.055), transparent 72%);
+}
+
+/* Scroll reveal stagger. Siblings sharing one range animate as a single block, which
+   reads as "things appeared" rather than "things were choreographed". Nudging the
+   entry range per child offsets them without any JavaScript. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal-stagger > * {
+      animation: reveal-in linear both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 24%;
+    }
+    .reveal-stagger > *:nth-child(2) {
+      animation-range: entry 1% cover 27%;
+    }
+    .reveal-stagger > *:nth-child(3) {
+      animation-range: entry -2% cover 30%;
+    }
+    .reveal-stagger > *:nth-child(4) {
+      animation-range: entry -5% cover 33%;
+    }
+  }
+}
+
+
+/* ============================================================
+   Interactive surfaces.
+   One class so every card in the site lifts and glows identically — consistency is
+   most of what makes hover states feel designed rather than bolted on.
+   ============================================================ */
+.lift {
+  transition:
+    transform 0.35s var(--ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.lift:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--swc-kesri) 55%, transparent);
+  /* Warm, wide and low-opacity. A hard shadow on near-black reads as a mistake;
+     a coloured bloom reads as light. */
+  box-shadow:
+    0 18px 50px -16px rgba(255, 138, 43, 0.35),
+    0 0 0 1px rgba(255, 138, 43, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lift:hover {
+    transform: none;
+  }
+}
+
+/* Animated underline for text links. */
+.link-underline {
+  background-image: linear-gradient(var(--swc-kesri), var(--swc-kesri));
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.35s var(--ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.link-underline:hover {
+  background-size: 100% 1px;
+}
+
+
+/* Frosted panel. Used sparingly — on a near-black ground the effect only reads when
+   there is something behind it to blur, so it belongs on sections that sit over a
+   bloom or an image, not on every card. */
+.glass {
+  background: rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--swc-line);
 }

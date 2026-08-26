@@ -54,7 +54,11 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
   const age = ageOn(dob, event.date);
   const isMinor = age !== null && age < 18;
 
-  /** Division is derived from age — never chosen, so nobody can game it. */
+  /**
+   * Division is derived from age, never chosen, so nobody can game it.
+   * With a single open division this resolves for every eligible age — but the logic
+   * stays age-based so adding divisions to a future event needs no change here.
+   */
   const division = useMemo(() => {
     if (age === null) return null;
     return (
@@ -93,9 +97,16 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
         <p className="mx-auto mt-3 max-w-md text-muted">
           {result.status === "confirmed" ? (
             <>
-              Your place in the <strong className="text-body">{division?.name}</strong>{" "}
-              division is confirmed. Check your email for your check-in QR code — bring it
-              on the day.
+              {event.divisions.length === 1 ? (
+                <>Your place is confirmed.</>
+              ) : (
+                <>
+                  Your place in the{" "}
+                  <strong className="text-body">{division?.name}</strong> division is
+                  confirmed.
+                </>
+              )}{" "}
+              Check your email for your check-in QR code — bring it on the day.
             </>
           ) : (
             <>
@@ -110,9 +121,7 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
         </p>
 
         <div className="mt-8">
-          <p className="text-xs tracking-[0.18em] text-muted uppercase">
-            Your player card
-          </p>
+          <p className="micro">Your player card</p>
           <div className="mt-4 flex justify-center">
             <PlayerCard
               name={(values.fullName as string) || "Player"}
@@ -152,7 +161,7 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
           </label>
 
           <label className="block">
-            <Label hint="Sets your division. We never show your exact age publicly.">
+            <Label hint="Checks you're old enough to compete. We never show your exact age publicly.">
               Date of birth
             </Label>
             <input
@@ -198,11 +207,20 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
           </label>
         </div>
 
-        {/* Live division feedback */}
+        {/* Live eligibility feedback */}
         {division && (
           <p className="mt-5 rounded-xl border border-ok/40 bg-ok/10 p-4 text-sm text-body">
-            You&apos;ll compete in the{" "}
-            <strong className="font-bold text-ok">{division.name}</strong> division.
+            {event.divisions.length === 1 ? (
+              <>
+                <strong className="font-bold text-ok">You&apos;re eligible.</strong>{" "}
+                Everyone competes in one open bracket, whatever their age.
+              </>
+            ) : (
+              <>
+                You&apos;ll compete in the{" "}
+                <strong className="font-bold text-ok">{division.name}</strong> division.
+              </>
+            )}
           </p>
         )}
         {tooYoung && (

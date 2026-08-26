@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "About" };
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-14">
-      <h1 className="font-display text-4xl">About {ORG.name}</h1>
+      <h1 className="display-xl text-[clamp(2.1rem,4.8vw,3.4rem)]">About {ORG.name}</h1>
       <p className="mt-5 text-lg text-muted">{ORG.intro}</p>
 
       <h2 className="font-display mt-12 text-2xl">Why we&apos;re doing this</h2>

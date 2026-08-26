@@ -36,12 +36,19 @@ export type EventFormat =
 
 /**
  * A division is a separate bracket within an event, with its own champion.
- * Sikh FIFA 26 has two: U16 and 16+.
+ * Sikh FIFA 26 runs a single open division — everyone in one bracket, one champion.
+ *
+ * The type still supports several, because future events may want age or weight
+ * categories (kabaddi almost certainly will), and splitting later should be data, not
+ * a rewrite.
+ *
+ * NOTE: a division's age bounds are a TOURNAMENT concept and have nothing to do with the
+ * `AgeBand` used by the Find a game board. That one is a safeguarding boundary keeping
+ * under-16s and adults apart online, and it is not affected by how an event is divided.
  */
 export interface Division {
   id: string;
   name: string;
-  ageBand: AgeBand;
   /** Inclusive age bounds on the day of the event. */
   minAge: number;
   maxAge: number;

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function SupportPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="font-display text-4xl">Support</h1>
+      <h1 className="display-xl text-[clamp(2.2rem,5vw,3.6rem)]">Support</h1>
       <p className="mt-3 text-lg text-muted">
         Report a problem, raise a safety concern, or just ask us something. You don&apos;t
         need an account, and you don&apos;t have to give your name.

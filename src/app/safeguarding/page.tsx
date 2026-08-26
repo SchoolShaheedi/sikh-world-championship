@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Safety & safeguarding" };
 export default function SafeguardingPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-14">
-      <h1 className="font-display text-4xl">Keeping players safe</h1>
+      <h1 className="display-xl text-[clamp(2.1rem,4.8vw,3.4rem)]">Keeping players safe</h1>
       <p className="mt-5 text-lg text-muted">
         Most of our players are young. Here&apos;s exactly what we do about that — written
         plainly, so parents can read it in two minutes and decide.

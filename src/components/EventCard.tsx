@@ -6,20 +6,20 @@ export function EventCard({ event }: { event: ChampionshipEvent }) {
   return (
     <Link
       href={`/events/${event.slug}`}
-      className="group block rounded-2xl border border-line bg-surface/70 p-5 transition-colors hover:border-kesri/60"
+      className="lift group block rounded-[20px] border border-line bg-surface p-5"
     >
       <div className="flex items-center gap-2">
-        <span className="rounded-md bg-kesri/15 px-2 py-1 text-[11px] font-bold tracking-wider text-kesri uppercase">
+        <span className="pill inline-block bg-kesri/15 px-3 py-1 text-[11px] font-bold tracking-[0.14em] text-kesri uppercase">
           {statusLabel(event.status)}
         </span>
         {event.entryFee === 0 && (
-          <span className="rounded-md bg-ok/15 px-2 py-1 text-[11px] font-bold tracking-wider text-ok uppercase">
+          <span className="pill inline-block bg-ok/15 px-3 py-1 text-[11px] font-bold tracking-[0.14em] text-ok uppercase">
             Free entry
           </span>
         )}
       </div>
 
-      <h3 className="font-display mt-3 text-xl text-body group-hover:text-kesri">
+      <h3 className="display-xl mt-4 text-xl text-body group-hover:text-kesri">
         {event.title}
       </h3>
       <p className="mt-1 text-sm text-muted">{event.tagline}</p>
