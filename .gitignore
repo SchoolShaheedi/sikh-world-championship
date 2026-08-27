@@ -3,3 +3,7 @@
 # so /node_modules in there correctly means 03_App/web/node_modules.
 .DS_Store
 *.log
+
+# direnv: .envrc is committed (it holds no secrets); the local override is not.
+.envrc.local
+.direnv/

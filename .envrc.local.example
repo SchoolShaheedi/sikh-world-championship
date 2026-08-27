@@ -1,0 +1,14 @@
+# Copy to .envrc.local (gitignored) and fill in, then run `direnv allow`.
+#
+# A project-scoped Cloudflare API token. With this set, wrangler ignores the global
+# `wrangler login` entirely, so this project's deploys are unaffected by work on any other
+# project — which is the whole point.
+#
+# Create at: https://dash.cloudflare.com/profile/api-tokens → Create Token
+# Start from the "Edit Cloudflare Workers" template, then scope it to the
+# media@shaheedibunga.com account only. Add D1:Edit if/when the data layer moves to D1.
+#
+# Least privilege matters here: this repository is public and the app handles children's
+# data. Do not reuse an account-wide token.
+
+# export CLOUDFLARE_API_TOKEN="…"

@@ -954,3 +954,51 @@ private, the folder can move to shared storage; no code depends on it.
 
 Full detail, including the verified route-by-route results and the deploy commands, is in
 `00_Docs/DEPLOYMENT.md`.
+
+
+---
+
+# Round 27 (2026-08-27) — Cloudflare account pinned per project
+
+113. **Logged in as `media@shaheedibunga.com`** (account `c1b50ea317dc2bbd5fdff7d6d9a3e8d9`),
+     with workers, pages and d1 write scopes — everything a deploy needs.
+114. **`wrangler login` is global, and that is a hazard here.** It writes one credential
+     file for the whole machine, so logging in for this project silently repointed every
+     other Cloudflare project in the workspace. There are **at least four different
+     Cloudflare accounts** across those projects.
+115. **Account pinned via direnv** in a repo-root `.envrc`:
+     `export CLOUDFLARE_ACCOUNT_ID=c1b50ea317dc2bbd5fdff7d6d9a3e8d9`.
+     A wrangler command run from this directory now either targets the right account or
+     fails loudly — verified by pinning a bogus id and getting
+     `Authentication error [code: 10000]`. Confirmed the variable is exported throughout the
+     project including `03_App/web/`, and unset outside it.
+     An account ID is an identifier rather than a credential — Cloudflare's own docs put it
+     in committed config — so `.envrc` is safe in a public repo. `.envrc.local` and
+     `.direnv/` are gitignored.
+116. **Optional full isolation via `CLOUDFLARE_API_TOKEN`** in a gitignored `.envrc.local`
+     (see `.envrc.local.example`). Wrangler prefers the token over the OAuth session on
+     every code path, including when invoked indirectly by the OpenNext adapter, so it makes
+     this project independent of whatever the global login happens to be.
+117. **Rejected `XDG_CONFIG_HOME` for this**, despite it working. It does give wrangler a
+     genuinely isolated per-project credential store on macOS — tested — but it also
+     redirects every other XDG-respecting tool in the directory, `gh` included, which would
+     lose its authentication. A scoped token achieves the same thing without the collateral
+     damage.
+
+## !! Worth checking — the global login change affects other projects
+
+The login for this project repointed the machine's wrangler credentials. Account IDs found
+pinned elsewhere in the workspace:
+
+| Project | account_id |
+|---|---|
+| `vismaad-creatives/api` | `34c4babf…` (the account previously logged in) |
+| `gurbani-overlay` | `2ee39d01…` |
+| `365gurbaniwords/signage/signage-worker` | `2ee39d01…` |
+| `MySanthiya` | `102027d5…` |
+| **`Patel-Brothers`** | **none pinned** |
+
+The pinned ones will now fail loudly rather than deploy wrongly, which is the correct
+outcome. **`Patel-Brothers` pins nothing**, so a deploy from it would go to whichever
+account is logged in — currently `media@shaheedibunga.com`. That is the accident this round
+exists to prevent, and it is worth fixing there too.

@@ -101,6 +101,55 @@ If the goal is a URL to show collaborators, sponsors or a venue, deploy the site
 
 That gets a shareable link today without opening a children's-data form to the internet.
 
+## Which Cloudflare account — pinned with direnv
+
+`wrangler login` is **global**. It writes one credential file for the whole machine, so
+logging in for one project silently repoints every other project on it. This workspace has
+at least four Cloudflare accounts across its projects, which makes that a real hazard
+rather than a theoretical one.
+
+The repo-root `.envrc` pins this project's account:
+
+```bash
+export CLOUDFLARE_ACCOUNT_ID=c1b50ea317dc2bbd5fdff7d6d9a3e8d9   # media@shaheedibunga.com
+```
+
+direnv is already installed and hooked into `~/.zshrc`. Run `direnv allow` once after
+changing `.envrc`. The variable is set anywhere inside the project, including
+`03_App/web/`, and unset outside it — verified.
+
+**What this buys you:** a wrangler command run from this directory either targets the right
+account or fails loudly. Verified by pinning a bogus account:
+
+```
+✘ ERROR  A request to the Cloudflare API (/accounts/…) failed.
+         Authentication error [code: 10000]
+```
+
+An account ID is an identifier, not a credential — Cloudflare's own docs put it in
+committed config — so `.envrc` is safe to commit even though this repository is public.
+
+### Full isolation, optionally
+
+The pin guarantees *which account*. It does not change *who you are authenticated as* —
+that still comes from the global login. To make this directory completely independent of
+whatever `wrangler login` last touched, copy `.envrc.local.example` to `.envrc.local`
+(gitignored) and add a project-scoped API token. Wrangler prefers `CLOUDFLARE_API_TOKEN`
+over the OAuth session, and every code path respects it — including wrangler invoked
+indirectly by the OpenNext adapter.
+
+Scope the token to the media@shaheedibunga.com account only, from the "Edit Cloudflare
+Workers" template. Least privilege matters more than usual here: public repo, children's
+data.
+
+### Why not XDG_CONFIG_HOME
+
+Setting `XDG_CONFIG_HOME` to a project-local directory *does* give wrangler a fully
+isolated credential store — tested, and it works on macOS. It was rejected because it also
+redirects every other XDG-respecting tool in this directory, `gh` included, which would
+lose its authentication. A scoped API token achieves the same isolation with no collateral
+damage.
+
 ## Deploying, when it is time
 
 ```bash
