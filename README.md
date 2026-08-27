@@ -34,6 +34,7 @@ currently the largest gap in the project.
 | Doc | What it covers |
 |---|---|
 | `NEXT-STEPS.md` | The live backlog — what is built, what blocks launch |
+| `DEPLOYMENT.md` | Cloudflare hosting: what works, what 500s, and why it is not live |
 | `DATA-LAYER.md` | Storage design; **read before touching any store** |
 | `CHAT-AND-SAFETY.md` | Safeguarding reasoning behind the player-facing features |
 | `ONLINE-PLAY-AND-CHAT.md` | The LFG board and why free-text chat is deferred |

@@ -899,3 +899,58 @@ readable. That is consistent with how this log already documents the project's l
 and the ICO is explicitly more forgiving of a documented known risk than an undocumented
 one — but it is a conscious choice, not an oversight. If the owner would rather they were
 private, the folder can move to shared storage; no code depends on it.
+
+
+---
+
+# Round 26 (2026-08-27) — Cloudflare hosting: groundwork done, deploy blocked
+
+107. **Hosting target: Cloudflare, via the OpenNext adapter** (`@opennextjs/cloudflare`).
+     A Next app of this shape deploys as a Worker with static assets rather than as a
+     classic Pages project. Config committed: `wrangler.jsonc`, `open-next.config.ts`, and
+     `cf:build` / `cf:preview` / `cf:deploy` scripts. `nodejs_compat` is required.
+108. **Next bumped 16.3.1 → 16.3.3.** The adapter's peer range is
+     `>=15.5.24 <16 || >=16.3.3`, which excludes 16.3.1 exactly. `esbuild` added too — the
+     adapter needs it at build time and does not declare it. Build, typecheck, lint and all
+     121 tests pass on 16.3.3.
+109. **The Cloudflare build succeeds and the site runs — but every form returns 500.**
+     Tested in `workerd` via `npm run cf:preview`, which is the real runtime, not a
+     simulation.
+     Working: every marketing and informational page, including the 3D hero.
+     Failing: `POST /api/events/[slug]/register`, `/play`, and every server action.
+     ```
+     Error: operation not permitted
+         at Module.mkdirSync (node-internal:internal_fs_sync:277:17)
+     ```
+     **Cloudflare Workers has no writable filesystem.** All four stores read and write
+     JSON files through `node:fs`. No compat flag fixes this; it is the constraint the
+     stores' own header comments have warned about since round 1 — *"a JSON file does not
+     survive a redeploy on most hosts"* — arriving.
+     `/moderation` returns 200 only because it denies access before touching a store: the
+     round 24 deny-by-default fix working, not the page working.
+110. **Supabase remains the database decision, and it survives this.** The Supabase client
+     is HTTP-based and runs on Workers, so choosing Cloudflare for hosting does not force
+     Cloudflare D1. D1 would work but would contradict a recorded decision and tie the data
+     layer to one host. **Finishing the Supabase migration is the single thing standing
+     between this and a working deployment** — and it is already the top item on
+     `NEXT-STEPS.md` and clears DPIA risk #4, so none of it is hosting-specific work.
+111. **NOT DEPLOYED, on two counts.**
+     - **Wrong account.** This machine's wrangler is authenticated as
+       `vismaadcreatives@gmail.com`. The intended account is `media@shaheedibunga.com`.
+       Deploying to the wrong Cloudflare account means wrong billing, wrong domain and wrong
+       access controls. `wrangler login` needs an interactive browser session, so the owner
+       has to do it.
+     - **`04_Legal/DPIA.md` says do not open real registrations.** Written one day earlier,
+       and nothing has changed since. Publishing a working sign-up form for an event open to
+       8-year-olds, before guardian emails send and before data is stored securely, would
+       contradict the project's own impact assessment. **Deploying is a technical step;
+       going live is a safeguarding decision**, and it is not one to take as a side effect
+       of wanting a URL.
+112. **The safe interim option, if a shareable URL is the actual need:** deploy behind
+     Cloudflare Access (email-gated, free tier), with `X-Robots-Tag: noindex`, and the
+     sign-up route disabled or visibly marked as a preview. That gives collaborators,
+     sponsors and the venue something to look at without opening a children's-data form to
+     the internet.
+
+Full detail, including the verified route-by-route results and the deploy commands, is in
+`00_Docs/DEPLOYMENT.md`.
