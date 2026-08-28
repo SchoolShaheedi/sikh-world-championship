@@ -8,10 +8,42 @@ import { PostCard } from "@/components/play/PostCard";
 import { takeDownMyPost, answerRequest } from "./actions";
 import { approvalFor } from "@/lib/guardian-store";
 import { AskGuardianButton } from "@/components/play/AskGuardianButton";
+import { boardOpen } from "@/lib/features";
 
 export const metadata: Metadata = { title: "Find a game" };
 
 export default async function PlayPage() {
+  // Checked before touching the store, which is the thing that cannot work on a host
+  // with no writable filesystem. Also honest: the board is built but not launched —
+  // guardian notification emails do not send yet, and that is a promise made on
+  // /safeguarding which has to be true before an under-16 can be here.
+  if (!boardOpen()) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-20">
+        <h1 className="font-display text-3xl">Find a game</h1>
+        <p className="mt-4 text-muted">
+          This is built, but it isn&apos;t switched on yet. It lets you find another Sikh
+          player to practise against — you pick a game, a platform and when you&apos;re
+          free, and other players send you a request.
+        </p>
+        <div className="mt-8 rounded-2xl border border-line bg-surface/60 p-6">
+          <h2 className="font-display text-lg text-kesri">How it will work</h2>
+          <ul className="mt-4 space-y-2.5 text-sm text-muted">
+            <li>— No chat and no typing, for anyone. Everything is built from set options.</li>
+            <li>— Under-16s and over-16s never mix, and adults cannot reach an under-16.</li>
+            <li>— Under-16s need a parent or guardian to switch it on, and they can switch it off again at any time.</li>
+            <li>— Gamertags are only shared once two players have both agreed to a game.</li>
+            <li>— Report and block on every post, with real moderators behind them.</li>
+          </ul>
+        </div>
+        <p className="mt-6 text-sm text-muted">
+          We&apos;re waiting on the parent and guardian notification emails before this
+          opens. That promise has to work before anyone under 16 is here, not after.
+        </p>
+      </div>
+    );
+  }
+
   const me = await currentPlayer();
 
   // Under-16s need a guardian to switch the board on. They get an explanation and a

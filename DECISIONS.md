@@ -1002,3 +1002,48 @@ The pinned ones will now fail loudly rather than deploy wrongly, which is the co
 outcome. **`Patel-Brothers` pins nothing**, so a deploy from it would go to whichever
 account is logged in — currently `media@shaheedibunga.com`. That is the accident this round
 exists to prevent, and it is worth fixing there too.
+
+
+---
+
+# Round 28 (2026-08-28) — Deployed, with registration switched off
+
+118. **Live at https://sikh-world-championship.shaheedibunga.workers.dev** on the
+     `media@shaheedibunga.com` account. All 14 routes return 200. `shaheedibunga` was
+     registered as the account's workers.dev subdomain — the account had none, and wrangler
+     could not auto-claim one.
+119. **Feature flags added (`src/lib/features.ts`): registration and the LFG board are OFF
+     in production, ON in development.** Deploying with them on would have put a form on the
+     public internet that 500s on submit — after asking for a child's medical details.
+     Two independent reasons, and **the safeguarding one outlives the technical one**:
+     fixing the database does not make it correct to open registrations. That is a
+     deliberate decision, and the flag is now where it gets recorded.
+     With the flags off the sign-up page renders **no form fields at all**, so nothing can
+     be typed or submitted, and the API returns 503 with a plain-English reason instead of
+     a 500. The board explains what it will do and why it is not on.
+120. **The sign-up page is `force-dynamic`.** Prerendering it baked "entries are closed"
+     into the HTML at build time — verified — so flipping the flag later would have opened
+     the API while the page still said closed. A page and an endpoint disagreeing about a
+     safeguarding gate is how a form quietly starts accepting children's data behind a
+     notice saying it does not.
+121. Also fixed a copy contradiction the flag exposed: the page still said "Sign up now to
+     hold your place" directly above the closed notice.
+122. **`sikhchampionships.com` is NOT attached.** Registered at Namecheap on 2026-08-26 and
+     still on Namecheap nameservers; the Cloudflare account has no zones. Workers custom
+     domains require the zone on Cloudflare, and there is no CNAME-only shortcut. The
+     wrangler token has `zone (read)` but not zone-create, so adding the zone is a dashboard
+     action — steps in `00_Docs/DEPLOYMENT.md`.
+123. **Domain name discrepancy, unresolved:** this is `sikhchampionships.com`, while
+     `NEXT-STEPS.md` says to register `sikhworldchampionship.com`, and the brand is "Sikh
+     World Championship" (round 4, decision 13). Decide which is canonical and redirect the
+     other. Two live unlinked domains is worse than either alone.
+
+## Patel-Brothers (separate repo, committed locally, not pushed)
+
+124. That project pins no `account_id`, so a deploy would have gone to whichever account was
+     logged in — which, after this round's login, was the wrong one. `bin/cf-guard` now
+     refuses any Cloudflare-reaching command unless `CLOUDFLARE_ACCOUNT_ID` is set, and
+     `deploy`, `db:create` and `db:migrate:remote` run it first. Local dev is untouched.
+     The account id was deliberately **not** guessed — it could not be determined from this
+     machine, and a wrong pin would swap a silent misdeploy for a confusing auth error.
+     Blocked is better than wrong.

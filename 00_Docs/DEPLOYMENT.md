@@ -1,8 +1,84 @@
 # Deployment — Cloudflare Workers
 
-> **STATUS: groundwork done and verified. NOT deployable yet.**
-> The build succeeds and the site runs on the real Workers runtime. Every form returns
-> **500**. Read "The blocker" before pointing a domain at anything.
+> **LIVE (preview):** https://sikh-world-championship.shaheedibunga.workers.dev
+> Deployed to the `media@shaheedibunga.com` account. Registration and the Looking For
+> Game board are **switched off** — see "Feature flags" below. Every other page works.
+>
+> **`sikhchampionships.com` is not attached yet.** It needs a nameserver change first —
+> see "Attaching the domain".
+
+## Feature flags — why the sign-up form is not there
+
+`src/lib/features.ts` gates registration and the LFG board. Both are **off in production by
+default** and on in local development, so a deploy is safe unless someone deliberately
+turns them on.
+
+Two independent reasons, and both currently apply:
+
+1. **Technical.** Both need a writable store. Workers has no writable filesystem, so with
+   the flags on every submission is a 500 with no explanation.
+2. **Safeguarding.** `04_Legal/DPIA.md` concludes real registrations must not open:
+   guardian emails do not send, children's data is not stored securely, nothing is ever
+   deleted, DBS checks have not started.
+
+**The second reason outlives the first.** Fixing the database does not make it correct to
+switch registration on — that is a safeguarding decision, and the flag is where it gets
+recorded.
+
+With the flags off, the sign-up page renders no form fields at all, so nothing can be typed
+or submitted, and `POST /api/events/[slug]/register` returns **503 with a plain-English
+reason** rather than a 500. The board explains what it will do and why it is not on yet.
+
+To turn them on later — after the database lands *and* a deliberate safeguarding decision:
+
+```bash
+npx wrangler secret put SWC_REGISTRATION_OPEN   # "true"
+```
+
+The sign-up page is `force-dynamic` so the page and the API always agree about whether
+entries are open. Prerendering it would bake "closed" into the HTML at build time, and
+flipping the flag would then open the endpoint while the page still said closed.
+
+## Attaching sikhchampionships.com
+
+The domain is registered at **Namecheap** (created 2026-08-26) and still uses Namecheap
+nameservers, so Cloudflare cannot serve it yet. Workers custom domains require the zone to
+be on Cloudflare — there is no CNAME-only shortcut for Workers.
+
+This part cannot be scripted from here: the wrangler OAuth token has `zone (read)` but not
+zone-create, so adding the zone is a dashboard action.
+
+1. **Add the site** at https://dash.cloudflare.com → Add a site → `sikhchampionships.com`
+   → Free plan. Cloudflare will show two assigned nameservers.
+2. **Change the nameservers at Namecheap:** Domain List → Manage → Nameservers → Custom
+   DNS → paste both. Usually live within minutes; allow up to 24h.
+3. **Wait for the zone to go Active** (Cloudflare emails you).
+4. **Attach it to the Worker:**
+
+```bash
+cd 03_App/web
+npx wrangler deploy   # after adding the routes block below to wrangler.jsonc
+```
+
+Add to `wrangler.jsonc` once the zone is active — **not before**, since a route for a
+nonexistent zone fails the deploy:
+
+```jsonc
+"routes": [
+  { "pattern": "sikhchampionships.com",     "custom_domain": true },
+  { "pattern": "www.sikhchampionships.com", "custom_domain": true }
+]
+```
+
+5. **Set the real origin**, or guardian approval links will point at localhost:
+
+```bash
+npx wrangler secret put NEXT_PUBLIC_SITE_URL   # https://sikhchampionships.com
+```
+
+> Note the domain is `sikhchampionships.com`, while `00_Docs/NEXT-STEPS.md` says to
+> register `sikhworldchampionship.com`. Decide which is canonical and redirect the other;
+> having both live and unlinked is worse than either alone.
 
 ## What was set up
 

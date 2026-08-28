@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import { getEvent } from "@/data/events";
 import { register } from "@/lib/store";
 import { validateRegistration } from "@/lib/registration-schema";
+import { registrationOpen } from "@/lib/features";
 
 /**
  * Register for an event.
@@ -17,6 +18,20 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
+  // Checked before anything else, including before we look at the body. If entries are
+  // closed there is no lawful basis to receive a child's medical details at all, so the
+  // request is refused before that data is even parsed.
+  if (!registrationOpen()) {
+    return NextResponse.json(
+      {
+        error:
+          "Entries aren't open yet. We're finishing the guardian notifications and the " +
+          "systems that hold players' details properly before we take any entries.",
+      },
+      { status: 503 },
+    );
+  }
+
   const { slug } = await params;
   const event = getEvent(slug);
   if (!event) {
