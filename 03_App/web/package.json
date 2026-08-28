@@ -9,9 +9,11 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "cf:build": "opennextjs-cloudflare build",
+    "cf:build": "node scripts/brand-manifest.mjs && opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare preview",
-    "cf:deploy": "opennextjs-cloudflare deploy"
+    "cf:deploy": "opennextjs-cloudflare deploy",
+    "brand:manifest": "node scripts/brand-manifest.mjs",
+    "prebuild": "node scripts/brand-manifest.mjs"
   },
   "dependencies": {
     "next": "^16.3.3",
@@ -21,9 +23,10 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260828.1",
     "@opennextjs/cloudflare": "^1.20.4",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^26.4.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.185.4",

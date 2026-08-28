@@ -1,3 +1,12 @@
+> **STATUS (2026-08-28, round 30): MIGRATED. This document's Supabase plan is superseded.**
+>
+> The stores are now **Cloudflare D1**. Supabase was chosen before Cloudflare was picked
+> for hosting; see DECISIONS.md round 29 for why that reversed, and round 30 for the
+> migration itself. The reasoning below about *why* the JSON files had to go is still
+> accurate and worth reading — it is only the destination that changed.
+>
+> Schema: `03_App/web/migrations/`. Access layer: `src/lib/db.ts`.
+
 # Data layer — current state and what must change before launch
 
 ## Today (development)

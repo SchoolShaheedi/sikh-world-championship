@@ -120,17 +120,28 @@ describe("re-requesting permission", () => {
   });
 });
 
+
+/**
+ * Age a request past its expiry window.
+ *
+ * Reaches into storage on purpose: the alternative is waiting thirty days or injecting a
+ * clock, and the behaviour under test is what happens to a record that IS expired.
+ * Previously rewrote the JSON file; now it is one UPDATE.
+ */
+async function expire(playerId: string): Promise<void> {
+  const { getDb } = await import("./db");
+  const db = await getDb();
+  await db
+    .prepare("UPDATE guardian_approvals SET expires_at = ? WHERE player_id = ?")
+    .bind(new Date(Date.now() - 1000).toISOString(), playerId)
+    .run();
+}
+
 describe("expiry", () => {
   it("refuses a decision on an expired pending request", async () => {
     const a = await requestApproval(child);
 
-    // Age the request past its lifetime.
-    const { promises: fs } = await import("node:fs");
-    const path = await import("node:path");
-    const file = path.join(process.env.SWC_DATA_DIR!, "guardian-approvals.json");
-    const rows = JSON.parse(await fs.readFile(file, "utf8"));
-    rows[0].expiresAt = new Date(Date.now() - 1000).toISOString();
-    await fs.writeFile(file, JSON.stringify(rows));
+    await expire(child.playerId);
 
     expect(await recordDecision(a.token, "approved")).toEqual({
       ok: false,
@@ -144,12 +155,7 @@ describe("expiry", () => {
     const a = await requestApproval(child);
     await recordDecision(a.token, "approved");
 
-    const { promises: fs } = await import("node:fs");
-    const path = await import("node:path");
-    const file = path.join(process.env.SWC_DATA_DIR!, "guardian-approvals.json");
-    const rows = JSON.parse(await fs.readFile(file, "utf8"));
-    rows[0].expiresAt = new Date(Date.now() - 1000).toISOString();
-    await fs.writeFile(file, JSON.stringify(rows));
+    await expire(child.playerId);
 
     expect(await recordDecision(a.token, "revoked")).toMatchObject({ ok: true });
     expect(await hasApproval(child.playerId)).toBe(false);

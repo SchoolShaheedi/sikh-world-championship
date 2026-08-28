@@ -1,20 +1,38 @@
-import { promises as fs } from "node:fs";
-import os from "node:os";
-import path from "node:path";
+/**
+ * Point the stores at a throwaway database for each test file.
+ *
+ * Same contract as before the D1 migration — `useTempDataDir()` / `clearDataDir()` are
+ * still the two calls, so no test file had to change. What they point at is now an
+ * in-memory SQLite database with the real migrations applied, rather than a temp
+ * directory of JSON files.
+ *
+ * The principle is unchanged and worth restating: tests must never touch real data. A
+ * test suite people are afraid to run is a test suite nobody runs.
+ */
+import { __setTestDb } from "./db";
+import { createTestDb } from "./test-db";
+
+let current: (ReturnType<typeof createTestDb>) | null = null;
 
 /**
- * Point the stores at a fresh temp directory for each test file, so tests never touch
- * real data and never leak state into each other.
+ * Swap in a brand-new database.
+ *
+ * Extracted so `clearDataDir` does not call `useTempDataDir` — eslint's rules-of-hooks
+ * reads any `use`-prefixed call as a React hook, and the public name has to stay put
+ * because every test file imports it.
  */
-export async function useTempDataDir(): Promise<string> {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "swc-test-"));
-  process.env.SWC_DATA_DIR = dir;
-  return dir;
+function freshDb(): void {
+  current?.close();
+  current = createTestDb();
+  __setTestDb(current);
 }
 
+export async function useTempDataDir(): Promise<string> {
+  freshDb();
+  return ":memory:";
+}
+
+/** Fresh database between tests, so one cannot leak state into the next. */
 export async function clearDataDir(): Promise<void> {
-  const dir = process.env.SWC_DATA_DIR;
-  if (!dir) return;
-  await fs.rm(dir, { recursive: true, force: true });
-  await fs.mkdir(dir, { recursive: true });
+  freshDb();
 }

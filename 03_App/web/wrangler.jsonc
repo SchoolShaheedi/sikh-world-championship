@@ -10,5 +10,12 @@
     // entries — that needs SWC_REGISTRATION_OPEN and a safeguarding decision.
     "SWC_REGISTRATION_DEMO": "true"
   },
+  "d1_databases": [
+    {
+      "binding": "swc_production",
+      "database_name": "swc-production",
+      "database_id": "1954aed5-0c12-43b9-ab9b-f5a76d784f69"
+    }
+  ],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" }
 }

@@ -1,34 +1,37 @@
 /**
- * Guardian approval store — DEVELOPMENT IMPLEMENTATION.
- * JSON-file backed. Replace with Supabase before launch (00_Docs/DATA-LAYER.md).
- * This file holds guardian email addresses, so it needs encryption at rest in production.
+ * Guardian approval store — Cloudflare D1.
+ *
+ * Signatures unchanged from the JSON version; see 00_Docs/DATA-LAYER.md.
+ *
+ * One thing the database now enforces that application code used to: `player_id` is
+ * UNIQUE, so there can only ever be one live approval record per child. Re-asking
+ * replaces the pending request instead of stacking links in a parent's inbox.
  */
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import crypto from "node:crypto";
-import { dataDir } from "./data-dir";
+import { getDb, parseJson } from "./db";
 import {
   APPROVAL_REQUEST_LIFETIME_DAYS,
   type ApprovalStatus,
   type GuardianApproval,
 } from "./guardian-types";
 
-const FILE = () => path.join(dataDir(), "guardian-approvals.json");
+type Row = Record<string, unknown>;
 
-async function readAll(): Promise<GuardianApproval[]> {
-  try {
-    return JSON.parse(await fs.readFile(FILE(), "utf8")) as GuardianApproval[];
-  } catch {
-    return [];
-  }
+function toApproval(r: Row): GuardianApproval {
+  return {
+    id: r.id as string,
+    playerId: r.player_id as string,
+    childDisplayName: r.child_display_name as string,
+    guardianEmail: r.guardian_email as string,
+    token: r.token as string,
+    status: r.status as ApprovalStatus,
+    createdAt: r.created_at as string,
+    respondedAt: (r.responded_at as string | null) ?? null,
+    history: parseJson<GuardianApproval["history"]>(r.history, []),
+    expiresAt: r.expires_at as string,
+  };
 }
 
-async function writeAll(rows: GuardianApproval[]): Promise<void> {
-  await fs.mkdir(dataDir(), { recursive: true });
-  await fs.writeFile(FILE(), JSON.stringify(rows, null, 2), "utf8");
-}
-
-/** 32 bytes of randomness, url-safe. Long enough that guessing is not a threat model. */
 export function newToken(): string {
   return crypto.randomBytes(32).toString("base64url");
 }
@@ -43,19 +46,16 @@ export async function requestApproval(input: {
   childDisplayName: string;
   guardianEmail: string;
 }): Promise<GuardianApproval> {
-  const rows = await readAll();
+  const db = await getDb();
 
   // An existing approved or declined decision stands. Only pending ones are replaced.
-  const settled = rows.find(
-    (r) =>
-      r.playerId === input.playerId &&
-      (r.status === "approved" || r.status === "declined"),
-  );
-  if (settled) return settled;
-
-  const filtered = rows.filter(
-    (r) => !(r.playerId === input.playerId && r.status === "pending"),
-  );
+  const existing = await db
+    .prepare("SELECT * FROM guardian_approvals WHERE player_id = ?")
+    .bind(input.playerId)
+    .first<Row>();
+  if (existing && (existing.status === "approved" || existing.status === "declined")) {
+    return toApproval(existing);
+  }
 
   const now = new Date();
   const row: GuardianApproval = {
@@ -73,8 +73,26 @@ export async function requestApproval(input: {
     ).toISOString(),
   };
 
-  filtered.push(row);
-  await writeAll(filtered);
+  // Replaces the pending row if there is one — the old token stops working, which is the
+  // intended effect of asking again.
+  await db
+    .prepare(
+      `INSERT INTO guardian_approvals
+         (id, player_id, child_display_name, guardian_email, token, status,
+          created_at, responded_at, expires_at, history)
+       VALUES (?,?,?,?,?,?,?,?,?,?)
+       ON CONFLICT(player_id) DO UPDATE SET
+         id = excluded.id, child_display_name = excluded.child_display_name,
+         guardian_email = excluded.guardian_email, token = excluded.token,
+         status = excluded.status, created_at = excluded.created_at,
+         responded_at = NULL, expires_at = excluded.expires_at`,
+    )
+    .bind(
+      row.id, row.playerId, row.childDisplayName, row.guardianEmail, row.token,
+      row.status, row.createdAt, null, row.expiresAt, "[]",
+    )
+    .run();
+
   return row;
 }
 
@@ -94,15 +112,23 @@ export async function findByToken(
 ): Promise<GuardianApproval | null> {
   // Reject empty/short tokens outright rather than letting them reach the lookup.
   if (!token || token.length < 20) return null;
-  const rows = await readAll();
-  return rows.find((r) => r.token === token) ?? null;
+  const db = await getDb();
+  const row = await db
+    .prepare("SELECT * FROM guardian_approvals WHERE token = ?")
+    .bind(token)
+    .first<Row>();
+  return row ? toApproval(row) : null;
 }
 
 export async function approvalFor(
   playerId: string,
 ): Promise<GuardianApproval | null> {
-  const rows = await readAll();
-  return rows.find((r) => r.playerId === playerId) ?? null;
+  const db = await getDb();
+  const row = await db
+    .prepare("SELECT * FROM guardian_approvals WHERE player_id = ?")
+    .bind(playerId)
+    .first<Row>();
+  return row ? toApproval(row) : null;
 }
 
 /**
@@ -126,20 +152,24 @@ export async function recordDecision(
   token: string,
   to: Extract<ApprovalStatus, "approved" | "declined" | "revoked">,
 ): Promise<DecisionResult> {
-  const rows = await readAll();
-  const row = rows.find((r) => r.token === token);
-  if (!row || token.length < 20) return { ok: false, reason: "not-found" };
+  const row = await findByToken(token);
+  if (!row) return { ok: false, reason: "not-found" };
 
   // A pending request goes stale; a settled one stays reachable so it can be revoked
   // or reinstated. Otherwise a guardian loses control the moment the link ages out.
   if (isExpired(row)) return { ok: false, reason: "expired" };
-
   if (row.status === to) return { ok: false, reason: "no-change" };
 
-  row.history.push({ at: new Date().toISOString(), from: row.status, to });
-  row.status = to;
-  row.respondedAt = new Date().toISOString();
+  const at = new Date().toISOString();
+  const history = [...row.history, { at, from: row.status, to }];
 
-  await writeAll(rows);
-  return { ok: true, approval: row };
+  const db = await getDb();
+  await db
+    .prepare(
+      "UPDATE guardian_approvals SET status = ?, responded_at = ?, history = ? WHERE token = ?",
+    )
+    .bind(to, at, JSON.stringify(history), token)
+    .run();
+
+  return { ok: true, approval: { ...row, status: to, respondedAt: at, history } };
 }

@@ -1075,3 +1075,60 @@ exists to prevent, and it is worth fixing there too.
      weight. And Supabase Auth, which is a genuine gap; Cloudflare has no consumer auth
      product. Auth is a separate decision for when accounts are actually built.
      Neither choice affects email: a transactional provider is needed either way.
+
+
+---
+
+# Round 30 (2026-08-28) — D1 migration done
+
+127. **All four stores now run on Cloudflare D1.** `store.ts`, `play-store.ts`,
+     `guardian-store.ts`, `support-store.ts`. Every exported signature is unchanged, so no
+     caller moved and no test file needed rewriting except two that reached into the JSON
+     on purpose. Database `swc-production` (`1954aed5-…`), migrations in
+     `03_App/web/migrations/`, served from **LHR** — UK data residency, which matters for
+     children's data.
+128. **Verified on the real Workers runtime:** a registration that returned 500 an hour
+     earlier now writes and returns a reference. The row lands with core fields, guardian
+     tier fields and medical details in their own columns, and only event-specific answers
+     (`psnId`, `skill`) in JSON.
+129. **The retention gap is closed.** `purgeMedical(eventSlug)` deletes the
+     special-category fields and keeps the registration — the operation the JSON store
+     could not perform, and the reason `04_Legal/RETENTION-POLICY.md` was unenforceable.
+     It is idempotent so a daily job can run safely, and scoped per event.
+     `clearCheckInTokens()` does the same for the QR credential. Tests cover both, plus
+     the case where a cleared token must not let `""` check anyone in.
+     **DPIA risk #4 (children's data not stored securely) and #8 (nothing is ever deleted)
+     are now addressable** — #8 still needs the scheduled job that calls these.
+130. **Tests stay in-process.** D1 is SQLite, and the query surface the stores use is four
+     methods wide, so tests run against `node:sqlite` through the same interface rather
+     than booting workerd per file. 125 tests in ~250ms. A test suite people are afraid to
+     run is one nobody runs, and a five-second boot per file would have undone that.
+131. **The database now enforces three things application code used to.** `reference` is
+     UNIQUE, so the reference-collision bug from round 10 becomes a failed insert rather
+     than two players sharing a reference at the desk. `guardian_approvals.player_id` is
+     UNIQUE, so re-asking cannot stack links in a parent's inbox. `blocks` has a composite
+     primary key, so a duplicate block is impossible by construction.
+
+## A bug this uncovered: the logo was missing on the live site
+
+132. `brand-assets.ts` scanned `public/brand/` with `node:fs` on every render. That worked
+     locally and **silently returned null on Workers**, which has no filesystem — so the
+     deployed site had no logo anywhere, with no error to notice. Confirmed by reading
+     `logoSrc":null` off the live pages while the local build produced
+     `/brand/logo-mark.png`.
+     Fixed by resolving the folder once at build time (`scripts/brand-manifest.mjs`, run by
+     `prebuild` and by `cf:build`, since the OpenNext build does not fire npm's prebuild
+     hook). Dropping a sensibly-named file into `public/brand/` still works; the detection
+     just happens at build rather than per render.
+
+## Outstanding
+
+133. **Wrangler is logged out** — the OAuth credential file disappeared mid-session and
+     `wrangler whoami` reports not authenticated, so the last redeploy failed. The live
+     Worker is the build containing the D1 stores and the logo fix (confirmed: the logo now
+     renders on dynamic pages). Re-run `wrangler login`, or better, set a project-scoped
+     `CLOUDFLARE_API_TOKEN` in `.envrc.local` — an API token does not expire out from under
+     a session the way the OAuth one just did.
+134. Still open, unchanged: guardian notification emails do not send, no scheduled job calls
+     the purge functions, DBS checks not started, and `sikhchampionships.com` is not
+     attached.

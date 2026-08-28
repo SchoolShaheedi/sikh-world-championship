@@ -1,12 +1,17 @@
 /**
- * LFG board store — DEVELOPMENT IMPLEMENTATION, same caveats as lib/store.ts.
- * JSON-file backed so the board works end to end today. Replace with Supabase before
- * launch — see 00_Docs/DATA-LAYER.md.
+ * Looking For Game store — Cloudflare D1.
+ *
+ * Signatures unchanged from the JSON version; see 00_Docs/DATA-LAYER.md.
+ *
+ * The safeguarding invariants in play-types.ts are enforced here. Two are now partly the
+ * database's job rather than purely application code:
+ *   - `age_band` is a CHECK-constrained, indexed column, so segregation is a WHERE clause
+ *     on every board read rather than a filter someone could forget to chain.
+ *   - `blocks` has a composite primary key, so a duplicate block is impossible by
+ *     construction instead of by a pre-read.
  */
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import crypto from "node:crypto";
-import { dataDir } from "./data-dir";
+import { getDb, bool, fromBool, parseJson } from "./db";
 import {
   POST_LIFETIME_DAYS,
   type Block,
@@ -14,33 +19,79 @@ import {
   type LfgPost,
   type Report,
   type ReportStatus,
+  type Game,
+  type Platform,
+  type Window,
+  type Intensity,
+  type PresetNote,
+  type ReportReason,
+  type RequestStatus,
 } from "./play-types";
 
+type Row = Record<string, unknown>;
 
-
-async function read<T>(file: string): Promise<T[]> {
-  try {
-    return JSON.parse(
-      await fs.readFile(path.join(dataDir(), file), "utf8"),
-    ) as T[];
-  } catch {
-    return [];
-  }
+function toPost(r: Row): LfgPost {
+  return {
+    id: r.id as string,
+    playerId: r.player_id as string,
+    ageBand: r.age_band as "U16" | "16+",
+    eventVerified: fromBool(r.event_verified),
+    displayName: r.display_name as string,
+    avatarId: (r.avatar_id as string | null) ?? null,
+    region: r.region as string,
+    game: r.game as Game,
+    platform: r.platform as Platform,
+    windows: parseJson<Window[]>(r.windows, []),
+    intensity: r.intensity as Intensity,
+    note: r.note as PresetNote,
+    createdAt: r.created_at as string,
+    expiresAt: r.expires_at as string,
+    status: r.status as LfgPost["status"],
+  };
 }
 
-async function write<T>(file: string, rows: T[]): Promise<void> {
-  await fs.mkdir(dataDir(), { recursive: true });
-  await fs.writeFile(
-    path.join(dataDir(), file),
-    JSON.stringify(rows, null, 2),
-    "utf8",
-  );
+function toRequest(r: Row): GameRequest {
+  return {
+    id: r.id as string,
+    postId: r.post_id as string,
+    fromPlayerId: r.from_player_id as string,
+    fromDisplayName: r.from_display_name as string,
+    fromRegion: r.from_region as string,
+    toPlayerId: r.to_player_id as string,
+    fromGuardianEmail: (r.from_guardian_email as string | null) ?? null,
+    proposedWindow: r.proposed_window as Window,
+    note: r.note as PresetNote,
+    status: r.status as RequestStatus,
+    createdAt: r.created_at as string,
+    respondedAt: (r.responded_at as string | null) ?? null,
+    fromGamertag: r.from_gamertag as string,
+    toGamertag: r.to_gamertag as string,
+  };
+}
+
+function toReport(r: Row): Report {
+  return {
+    id: r.id as string,
+    reporterId: r.reporter_id as string,
+    targetPlayerId: r.target_player_id as string,
+    targetDisplayName: r.target_display_name as string,
+    context: r.context as string,
+    reason: r.reason as ReportReason,
+    detail: (r.detail as string | null) ?? "",
+    status: r.status as ReportStatus,
+    createdAt: r.created_at as string,
+    assignedTo: (r.assigned_to as string | null) ?? null,
+    handledAt: (r.handled_at as string | null) ?? null,
+    resolution: (r.resolution as string | null) ?? null,
+  };
 }
 
 /* ---------- Posts ---------- */
 
 export async function allPosts(): Promise<LfgPost[]> {
-  return read<LfgPost>("lfg-posts.json");
+  const db = await getDb();
+  const { results } = await db.prepare("SELECT * FROM lfg_posts").all<Row>();
+  return results.map(toPost);
 }
 
 /**
@@ -59,74 +110,87 @@ export async function boardFor(
   viewerId: string,
   viewerAgeBand: "U16" | "16+",
 ): Promise<LfgPost[]> {
-  const [posts, blocks] = await Promise.all([
-    allPosts(),
-    read<Block>("blocks.json"),
-  ]);
-  const now = Date.now();
-
-  const hidden = new Set(
-    blocks
-      .filter((b) => b.blockerId === viewerId || b.blockedId === viewerId)
-      .map((b) => (b.blockerId === viewerId ? b.blockedId : b.blockerId)),
-  );
-
-  return posts
-    .filter((p) => p.ageBand === viewerAgeBand)
-    .filter((p) => p.status === "open")
-    .filter((p) => new Date(p.expiresAt).getTime() > now)
-    .filter((p) => p.playerId !== viewerId)
-    .filter((p) => !hidden.has(p.playerId))
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+  const db = await getDb();
+  const { results } = await db
+    .prepare(
+      `SELECT * FROM lfg_posts
+        WHERE age_band = ?
+          AND status = 'open'
+          AND expires_at > ?
+          AND player_id != ?
+          AND player_id NOT IN (
+            SELECT blocked_id FROM blocks WHERE blocker_id = ?
+            UNION
+            SELECT blocker_id FROM blocks WHERE blocked_id = ?
+          )
+        ORDER BY created_at DESC`,
+    )
+    .bind(viewerAgeBand, new Date().toISOString(), viewerId, viewerId, viewerId)
+    .all<Row>();
+  return results.map(toPost);
 }
 
 export async function myPost(playerId: string): Promise<LfgPost | null> {
-  const posts = await allPosts();
-  const now = Date.now();
-  return (
-    posts.find(
-      (p) =>
-        p.playerId === playerId &&
-        p.status === "open" &&
-        new Date(p.expiresAt).getTime() > now,
-    ) ?? null
-  );
+  const db = await getDb();
+  const row = await db
+    .prepare(
+      `SELECT * FROM lfg_posts
+        WHERE player_id = ? AND status = 'open' AND expires_at > ?
+        ORDER BY created_at DESC LIMIT 1`,
+    )
+    .bind(playerId, new Date().toISOString())
+    .first<Row>();
+  return row ? toPost(row) : null;
 }
 
 /** One open post per player. Posting again replaces the old one. */
 export async function createPost(
   input: Omit<LfgPost, "id" | "createdAt" | "expiresAt" | "status">,
 ): Promise<LfgPost> {
-  const posts = await allPosts();
-  for (const p of posts) {
-    if (p.playerId === input.playerId && p.status === "open") p.status = "closed";
-  }
-
+  const db = await getDb();
   const now = new Date();
   const post: LfgPost = {
     ...input,
     id: crypto.randomUUID(),
     createdAt: now.toISOString(),
-    expiresAt: new Date(
-      now.getTime() + POST_LIFETIME_DAYS * 864e5,
-    ).toISOString(),
+    expiresAt: new Date(now.getTime() + POST_LIFETIME_DAYS * 864e5).toISOString(),
     status: "open",
   };
-  posts.push(post);
-  await write("lfg-posts.json", posts);
+
+  await db.batch([
+    db
+      .prepare("UPDATE lfg_posts SET status = 'closed' WHERE player_id = ? AND status = 'open'")
+      .bind(input.playerId),
+    db
+      .prepare(
+        `INSERT INTO lfg_posts
+           (id, player_id, age_band, event_verified, display_name, avatar_id, region,
+            game, platform, windows, intensity, note, created_at, expires_at, status)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      )
+      .bind(
+        post.id, post.playerId, post.ageBand, bool(post.eventVerified),
+        post.displayName, post.avatarId, post.region, post.game, post.platform,
+        JSON.stringify(post.windows), post.intensity, post.note,
+        post.createdAt, post.expiresAt, post.status,
+      ),
+  ]);
+
   return post;
 }
 
 export async function closePost(postId: string, playerId: string): Promise<boolean> {
-  const posts = await allPosts();
-  const post = posts.find((p) => p.id === postId);
-  // Ownership check: never let one player close another's post.
-  if (!post || post.playerId !== playerId) return false;
-  post.status = "closed";
-  await write("lfg-posts.json", posts);
+  const db = await getDb();
+  // Ownership check in the WHERE clause: never let one player close another's post.
+  const existing = await db
+    .prepare("SELECT id FROM lfg_posts WHERE id = ? AND player_id = ?")
+    .bind(postId, playerId)
+    .first();
+  if (!existing) return false;
+  await db
+    .prepare("UPDATE lfg_posts SET status = 'closed' WHERE id = ? AND player_id = ?")
+    .bind(postId, playerId)
+    .run();
   return true;
 }
 
@@ -136,10 +200,14 @@ export async function requestsFor(playerId: string): Promise<{
   incoming: GameRequest[];
   outgoing: GameRequest[];
 }> {
-  const rows = await read<GameRequest>("game-requests.json");
+  const db = await getDb();
+  const [inc, out] = await Promise.all([
+    db.prepare("SELECT * FROM game_requests WHERE to_player_id = ?").bind(playerId).all<Row>(),
+    db.prepare("SELECT * FROM game_requests WHERE from_player_id = ?").bind(playerId).all<Row>(),
+  ]);
   return {
-    incoming: rows.filter((r) => r.toPlayerId === playerId),
-    outgoing: rows.filter((r) => r.fromPlayerId === playerId),
+    incoming: inc.results.map(toRequest),
+    outgoing: out.results.map(toRequest),
   };
 }
 
@@ -147,34 +215,39 @@ export async function createRequest(
   input: Omit<GameRequest, "id" | "createdAt" | "respondedAt" | "status">,
   senderAgeBand: "U16" | "16+",
 ): Promise<GameRequest | { error: string }> {
-  const rows = await read<GameRequest>("game-requests.json");
+  const db = await getDb();
 
   // Second enforcement point for age segregation. The board query already prevents this
   // being reachable through the UI, but a request is the moment two people actually
   // connect, so it is checked again here against the post itself.
-  const post = (await allPosts()).find((p) => p.id === input.postId);
+  const post = await db
+    .prepare("SELECT * FROM lfg_posts WHERE id = ?")
+    .bind(input.postId)
+    .first<Row>();
   if (!post || post.status !== "open") {
     return { error: "This post is no longer available." };
   }
-  if (post.ageBand !== senderAgeBand) {
+  if (post.age_band !== senderAgeBand) {
     return { error: "This post is no longer available." };
   }
 
   // One pending request per pair per post — stops repeat-requesting as a way to pester.
-  const existing = rows.find(
-    (r) =>
-      r.postId === input.postId &&
-      r.fromPlayerId === input.fromPlayerId &&
-      r.status === "pending",
-  );
+  const existing = await db
+    .prepare(
+      `SELECT id FROM game_requests
+        WHERE post_id = ? AND from_player_id = ? AND status = 'pending'`,
+    )
+    .bind(input.postId, input.fromPlayerId)
+    .first();
   if (existing) return { error: "You've already sent a request on this post." };
 
-  const blocks = await read<Block>("blocks.json");
-  const blocked = blocks.some(
-    (b) =>
-      (b.blockerId === input.toPlayerId && b.blockedId === input.fromPlayerId) ||
-      (b.blockerId === input.fromPlayerId && b.blockedId === input.toPlayerId),
-  );
+  const blocked = await db
+    .prepare(
+      `SELECT 1 AS x FROM blocks
+        WHERE (blocker_id = ? AND blocked_id = ?) OR (blocker_id = ? AND blocked_id = ?)`,
+    )
+    .bind(input.toPlayerId, input.fromPlayerId, input.fromPlayerId, input.toPlayerId)
+    .first();
   // Deliberately vague: telling someone they've been blocked invites retaliation.
   if (blocked) return { error: "This post is no longer available." };
 
@@ -185,8 +258,22 @@ export async function createRequest(
     createdAt: new Date().toISOString(),
     respondedAt: null,
   };
-  rows.push(row);
-  await write("game-requests.json", rows);
+
+  await db
+    .prepare(
+      `INSERT INTO game_requests
+         (id, post_id, from_player_id, from_display_name, from_region, to_player_id,
+          from_guardian_email, proposed_window, note, status, created_at, responded_at,
+          from_gamertag, to_gamertag)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    )
+    .bind(
+      row.id, row.postId, row.fromPlayerId, row.fromDisplayName, row.fromRegion,
+      row.toPlayerId, row.fromGuardianEmail, row.proposedWindow, row.note,
+      row.status, row.createdAt, null, row.fromGamertag, row.toGamertag,
+    )
+    .run();
+
   return row;
 }
 
@@ -195,15 +282,24 @@ export async function respondToRequest(
   playerId: string,
   accept: boolean,
 ): Promise<GameRequest | null> {
-  const rows = await read<GameRequest>("game-requests.json");
-  const row = rows.find((r) => r.id === requestId);
-  // Only the recipient can answer.
-  if (!row || row.toPlayerId !== playerId || row.status !== "pending") return null;
+  const db = await getDb();
+  // Only the recipient can answer, and only a pending request.
+  const row = await db
+    .prepare(
+      "SELECT * FROM game_requests WHERE id = ? AND to_player_id = ? AND status = 'pending'",
+    )
+    .bind(requestId, playerId)
+    .first<Row>();
+  if (!row) return null;
 
-  row.status = accept ? "accepted" : "declined";
-  row.respondedAt = new Date().toISOString();
-  await write("game-requests.json", rows);
-  return row;
+  const status = accept ? "accepted" : "declined";
+  const respondedAt = new Date().toISOString();
+  await db
+    .prepare("UPDATE game_requests SET status = ?, responded_at = ? WHERE id = ?")
+    .bind(status, respondedAt, requestId)
+    .run();
+
+  return toRequest({ ...row, status, responded_at: respondedAt });
 }
 
 /**
@@ -225,7 +321,7 @@ export async function createReport(
     "id" | "createdAt" | "status" | "assignedTo" | "handledAt" | "resolution"
   >,
 ): Promise<Report> {
-  const rows = await read<Report>("reports.json");
+  const db = await getDb();
   const row: Report = {
     ...input,
     id: crypto.randomUUID(),
@@ -235,51 +331,73 @@ export async function createReport(
     handledAt: null,
     resolution: null,
   };
-  rows.push(row);
-  await write("reports.json", rows);
+  await db
+    .prepare(
+      `INSERT INTO reports
+         (id, reporter_id, target_player_id, target_display_name, context, reason,
+          detail, status, created_at, assigned_to, handled_at, resolution)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    )
+    .bind(
+      row.id, row.reporterId, row.targetPlayerId, row.targetDisplayName,
+      row.context, row.reason, row.detail, row.status, row.createdAt, null, null, null,
+    )
+    .run();
   return row;
 }
 
 export async function allReports(): Promise<Report[]> {
-  const rows = await read<Report>("reports.json");
-  const rank: Record<ReportStatus, number> = {
-    open: 0,
-    investigating: 1,
-    actioned: 2,
-    dismissed: 3,
-  };
-  return rows.sort(
-    (a, b) =>
-      rank[a.status] - rank[b.status] ||
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-  );
+  const db = await getDb();
+  const { results } = await db
+    .prepare(
+      `SELECT * FROM reports
+        ORDER BY
+          CASE status WHEN 'open' THEN 0 WHEN 'investigating' THEN 1
+                      WHEN 'actioned' THEN 2 ELSE 3 END ASC,
+          created_at ASC`,
+    )
+    .all<Row>();
+  return results.map(toReport);
 }
 
 export async function updateReport(
   reportId: string,
   patch: Partial<Pick<Report, "status" | "assignedTo" | "resolution">>,
 ): Promise<Report | null> {
-  const rows = await read<Report>("reports.json");
-  const row = rows.find((r) => r.id === reportId);
-  if (!row) return null;
-  Object.assign(row, patch);
-  if (patch.status === "actioned" || patch.status === "dismissed") {
-    row.handledAt = new Date().toISOString();
-  }
-  await write("reports.json", rows);
-  return row;
+  const db = await getDb();
+  const existing = await db
+    .prepare("SELECT * FROM reports WHERE id = ?")
+    .bind(reportId)
+    .first<Row>();
+  if (!existing) return null;
+
+  const merged = { ...toReport(existing), ...patch };
+  const handledAt =
+    patch.status === "actioned" || patch.status === "dismissed"
+      ? new Date().toISOString()
+      : merged.handledAt;
+
+  await db
+    .prepare(
+      "UPDATE reports SET status = ?, assigned_to = ?, resolution = ?, handled_at = ? WHERE id = ?",
+    )
+    .bind(merged.status, merged.assignedTo, merged.resolution, handledAt, reportId)
+    .run();
+
+  return { ...merged, handledAt };
 }
 
 export async function blockPlayer(
   blockerId: string,
   blockedId: string,
 ): Promise<void> {
-  const rows = await read<Block>("blocks.json");
-  if (rows.some((b) => b.blockerId === blockerId && b.blockedId === blockedId)) {
-    return;
-  }
-  rows.push({ blockerId, blockedId, createdAt: new Date().toISOString() });
-  await write("blocks.json", rows);
+  const db = await getDb();
+  // The composite primary key makes a duplicate impossible; OR IGNORE turns a repeat
+  // block into a no-op rather than an error.
+  await db
+    .prepare("INSERT OR IGNORE INTO blocks (blocker_id, blocked_id, created_at) VALUES (?,?,?)")
+    .bind(blockerId, blockedId, new Date().toISOString())
+    .run();
 }
 
 /** How long reports have been sitting — the number that tells you if moderation is working. */
@@ -287,12 +405,18 @@ export async function moderationHealth(): Promise<{
   open: number;
   oldestOpenHours: number | null;
 }> {
-  const rows = await read<Report>("reports.json");
-  const open = rows.filter((r) => r.status === "open" || r.status === "investigating");
-  if (open.length === 0) return { open: 0, oldestOpenHours: null };
-  const oldest = Math.min(...open.map((r) => new Date(r.createdAt).getTime()));
+  const db = await getDb();
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS open, MIN(created_at) AS oldest FROM reports
+        WHERE status IN ('open','investigating')`,
+    )
+    .first<{ open: number; oldest: string | null }>();
+  if (!row || row.open === 0) return { open: 0, oldestOpenHours: null };
   return {
-    open: open.length,
-    oldestOpenHours: Math.floor((Date.now() - oldest) / 36e5),
+    open: row.open,
+    oldestOpenHours: Math.floor((Date.now() - new Date(row.oldest!).getTime()) / 36e5),
   };
 }
+
+export type { Block };
