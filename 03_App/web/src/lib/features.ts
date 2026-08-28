@@ -34,6 +34,22 @@ export function registrationOpen(): boolean {
   return flag("SWC_REGISTRATION_OPEN");
 }
 
+/**
+ * Demo mode: render the sign-up form, validate it properly, and save nothing.
+ *
+ * For walking a planning team through the flow before entries open. Everything runs
+ * except the write — the schema still rejects a missing guardian, still refuses unknown
+ * fields, still enforces the age tiers — so what people see is the real form, not a mockup.
+ *
+ * It is labelled unmistakably on the page and again on the confirmation, because a form
+ * that looks like it worked is exactly how someone ends up believing their child has a
+ * place when no record exists. Ignored when registration is genuinely open.
+ */
+export function registrationDemo(): boolean {
+  if (registrationOpen()) return false;
+  return process.env.SWC_REGISTRATION_DEMO === "true";
+}
+
 /** Is the Looking For Game board live? */
 export function boardOpen(): boolean {
   return flag("SWC_BOARD_OPEN");

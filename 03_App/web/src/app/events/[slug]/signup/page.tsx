@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EVENTS, getEvent } from "@/data/events";
 import { SignupForm } from "@/components/SignupForm";
-import { registrationOpen } from "@/lib/features";
+import { registrationOpen, registrationDemo } from "@/lib/features";
 
 /**
  * Rendered per request, not prerendered.
@@ -57,9 +57,21 @@ export default async function SignupPage({
         </p>
       )}
 
-      {registrationOpen() ? (
+      {registrationDemo() && (
+        <div className="mt-6 rounded-2xl border-2 border-dashed border-kesri/60 bg-kesri/[0.08] p-5">
+          <p className="font-display text-lg text-kesri">Preview — nothing is saved</p>
+          <p className="mt-2 text-sm text-muted">
+            Entries aren&apos;t open yet. This is the real form, with the real checks, so
+            the team can see exactly what an entrant fills in — but submitting it stores
+            nothing and does not hold you a place. Please don&apos;t enter anyone&apos;s
+            real medical details.
+          </p>
+        </div>
+      )}
+
+      {registrationOpen() || registrationDemo() ? (
         <div className="mt-10">
-          <SignupForm event={event} />
+          <SignupForm event={event} demo={registrationDemo()} />
         </div>
       ) : (
         /* Registration is not open. Showing the form would be dishonest — it cannot

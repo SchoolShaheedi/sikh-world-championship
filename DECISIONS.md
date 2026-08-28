@@ -1047,3 +1047,31 @@ exists to prevent, and it is worth fixing there too.
      The account id was deliberately **not** guessed — it could not be determined from this
      machine, and a wrong pin would swap a silent misdeploy for a confusing auth error.
      Blocked is better than wrong.
+
+
+---
+
+# Round 29 (2026-08-28) — Demo mode, and Cloudflare D1 replaces Supabase
+
+125. **Demo mode for the planning team** (`SWC_REGISTRATION_DEMO`, set in `wrangler.jsonc`).
+     The sign-up form renders and validates **for real** — schema, guardian age tiers,
+     unknown-key rejection, consent checks all run — and only the write is skipped. So the
+     team walks the actual form, not a mockup.
+     Labelled in three places, because a form that looks like it worked is exactly how
+     someone leaves believing their child has a place: a dashed banner above the form, the
+     submit button reading "Submit (preview — saves nothing)", and a confirmation screen
+     that says plainly no place was held and nothing was stored. Reference is `DEMO-ONLY`.
+     Ignored entirely when `SWC_REGISTRATION_OPEN` is true, so it cannot mask a real
+     opening.
+126. **Supabase dropped. Cloudflare D1 is the database.** Supersedes the Supabase decision
+     in `DATA-LAYER.md` and `NEXT-STEPS.md`, which predates choosing Cloudflare for hosting.
+     Reasons: one vendor, one bill, one dashboard and one access-control surface for a
+     volunteer-run org; D1 sits next to the Worker instead of across an HTTP hop; the
+     existing token already has `d1:write`; and **Patel-Brothers already runs D1**, so it is
+     not a new thing to learn.
+     What we give up, stated honestly: Postgres row-level security, which is real
+     defence-in-depth for children's data — but this app is entirely server-rendered with no
+     client-direct queries, so the app-layer checks (already written and tested) carry that
+     weight. And Supabase Auth, which is a genuine gap; Cloudflare has no consumer auth
+     product. Auth is a separate decision for when accounts are actually built.
+     Neither choice affects email: a transactional provider is needed either way.

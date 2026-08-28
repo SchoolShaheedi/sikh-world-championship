@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import { getEvent } from "@/data/events";
 import { register } from "@/lib/store";
 import { validateRegistration } from "@/lib/registration-schema";
-import { registrationOpen } from "@/lib/features";
+import { registrationOpen, registrationDemo } from "@/lib/features";
 
 /**
  * Register for an event.
@@ -21,7 +21,7 @@ export async function POST(
   // Checked before anything else, including before we look at the body. If entries are
   // closed there is no lawful basis to receive a child's medical details at all, so the
   // request is refused before that data is even parsed.
-  if (!registrationOpen()) {
+  if (!registrationOpen() && !registrationDemo()) {
     return NextResponse.json(
       {
         error:
@@ -59,6 +59,18 @@ export async function POST(
       { error: result.error, fieldErrors: result.fieldErrors },
       { status: 400 },
     );
+  }
+
+  // Demo mode: everything above ran for real — schema, guardian tier, age gate, unknown
+  // keys. Only the write is skipped. Returning a shaped response lets the team see the
+  // confirmation screen, and `demo: true` makes the UI say plainly that nothing was saved.
+  if (registrationDemo()) {
+    return NextResponse.json({
+      demo: true,
+      status: "confirmed",
+      reference: "DEMO-ONLY",
+      checkInToken: "",
+    });
   }
 
   const registration = await register({

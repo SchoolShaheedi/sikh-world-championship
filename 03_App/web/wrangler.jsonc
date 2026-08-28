@@ -4,5 +4,11 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-08-27",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "vars": {
+    // Preview for the planning team: the sign-up form renders and validates for real,
+    // but the write is skipped and every screen says so. NOT a substitute for opening
+    // entries — that needs SWC_REGISTRATION_OPEN and a safeguarding decision.
+    "SWC_REGISTRATION_DEMO": "true"
+  },
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" }
 }

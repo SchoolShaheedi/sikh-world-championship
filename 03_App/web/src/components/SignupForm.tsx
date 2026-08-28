@@ -80,7 +80,14 @@ const Label = ({
 const inputCx =
   "mt-2 w-full rounded-xl border border-line bg-surface px-4 py-3 text-body placeholder:text-muted/60 focus:border-kesri focus:outline-none";
 
-export function SignupForm({ event }: { event: ChampionshipEvent }) {
+export function SignupForm({
+  event,
+  demo = false,
+}: {
+  event: ChampionshipEvent;
+  /** Preview mode: the form works, the submission is discarded. See lib/features.ts. */
+  demo?: boolean;
+}) {
   const [values, setValues] = useState<Record<string, string | boolean | string[]>>({});
   const [avatarId, setAvatarId] = useState<string>(AVATARS[0].id);
   const [submitting, setSubmitting] = useState(false);
@@ -95,6 +102,7 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
     fieldErrors?: Record<string, string>;
   }>(null);
   const [result, setResult] = useState<null | {
+    demo?: boolean;
     status: "confirmed" | "waitlisted";
     reference: string;
     /** Goes in the QR code — not shown on screen, and never printed on a public list. */
@@ -177,13 +185,28 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
   if (result) {
     return (
       <div className="rounded-3xl border border-line bg-surface/70 p-8 text-center">
+        {result.demo && (
+          /* The whole point of the demo is to show the flow. The one thing it must never
+             do is let someone leave believing they have a place. */
+          <p className="mx-auto mb-5 max-w-md rounded-xl border-2 border-dashed border-kesri/60 bg-kesri/[0.08] px-4 py-3 text-sm text-kesrisoft">
+            <strong className="font-bold">Preview only — nothing was saved.</strong> This is
+            what an entrant would see. No place has been held and no details were stored.
+          </p>
+        )}
         <h2 className="font-display text-3xl">
-          {result.status === "confirmed"
-            ? "You're in."
-            : "You're on the waitlist."}
+          {result.demo
+            ? "This is the confirmation screen"
+            : result.status === "confirmed"
+              ? "You're in."
+              : "You're on the waitlist."}
         </h2>
         <p className="mx-auto mt-3 max-w-md text-muted">
-          {result.status === "confirmed" ? (
+          {result.demo ? (
+            <>
+              A real entrant would be told their place is confirmed here, and would get an
+              email with a QR check-in code to bring on the day. None of that happened.
+            </>
+          ) : result.status === "confirmed" ? (
             <>
               {event.divisions.length === 1 ? (
                 <>Your place is confirmed.</>
@@ -694,7 +717,7 @@ export function SignupForm({ event }: { event: ChampionshipEvent }) {
           disabled={submitting || !division}
           className="rounded-xl bg-kesri px-8 py-4 font-bold text-ink transition-colors hover:bg-kesrisoft disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {submitting ? "Sending…" : "Confirm my place"}
+          {submitting ? "Sending…" : demo ? "Submit (preview — saves nothing)" : "Confirm my place"}
         </button>
         <p className="text-sm text-muted">
           Free to enter. {event.capacity} places.
