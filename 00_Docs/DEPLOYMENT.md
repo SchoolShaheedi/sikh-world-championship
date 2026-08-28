@@ -82,9 +82,33 @@ npx wrangler secret put NEXT_PUBLIC_SITE_URL   # https://sikhchampionships.com
 
 ## What was set up
 
-Hosting target is Cloudflare, via the OpenNext adapter (`@opennextjs/cloudflare`). Cloudflare
-Pages is the older product for this; a Next app of this shape deploys as a **Worker with
-static assets**, which is what `wrangler.jsonc` describes.
+Hosting target is Cloudflare, via the OpenNext adapter (`@opennextjs/cloudflare`). A Next
+app of this shape deploys as a **Worker with static assets**, which is what
+`wrangler.jsonc` describes.
+
+### Why Workers and not Pages
+
+Because Pages is not an option for Next.js any more. `@cloudflare/next-on-pages`, the
+adapter that targeted Pages, is **formally deprecated** — npm returns
+*"Please use the OpenNext adapter instead"* — and has not been updated since July 2026,
+while the Workers adapter ships regularly. Cloudflare has moved Next.js hosting to Workers,
+Pages is in maintenance for new development, and Workers Static Assets (the `assets`
+binding here) is what replaced it.
+
+It would not have run anyway: `next-on-pages` requires `runtime = 'edge'` on every server
+route, and the stores use `node:crypto` and `node:fs`. That is a rewrite, not a flag.
+
+**The one thing Pages would have given us**, and it is worth knowing because it is the
+blocker on the custom domain: Pages supports custom domains for zones that are *not* on
+Cloudflare — you CNAME from the external registrar to `<project>.pages.dev` and Cloudflare
+issues the certificate. Workers custom domains require the zone on Cloudflare, which is why
+`sikhchampionships.com` needs a nameserver change.
+
+That is a real trade-off, but not one worth taking: it would mean building on a deprecated
+adapter and rewriting every route for the edge runtime, to avoid a single one-off DNS
+change — and moving DNS to Cloudflare is wanted regardless, since it is what enables Access
+for a gated preview, redirects for the domain-name clash, and caching in front of the
+Worker.
 
 | File | Purpose |
 |---|---|
