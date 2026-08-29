@@ -1327,3 +1327,26 @@ exists to prevent, and it is worth fixing there too.
      a real cost on mobile data for the community this is aimed at. It wants resizing to
      roughly 600px wide — but it is a brand asset, so that is the owner's call rather than
      something to do quietly.
+
+
+---
+
+# Round 36 (2026-08-29) — Brand assets optimised
+
+169. **Every page was loading 1.57 MB of logo.** `logo.png` was 1.36 MB in the footer and
+     `logo-mark.png` 210 KB in the header — the mark drawn at about 22px. On mobile data,
+     for the community this is aimed at, that is a real cost and the first thing a visitor
+     pays before seeing anything.
+170. **Now WebP, resized to what is actually drawn.** The footer lockup renders at 210px, so
+     640px gives 3x for retina with headroom; the header mark renders small, so 160px is
+     generous.
+     `logo.png` 1327 KB → `logo.webp` **34 KB**. `logo-mark.png` 210 KB → `logo-mark.webp`
+     **5 KB**. Checked visually at quality 88 before shipping — the gold gradients and the
+     nishan sahib survive it cleanly.
+171. **Masters moved to `01_Brand/`**, which is what that folder is for: the authored
+     originals live there, only optimised copies are served. `swc-logo-texture.png` (1.6 MB)
+     was sitting in `public/` as a master and being served publicly for no reason — the GLB
+     uses the JPEG. Shipped brand weight is now **336 KB total, from about 2 MB**, and most
+     of the remainder is the 3D model.
+172. `public/brand/README.md` carries a note to check the weight before adding another PNG,
+     since this is the kind of thing that creeps back.

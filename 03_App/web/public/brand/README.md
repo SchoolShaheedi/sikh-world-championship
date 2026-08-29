@@ -1,3 +1,8 @@
+> **Shipped assets are WebP and small on purpose.** `logo.png` was 1.36 MB and sat in the
+> footer of every page — a real cost on mobile data for the community this is aimed at.
+> The full-resolution originals live in `01_Brand/` as masters; only optimised copies are
+> served. Before adding a PNG here, check what it weighs.
+
 # Brand assets
 
 ## What's here now
