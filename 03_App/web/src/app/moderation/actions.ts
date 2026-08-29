@@ -11,7 +11,7 @@ const VALID: ReportStatus[] = ["open", "investigating", "actioned", "dismissed"]
 
 export async function handleReport(formData: FormData) {
   const me = await currentPlayer();
-  if (!me.isModerator) throw new Error("Moderators only.");
+  if (!me?.isModerator) throw new Error("Moderators only.");
 
   const status = String(formData.get("status")) as ReportStatus;
   if (!VALID.includes(status)) throw new Error("Bad status.");
@@ -31,7 +31,7 @@ const VALID_TICKET: TicketStatus[] = ["new", "in-progress", "resolved", "closed"
 
 export async function handleTicket(formData: FormData) {
   const me = await currentPlayer();
-  if (!me.isModerator) throw new Error("Moderators only.");
+  if (!me?.isModerator) throw new Error("Moderators only.");
 
   const status = String(formData.get("status")) as TicketStatus;
   if (!VALID_TICKET.includes(status)) throw new Error("Bad status.");

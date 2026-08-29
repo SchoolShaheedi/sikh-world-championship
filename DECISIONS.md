@@ -1279,3 +1279,51 @@ exists to prevent, and it is worth fixing there too.
 159. **`robots: { index: false }`** while entries are closed and the safeguarding leads are
      unnamed. There is nothing here worth indexing yet, and a search result pointing at a
      page naming "TBC" as the safeguarding contact is worse than no search result.
+
+
+---
+
+# Round 35 (2026-08-29) — Player accounts
+
+160. **Passwordless sign-in, hand-rolled, D1-backed.** Deliberately against the usual
+     "never roll your own auth", so the reasoning is in
+     `migrations/0004_accounts.sql`: there are no passwords to store or leak; a session is
+     a 256-bit random bearer token looked up in a table rather than a signed cookie, so
+     there is no signature scheme to get wrong and revocation is a DELETE; and the
+     decisive reason — **under-16 accounts are guardian-linked, and no off-the-shelf
+     library models that.** Adopting one would mean fighting its user model on exactly the
+     part that matters most. Revisit if OAuth, MFA or passwords are ever needed.
+161. **Security properties are asserted, not assumed** — 14 tests. Single-use tokens
+     (a link forwarded, cached by a mail scanner or left in an inbox cannot be replayed),
+     15-minute expiry, requesting a new link kills the old one, an unknown address gets an
+     identical response to a known one so the form cannot enumerate who has an account, and
+     signing out deletes the session server-side rather than only clearing the cookie.
+162. **The account is created during registration**, per decision 15 — one form, account at
+     the end. The guardian email comes from that record and nowhere else, which is what
+     keeps the consent mechanism from being theatre.
+163. **`upsertPlayer` never changes age band or moderator status on a later registration.**
+     Age band is a safeguarding boundary and moderator is an access grant; neither may move
+     as a side effect of filling in a sign-up form. Both are tested.
+164. **Age band is stored, not derived.** Computing it from date of birth on every read
+     would mean a child's sixteenth birthday silently moved them into the adult pool,
+     including into conversations already in progress. Moving band should be deliberate.
+165. **`currentPlayer()` now returns `SessionPlayer | null` and fails closed.** The compiler
+     found all 21 call sites, which is exactly why everything read through that one
+     function. The stub used to return a fixed player who was also a moderator — the bug
+     behind round 24's public moderation queue. Nothing may invent a viewer again.
+166. **Two bugs found by testing in the real runtime, not in unit tests:**
+     - Redeeming a link 500'd, because Next only permits setting cookies from a Route
+       Handler or Server Action, never during a page render. Converted to a route handler.
+     - `rate-limit.test.ts` was **flaky, failing about one run in three**: it used a 1ms
+       window, so the window could elapse between the two calls asserting refusal. Found by
+       running the suite repeatedly rather than shrugging at a single red run. Rewritten
+       with fake timers; 10 consecutive clean runs.
+167. Sign-in lives in the footer, not the header: it is for the few people who already have
+     an account, and the header's single call to action should stay on entering an event.
+
+## Noted, not changed
+
+168. `public/brand/logo.png` is **1.36 MB**, and it is in the footer of every page. That is
+     a real cost on mobile data for the community this is aimed at. It wants resizing to
+     roughly 600px wide — but it is a brand asset, so that is the owner's call rather than
+     something to do quietly.

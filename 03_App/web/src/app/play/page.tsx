@@ -46,6 +46,32 @@ export default async function PlayPage() {
 
   const me = await currentPlayer();
 
+  // Signed out. The board shows names, regions and age bands of real players — including
+  // children — so it is not something to render to an anonymous visitor.
+  if (!me) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-20">
+        <h1 className="font-display text-3xl">Find a game</h1>
+        <p className="mt-4 text-muted">
+          Sign in to see the board. It shows other players&apos; first names and regions, so
+          it isn&apos;t public.
+        </p>
+        <div className="mt-8">
+          <Link
+            href="/signin"
+            className="rounded-xl bg-kesri px-6 py-3 font-bold text-ink transition-colors hover:bg-kesrisoft"
+          >
+            Sign in
+          </Link>
+        </div>
+        <p className="mt-6 text-sm text-muted">
+          You get an account automatically when you enter an event — there&apos;s no separate
+          sign-up.
+        </p>
+      </div>
+    );
+  }
+
   // Under-16s need a guardian to switch the board on. They get an explanation and a
   // way to get it sorted, not a locked door.
   if (!canUseBoard(me)) {

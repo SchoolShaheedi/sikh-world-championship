@@ -33,7 +33,11 @@ import {
  */
 async function gate() {
   const me = await currentPlayer();
-  if (!canUseBoard(me)) throw new Error("The board is 16+ only.");
+  // Signed out is now a real state. Fail closed: no viewer, no access.
+  if (!me) throw new Error("You need to be signed in.");
+  if (!canUseBoard(me)) {
+    throw new Error("A parent or guardian needs to switch the board on for you first.");
+  }
   return me;
 }
 
@@ -175,7 +179,10 @@ export async function answerRequest(formData: FormData) {
 }
 
 export async function reportPlayer(formData: FormData) {
+  // Deliberately not behind gate(): you must be able to report someone even if your own
+  // board access has been revoked. But you do have to be signed in.
   const me = await currentPlayer();
+  if (!me) return { error: "You need to be signed in to report someone." };
   const reason = pick(REPORT_REASONS, formData.get("reason"));
   if (!reason) return { error: "Pick a reason." };
 
@@ -195,6 +202,7 @@ export async function reportPlayer(formData: FormData) {
 
 export async function blockAndHide(formData: FormData) {
   const me = await currentPlayer();
+  if (!me) return;
   await blockPlayer(me.id, String(formData.get("targetPlayerId")));
   revalidatePath("/play");
 }

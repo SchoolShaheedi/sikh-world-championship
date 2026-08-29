@@ -36,7 +36,7 @@ const STATUS_STYLE: Record<ReportStatus, string> = {
  */
 export default async function ModerationPage() {
   const me = await currentPlayer();
-  if (!me.isModerator) {
+  if (!me?.isModerator) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-20 text-center">
         <h1 className="font-display text-3xl">Moderators only</h1>

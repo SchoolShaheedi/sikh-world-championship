@@ -119,6 +119,10 @@ export function SiteFooter({ logoSrc = null }: { logoSrc?: string | null }) {
             <li><Link href="/safeguarding" className="text-body hover:text-kesri">Safety &amp; safeguarding</Link></li>
             <li><Link href="/support" className="text-body hover:text-kesri">Support &amp; report a problem</Link></li>
             <li><Link href="/sponsors" className="text-body hover:text-kesri">Sponsors</Link></li>
+            {/* In the footer rather than the header: signing in is for the handful of
+                people who already have an account, and the header's one call to action
+                should stay on entering an event. */}
+            <li><Link href="/signin" className="text-body hover:text-kesri">Sign in</Link></li>
             <li><span className="text-muted">{ORG.email}</span></li>
           </ul>
         </div>

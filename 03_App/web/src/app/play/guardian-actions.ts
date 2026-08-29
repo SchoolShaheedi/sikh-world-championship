@@ -14,6 +14,7 @@ import { rateLimit, LIMITS } from "@/lib/rate-limit";
  */
 export async function askGuardian(): Promise<{ ok: boolean; error?: string }> {
   const me = await currentPlayer();
+  if (!me) return { ok: false, error: "You need to be signed in." };
 
   if (me.ageBand !== "U16") return { ok: false, error: "Not needed." };
   if (!me.guardianEmail) {

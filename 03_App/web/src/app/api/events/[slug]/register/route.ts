@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import crypto from "node:crypto";
 import { getEvent } from "@/data/events";
 import { register } from "@/lib/store";
 import { validateRegistration } from "@/lib/registration-schema";
 import { registrationOpen, registrationDemo } from "@/lib/features";
+import { upsertPlayer, bandFor } from "@/lib/players";
 
 /**
  * Register for an event.
@@ -73,11 +73,33 @@ export async function POST(
     });
   }
 
+  /**
+   * The account is created here, as part of registering — decision 15: "account creation
+   * must be *part of* the registration flow, not a separate step before it. One form,
+   * account created at the end."
+   *
+   * The guardian email comes from this record and nowhere else. That is what makes the
+   * consent mechanism more than theatre: a child cannot type their own address into a
+   * field labelled "your parent's email" later on.
+   */
+  const a = result.answers;
+  const player = await upsertPlayer({
+    email: String(a.email),
+    displayName: String(a.fullName).split(" ")[0] || String(a.fullName),
+    ageBand: bandFor(result.age),
+    dateOfBirth: String(a.dob),
+    region: typeof a.region === "string" ? a.region : null,
+    avatarId: typeof a.avatarId === "string" ? a.avatarId : null,
+    gamertag: typeof a.psnId === "string" ? a.psnId : null,
+    guardianEmail:
+      result.age < 18 && typeof a.guardianEmail === "string" ? a.guardianEmail : null,
+  });
+
   const registration = await register({
     eventSlug: slug,
     divisionId,
     divisionCapacity: division.capacity,
-    playerId: crypto.randomUUID(),
+    playerId: player.id,
     // Only what the schema returned — never the raw body.
     answers: result.answers,
   });

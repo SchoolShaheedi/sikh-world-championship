@@ -234,3 +234,49 @@ export function guardianDecisionConfirmed(n: {
 
   return { subject, text, html };
 }
+
+
+/**
+ * The sign-in link.
+ *
+ * Short by design: it arrives seconds after someone clicked a button, so it needs to say
+ * what it is and get out of the way. The security note is there because a link that
+ * expires quickly looks broken to someone who comes back to it an hour later.
+ */
+export function signInLink(n: {
+  displayName: string;
+  url: string;
+  minutes: number;
+}): Rendered {
+  const subject = `Your sign-in link — ${BRAND}`;
+
+  const text = [
+    `${BRAND}`,
+    ``,
+    `Hi ${n.displayName},`,
+    ``,
+    `Here is your sign-in link. It works once and expires in ${n.minutes} minutes:`,
+    ``,
+    n.url,
+    ``,
+    `If you did not ask to sign in, you can ignore this — nobody can get into your account`,
+    `without this link, and it will stop working shortly.`,
+    ``,
+    `Questions: https://sikhchampionships.com/support`,
+  ].join("\n");
+
+  const html = wrap(
+    `Sign in to ${BRAND}`,
+    `<p style="margin:0 0 14px;">Hi ${n.displayName},</p>
+     <p style="margin:0 0 4px;">
+       Here is your sign-in link. It works once and expires in ${n.minutes} minutes.
+     </p>
+     ${button(n.url, "Sign in")}
+     <p style="margin:0;font-size:14px;color:#55554f;">
+       If you did not ask to sign in, ignore this. Nobody can get into your account without
+       this link, and it stops working shortly.
+     </p>`,
+  );
+
+  return { subject, text, html };
+}

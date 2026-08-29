@@ -1,15 +1,19 @@
 /**
- * TEMPORARY SESSION STUB.
+ * Who is asking.
  *
- * Accounts are a locked decision but auth isn't built yet, so the board needs someone to
- * be "you". This returns a fixed demo player.
+ * Everything that needs to know the viewer calls `currentPlayer()` and nothing else, which
+ * is what made replacing the stub a single-file change. It now resolves a real session
+ * cookie against the database.
  *
- * REPLACE BEFORE LAUNCH with the real session lookup (Supabase auth). Everything that
- * needs to know who the viewer is calls currentPlayer() and nothing else, so this is the
- * only file that changes.
+ * FAILS CLOSED. An unknown, expired or absent session is `null`, and every caller must
+ * handle that as "no access". The stub used to return a fixed player who was also a
+ * moderator, which made /moderation readable by anyone (round 24). Nothing here may ever
+ * invent a viewer again.
  */
-import type { AgeBand } from "./types";
+import { cookies } from "next/headers";
+import { SESSION_COOKIE, playerForSession } from "./auth";
 import { hasApproval } from "./guardian-store";
+import type { AgeBand } from "./types";
 
 export interface SessionPlayer {
   id: string;
@@ -31,44 +35,30 @@ export interface SessionPlayer {
 }
 
 /**
- * Moderator access, while auth is still a stub.
+ * The signed-in player, or null.
  *
- * DENY BY DEFAULT. This used to return `true` unconditionally, which made /moderation —
- * the page that renders safeguarding disclosures, reporter identities and parents' email
- * addresses — readable by anyone who typed the URL. A stub that fails open is a data
- * breach waiting for a deploy.
- *
- * To work on the page locally: SWC_DEV_MODERATOR=1 npm run dev
- * It is refused in production even if the variable is set, so the opt-in cannot escape
- * a developer's machine. Delete this whole function when real auth lands.
+ * Returns null rather than throwing: most callers want to render a signed-out view, and
+ * an exception would turn "not signed in" into a 500.
  */
-function stubModeratorAccess(): boolean {
-  if (process.env.NODE_ENV === "production") return false;
-  return process.env.SWC_DEV_MODERATOR === "1";
-}
-
-/**
- * Flip `ageBand` to "U16" (and set a guardianEmail) to see the under-16 board and the
- * guardian-consent gate while developing.
- */
-export async function currentPlayer(): Promise<SessionPlayer> {
-  const id = "demo-player-1";
-  const ageBand: AgeBand = "16+";
+export async function currentPlayer(): Promise<SessionPlayer | null> {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  const player = await playerForSession(token);
+  if (!player) return null;
 
   return {
-    id,
-    displayName: "Jagdeep",
-    ageBand,
-    region: "Birmingham",
-    avatarId: "kesri-1",
-    gamertag: "jagdeep_10",
-    eventVerified: true,
-    // Read from the approval store rather than hardcoded, so revoking permission takes
-    // effect immediately — that's what makes "you can withdraw at any time" true.
+    id: player.id,
+    displayName: player.displayName,
+    ageBand: player.ageBand,
+    region: player.region ?? "",
+    avatarId: player.avatarId ?? "kesri-1",
+    gamertag: player.gamertag ?? "",
+    eventVerified: player.eventVerified,
+    // Read live rather than cached, so revoking permission takes effect immediately —
+    // that is what makes "you can withdraw at any time" true.
     guardianApprovedForBoard:
-      ageBand === "16+" ? true : await hasApproval(id),
-    guardianEmail: ageBand === "16+" ? null : "parent@example.com",
-    isModerator: stubModeratorAccess(),
+      player.ageBand === "16+" ? true : await hasApproval(player.id),
+    guardianEmail: player.ageBand === "16+" ? null : player.guardianEmail,
+    isModerator: player.isModerator,
   };
 }
 

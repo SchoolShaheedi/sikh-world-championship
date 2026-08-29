@@ -32,12 +32,10 @@ export async function submitTicket(formData: FormData) {
   }
 
   // Signing in is optional here — see support-types.ts for why.
-  let playerId: string | null = null;
-  try {
-    playerId = (await currentPlayer()).id;
-  } catch {
-    playerId = null;
-  }
+  // Signing in is optional here — see support-types.ts for why. The most important
+  // message this system will ever receive is from a parent who has never logged in.
+  const me = await currentPlayer();
+  const playerId = me?.id ?? null;
 
   const ticket = await createTicket({
     category: categoryId as SupportCategoryId,

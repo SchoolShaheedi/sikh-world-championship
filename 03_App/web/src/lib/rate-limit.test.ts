@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { rateLimit, resetRateLimits, LIMITS } from "./rate-limit";
 
 beforeEach(resetRateLimits);
@@ -23,15 +23,19 @@ describe("rateLimit", () => {
   });
 
   it("forgives once the window has passed", () => {
-    expect(rateLimit("k", 1, 1).ok).toBe(true);
-    expect(rateLimit("k", 1, 1).ok).toBe(false);
-    // A 1ms window has already elapsed by the next tick.
-    return new Promise<void>((resolve) =>
-      setTimeout(() => {
-        expect(rateLimit("k", 1, 1).ok).toBe(true);
-        resolve();
-      }, 5),
-    );
+    // Fake timers, not a real sleep. The first version used a 1ms window and a setTimeout,
+    // which meant the window could elapse *between* the two calls that assert refusal —
+    // so the test failed roughly one run in three. Controlling the clock makes it exact.
+    vi.useFakeTimers();
+    try {
+      expect(rateLimit("k", 1, 60_000).ok).toBe(true);
+      expect(rateLimit("k", 1, 60_000).ok).toBe(false);
+
+      vi.advanceTimersByTime(60_001);
+      expect(rateLimit("k", 1, 60_000).ok).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("keeps the support limit loose enough for a worried parent to double-submit", () => {

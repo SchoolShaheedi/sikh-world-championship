@@ -78,4 +78,11 @@ export const LIMITS = {
    * from us, not from them. Three is enough for a genuine "did that send?" retry.
    */
   guardianApproval: { limit: 3, windowMs: 60 * 60 * 1000 },
+
+  /**
+   * Sign-in links per IP. Loose enough for a household sharing a connection — several
+   * siblings signing in at once is normal here — while still stopping someone spraying
+   * links at an address they do not own.
+   */
+  signInLink: { limit: 8, windowMs: 15 * 60 * 1000 },
 } as const;
