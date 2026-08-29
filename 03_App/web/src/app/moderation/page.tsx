@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { currentPlayer } from "@/lib/session";
 import { allReports, moderationHealth } from "@/lib/play-store";
 import { allTickets, supportHealth } from "@/lib/support-store";
+import { failedSends } from "@/lib/email";
 import { categoryById } from "@/lib/support-types";
 import type { ReportStatus } from "@/lib/play-types";
 import { handleReport, handleTicket } from "./actions";
@@ -44,11 +45,12 @@ export default async function ModerationPage() {
     );
   }
 
-  const [reports, health, tickets, sHealth] = await Promise.all([
+  const [reports, health, tickets, sHealth, failedEmails] = await Promise.all([
     allReports(),
     moderationHealth(),
     allTickets(),
     supportHealth(),
+    failedSends(),
   ]);
 
   // Urgent support tickets are safety concerns and player reports raised through the
@@ -64,6 +66,43 @@ export default async function ModerationPage() {
       <p className="mt-3 text-muted">
         Every report, oldest unhandled first. Claim one before you work it.
       </p>
+
+      {/* A guardian notification that did not send is a SAFEGUARDING INCIDENT, not an ops
+          detail: the connection happened and the one person who should know does not.
+          It goes above the queue because it is more urgent than anything in it — nobody
+          reported this, and nobody will. */}
+      {failedEmails.length > 0 && (
+        <div
+          role="alert"
+          className="mt-8 rounded-2xl border-2 border-kesri/60 bg-kesri/[0.10] p-5"
+        >
+          <h2 className="font-display text-lg text-kesri">
+            {failedEmails.length} notification{failedEmails.length === 1 ? "" : "s"} did not
+            send
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Nobody has been told. If any of these is a guardian notice, contact the parent
+            directly — do not wait for a retry.
+          </p>
+          <ul className="mt-4 space-y-2.5">
+            {failedEmails.slice(0, 10).map((f) => (
+              <li key={f.id} className="rounded-xl border border-line bg-surface/60 p-3 text-sm">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="font-semibold text-body">{f.kind}</span>
+                  <span className="text-muted">{f.toEmail}</span>
+                  {f.attempts > 1 && (
+                    <span className="text-xs text-kesri">{f.attempts} attempts</span>
+                  )}
+                  <span className="ml-auto text-xs text-muted">
+                    {new Date(f.createdAt).toLocaleString("en-GB")}
+                  </span>
+                </div>
+                {f.error && <p className="mt-1.5 text-xs text-muted">{f.error}</p>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* The health numbers. If the oldest open report is measured in days, the rota has
           stopped working — and that's the failure mode that kills these platforms. */}

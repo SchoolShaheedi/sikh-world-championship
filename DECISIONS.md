@@ -1236,3 +1236,46 @@ exists to prevent, and it is worth fixing there too.
      Without it, guardian notifications are far more likely to be filed as spam — and a
      safeguarding email that silently lands in junk is worse than one never promised.
 150. Mail sender confirmed as `no-reply@sikhchampionships.com`.
+
+
+---
+
+# Round 34 (2026-08-29) — Guardian emails send; share image
+
+151. **`notify.ts` sends real email, via Resend.** The stub that only logged is gone, and
+     with it the gap between what /safeguarding promised and what the code did.
+     `no-reply@sikhchampionships.com`, domain verified, EU-West-1.
+152. **Every send is recorded in `email_sends`** — the standing TODO: "record that it was
+     sent so we can prove the notification happened if a guardian ever asks". A
+     safeguarding promise you cannot evidence is one you cannot defend.
+     The table stores kind, recipient, subject, status, provider id, error and attempt
+     count — **never the message body**. The kind and context show what was sent; keeping
+     rendered text would copy a child's name into another table for no gain.
+153. **Sending never throws at the caller.** An email failure must not roll back the thing
+     that triggered it: a guardian approval that succeeded but reported an error would
+     leave the child locked out for a reason nobody can see.
+154. **Failed sends are surfaced at the top of /moderation**, above the report queue,
+     because a guardian notification that did not send is a safeguarding incident rather
+     than an ops detail — the connection happened and the one person who should know does
+     not. Nobody reports this, and nobody will.
+155. **A missing API key records a failure rather than a silent success.** That is exactly
+     how the old stub hid the fact that nothing sent.
+156. **Idempotent by event, not by time.** A re-render or double submit cannot email a
+     parent twice — but a FAILED send stays retryable, or a notification lost to a blip
+     would be lost forever.
+157. **Two notifications still cannot send, and say so.** `notifyRequestReceived` and
+     `notifyChildOfDecision` take a `playerId`, and there is no accounts system to look an
+     address up in. They record the attempt as a failure reading "no email address on
+     record — player accounts do not exist yet", so it appears in the moderation queue
+     instead of vanishing. They start working when accounts do.
+158. **Open Graph image added.** Shares previously rendered a grey triangle: there was no
+     `og:image`, and no `metadataBase`, without which Next emits a relative image URL that
+     every scraper ignores. Generated with `next/og` rather than a static file so the
+     wordmark and tagline stay in step with `org.ts` — which matters while the
+     Championship/Championships naming is still unsettled. Verified rendering in workerd
+     before deploying, then live: a real 1200×630 PNG.
+     It does **not** use the new logo, because the full lockup has not been saved to
+     `public/brand/logo.png` yet. Once it is, it can be composited in.
+159. **`robots: { index: false }`** while entries are closed and the safeguarding leads are
+     unnamed. There is nothing here worth indexing yet, and a search result pointing at a
+     page naming "TBC" as the safeguarding contact is worse than no search result.

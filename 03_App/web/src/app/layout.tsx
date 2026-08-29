@@ -35,12 +35,39 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
+/**
+ * `metadataBase` is required for the Open Graph image to work at all: without it Next
+ * emits a relative og:image URL, and every scraper ignores it. That is why shares
+ * rendered a grey triangle rather than anything of ours.
+ *
+ * Falls back to the production origin rather than localhost, so a preview build still
+ * produces shareable URLs instead of links to someone's laptop.
+ */
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://sikhchampionships.com";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: `${ORG.name} — ${ORG.tagline}`,
     template: `%s · ${ORG.short}`,
   },
   description: ORG.intro,
+  openGraph: {
+    type: "website",
+    siteName: ORG.name,
+    title: `${ORG.name} — ${ORG.tagline}`,
+    description: ORG.intro,
+    url: SITE_URL,
+    locale: "en_GB",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${ORG.name} — ${ORG.tagline}`,
+    description: ORG.intro,
+  },
+  // The site is not open for entries and the safeguarding leads are still unnamed, so
+  // there is nothing here worth indexing yet. Flip this when entries open.
+  robots: { index: false, follow: true },
 };
 
 export default function RootLayout({

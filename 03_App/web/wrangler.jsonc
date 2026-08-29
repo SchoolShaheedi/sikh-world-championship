@@ -8,7 +8,10 @@
     // Preview for the planning team: the sign-up form renders and validates for real,
     // but the write is skipped and every screen says so. NOT a substitute for opening
     // entries — that needs SWC_REGISTRATION_OPEN and a safeguarding decision.
-    "SWC_REGISTRATION_DEMO": "true"
+    "SWC_REGISTRATION_DEMO": "true",
+    // Sender for every guardian notification. The domain is verified in Resend
+    // (EU-West-1). Not a secret — the API key is, and that is set separately.
+    "MAIL_FROM": "Sikh World Championship <no-reply@sikhchampionships.com>"
   },
   // Custom domains, not routes. A route only matches requests that already reach
   // Cloudflare; it does NOT create a DNS record — which is why the site returned

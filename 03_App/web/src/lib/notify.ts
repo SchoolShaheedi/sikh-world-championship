@@ -1,10 +1,23 @@
 /**
- * Notifications — STUB. Logs instead of sending.
+ * Notifications.
  *
- * REPLACE BEFORE LAUNCH. The guardian notification in particular is a safeguarding
- * commitment we make publicly on /safeguarding, so it must actually send. Until it does,
- * under-16 board access should not be switched on for real players.
+ * These used to be `console.info` and nothing else, which meant the guardian notification
+ * promised publicly on /safeguarding did not exist. It does now, via Resend.
+ *
+ * WHAT STILL CANNOT SEND, AND WHY THAT IS SAID OUT LOUD:
+ * two of these take a `playerId`, not an address, and there is no accounts system to look
+ * an address up in (`session.ts` is still a stub). Rather than pretend, they record the
+ * attempt as a failure with a clear reason, so it shows up in the moderation queue instead
+ * of vanishing. They start working when accounts do.
  */
+import crypto from "node:crypto";
+import { sendEmail } from "./email";
+import {
+  guardianApprovalRequest,
+  guardianConnectionNotice,
+  guardianDecisionConfirmed,
+} from "./email-templates";
+import { getDb } from "./db";
 
 export interface GuardianConnectionNotice {
   guardianEmail: string;
@@ -23,21 +36,56 @@ export interface GuardianConnectionNotice {
 export async function notifyGuardianOfConnection(
   n: GuardianConnectionNotice,
 ): Promise<void> {
-  console.info(
-    `[guardian-notice] to=${n.guardianEmail} child=${n.childDisplayName} ` +
-      `connected-with=${n.otherPlayerName} (${n.otherPlayerRegion}) ` +
-      `game=${n.game} window=${n.when}`,
-  );
-  // TODO: send via the real mail provider, and record that it was sent so we can prove
-  // the notification happened if a guardian ever asks.
+  const t = guardianConnectionNotice(n);
+  await sendEmail({
+    kind: "guardian-connection",
+    to: n.guardianEmail,
+    ...t,
+    // One notice per child per counterpart per window. A page re-render or a double
+    // submit must not email a parent twice about the same game.
+    idempotencyKey: `guardian-connection:${n.guardianEmail}:${n.childDisplayName}:${n.otherPlayerName}:${n.when}`,
+  });
+}
+
+/**
+ * Neither of the two player-addressed notifications can send yet.
+ *
+ * Recorded rather than dropped: a moderator seeing "no email address on record" in the
+ * failed queue is how this gets noticed, instead of everyone assuming it works.
+ */
+async function recordUnsendable(kind: string, playerId: string, note: string): Promise<void> {
+  console.warn(`[notify] ${kind} for player=${playerId}: ${note}`);
+  const db = await getDb();
+  const now = new Date().toISOString();
+  await db
+    .prepare(
+      `INSERT INTO email_sends
+         (id, kind, to_email, subject, status, error, attempts, created_at, idempotency_key)
+       VALUES (?,?,?,?,'failed',?,1,?,?)
+       ON CONFLICT(idempotency_key) DO UPDATE SET attempts = email_sends.attempts + 1`,
+    )
+    .bind(
+      crypto.randomUUID(),
+      kind,
+      `player:${playerId}`,
+      "(not sent)",
+      note,
+      now,
+      `${kind}:${playerId}:${now}`,
+    )
+    .run();
 }
 
 export async function notifyRequestReceived(
   toPlayerId: string,
   fromDisplayName: string,
 ): Promise<void> {
-  console.info(`[request-notice] to=${toPlayerId} from=${fromDisplayName}`);
-  // TODO: email/push. Without this the board only works for people who happen to visit.
+  await recordUnsendable(
+    "request-received",
+    toPlayerId,
+    `No email address on record for this player (${fromDisplayName} sent them a request). ` +
+      `Player accounts do not exist yet — src/lib/session.ts is a stub.`,
+  );
 }
 
 export interface GuardianApprovalRequest {
@@ -50,12 +98,15 @@ export interface GuardianApprovalRequest {
 export async function notifyGuardianApprovalRequest(
   n: GuardianApprovalRequest,
 ): Promise<void> {
-  console.info(
-    `[guardian-approval-request] to=${n.guardianEmail} ` +
-      `child=${n.childDisplayName} url=${n.approvalUrl}`,
-  );
-  // TODO: real email. Must clearly identify Sikh World Championship, name the child, and
-  // explain what's being asked — a bare link from an unknown sender gets deleted.
+  const t = guardianApprovalRequest(n);
+  await sendEmail({
+    kind: "guardian-approval-request",
+    to: n.guardianEmail,
+    ...t,
+    // Keyed on the approval token: asking again mints a new token, which is a genuinely
+    // new email, while a retry of the same request is not.
+    idempotencyKey: `guardian-approval-request:${n.approvalUrl}`,
+  });
 }
 
 /** Sent to the guardian confirming their own decision, so a change they didn't make is visible. */
@@ -64,9 +115,13 @@ export async function notifyGuardianDecisionConfirmed(
   childDisplayName: string,
   decision: string,
 ): Promise<void> {
-  console.info(
-    `[guardian-decision] to=${guardianEmail} child=${childDisplayName} decision=${decision}`,
-  );
+  const t = guardianDecisionConfirmed({ childDisplayName, decision });
+  await sendEmail({
+    kind: "guardian-decision",
+    to: guardianEmail,
+    ...t,
+    idempotencyKey: `guardian-decision:${guardianEmail}:${childDisplayName}:${decision}`,
+  });
 }
 
 /** Sent to the child so they know where they stand without having to ask. */
@@ -74,5 +129,10 @@ export async function notifyChildOfDecision(
   playerId: string,
   decision: string,
 ): Promise<void> {
-  console.info(`[child-decision-notice] player=${playerId} decision=${decision}`);
+  await recordUnsendable(
+    "child-decision",
+    playerId,
+    `No email address on record for this player (decision: ${decision}). ` +
+      `Player accounts do not exist yet — src/lib/session.ts is a stub.`,
+  );
 }
