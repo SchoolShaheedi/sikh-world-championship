@@ -1132,3 +1132,20 @@ exists to prevent, and it is worth fixing there too.
 134. Still open, unchanged: guardian notification emails do not send, no scheduled job calls
      the purge functions, DBS checks not started, and `sikhchampionships.com` is not
      attached.
+
+
+---
+
+# Round 31 (2026-08-28) — Custom domain, not a Worker route
+
+135. **`sikhchampionships.com` returned `DNS_PROBE_FINISHED_NXDOMAIN`.** Nameservers were
+     correctly on Cloudflare (`phil`/`zita.ns.cloudflare.com`), but the zone had **no
+     A/AAAA record at all** — `dig` returned `NOERROR, ANSWER: 0` for both the apex and
+     `www`. The registrar's parking records had been deleted (correctly) and nothing
+     replaced them.
+136. **A Workers Route was the wrong tool.** A route only matches requests that already
+     reach Cloudflare; it does **not** create a DNS record, so adding one to an empty zone
+     changes nothing a browser can see. Routes are for putting a Worker in front of an
+     existing origin on particular paths. Here the Worker *is* the origin.
+     **Custom Domains** create the DNS record and the certificate, and are now declared in
+     `wrangler.jsonc` so a deploy attaches them rather than relying on dashboard state.

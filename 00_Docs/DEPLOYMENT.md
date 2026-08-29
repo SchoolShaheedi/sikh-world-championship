@@ -60,15 +60,17 @@ cd 03_App/web
 npx wrangler deploy   # after adding the routes block below to wrangler.jsonc
 ```
 
-Add to `wrangler.jsonc` once the zone is active — **not before**, since a route for a
-nonexistent zone fails the deploy:
+This is now declared in `wrangler.jsonc`, so a deploy attaches it.
 
-```jsonc
-"routes": [
-  { "pattern": "sikhchampionships.com",     "custom_domain": true },
-  { "pattern": "www.sikhchampionships.com", "custom_domain": true }
-]
-```
+**Custom domains, not routes.** A Workers *Route* only matches requests that already
+reach Cloudflare — it does **not** create a DNS record. Deleting the registrar's parking
+records without adding a custom domain leaves the zone with no A/AAAA record at all, and
+the site returns `DNS_PROBE_FINISHED_NXDOMAIN`. That happened here. A *custom domain*
+creates both the DNS record and the certificate, and is the right shape when the Worker
+is itself the origin rather than sitting in front of one.
+
+Via the dashboard instead: Workers & Pages → the Worker → Settings → Domains & Routes →
+Add → Custom Domain.
 
 5. **Set the real origin**, or guardian approval links will point at localhost:
 

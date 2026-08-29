@@ -10,6 +10,14 @@
     // entries — that needs SWC_REGISTRATION_OPEN and a safeguarding decision.
     "SWC_REGISTRATION_DEMO": "true"
   },
+  // Custom domains, not routes. A route only matches requests that already reach
+  // Cloudflare; it does NOT create a DNS record — which is why the site returned
+  // NXDOMAIN after the parking records were deleted. custom_domain creates the DNS
+  // record and the certificate, and this Worker IS the origin, so it is the right shape.
+  "routes": [
+    { "pattern": "sikhchampionships.com", "custom_domain": true },
+    { "pattern": "www.sikhchampionships.com", "custom_domain": true }
+  ],
   "d1_databases": [
     {
       "binding": "swc_production",
