@@ -1149,3 +1149,43 @@ exists to prevent, and it is worth fixing there too.
      existing origin on particular paths. Here the Worker *is* the origin.
      **Custom Domains** create the DNS record and the certificate, and are now declared in
      `wrangler.jsonc` so a deploy attaches them rather than relying on dashboard state.
+
+
+---
+
+# Round 32 (2026-08-29) — Live on the domain; canonical host settled
+
+137. **Live at https://sikhchampionships.com**, D1 bound, logo rendering. Custom domains
+     declared in `wrangler.jsonc` so a deploy attaches them.
+138. **"Always Use HTTPS" enabled** via the API. The certificate had been valid all along —
+     the problem was narrower than it looked: `http://` returned 200 instead of redirecting,
+     so typing the bare domain left you on HTTP and the browser said "Not Secure".
+139. **Canonical host: the apex, `sikhchampionships.com`.** Both hosts were serving the
+     site, which is duplicate content — search engines guess which is authoritative, links
+     and shares split between the two, and anything host-scoped (cookies, analytics, an
+     eventual login session) silently forks in half.
+     Apex over www because the name goes on posters, flyers and social bios for a community
+     event, and the shortest thing a person can be told to type wins. Cloudflare handles
+     apex records, so the old technical argument for www does not apply.
+     Implemented as a Next redirect in `next.config.ts` rather than a Cloudflare Redirect
+     Rule, so it is version-controlled and reviewable rather than dashboard state nobody
+     remembers setting. (The API token also lacks Rulesets edit.)
+     **Bug caught while verifying:** `source: "/:path*"` leaves the literal `:path*` in the
+     destination when it matches the bare root, so `www.sikhchampionships.com` redirected to
+     `https://sikhchampionships.com/:path*`. Sub-paths were fine; only the root was broken.
+     Fixed with a separate rule for `/` plus `/:path+` for the rest.
+140. **Resend configured and verified**, EU-West-1 (Ireland) — the right region for UK
+     children's data. DKIM present, `send.` subdomain carrying SPF and the bounce MX.
+     **Still missing: a DMARC record.** Without it guardian notifications are far more
+     likely to be filed as spam, and a safeguarding email that silently lands in junk is
+     worse than one never promised.
+
+## Credential hygiene
+
+141. Both API keys (Cloudflare and Resend) were surfaced in full in a chat transcript.
+     Nothing went wrong, but a live credential to an account holding children's data should
+     not persist after being logged somewhere it was not meant to be. Rotate both.
+142. The `RESEND_API_KEY` line in `.envrc.local` was missing `export`, so it was never
+     reaching any process. The Cloudflare token line had also been left commented out.
+     Both fixed — worth knowing as a pattern: a value present in the file is not the same
+     as a value in the environment.
