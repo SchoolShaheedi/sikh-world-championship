@@ -1,0 +1,17 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "swc-retention",
+  "main": "index.ts",
+  "compatibility_date": "2026-08-27",
+  "compatibility_flags": ["nodejs_compat"],
+  // 03:15 UTC daily — quiet hours, and off the hour so it does not contend with every
+  // other cron on the platform.
+  "triggers": { "crons": ["15 3 * * *"] },
+  "d1_databases": [
+    {
+      "binding": "swc_production",
+      "database_name": "swc-production",
+      "database_id": "1954aed5-0c12-43b9-ab9b-f5a76d784f69"
+    }
+  ]
+}

@@ -26,14 +26,20 @@ export interface Stmt {
   run(): Promise<unknown>;
 }
 
-let testDb: Db | null = null;
+let override: Db | null = null;
 
 /**
- * Point the stores at an in-process SQLite database. Tests only — mirrors how
- * SWC_DATA_DIR redirected the JSON stores, so `useTempDataDir()` keeps working.
+ * Supply the database directly, instead of resolving it from the Cloudflare request
+ * context. Two callers:
+ *
+ *  - tests, which pass an in-process SQLite database (see test-helpers.ts)
+ *  - the retention worker, which is a plain Cron worker with no OpenNext context, so it
+ *    hands over `env.swc_production` itself
+ *
+ * Pass null to go back to resolving from the request context.
  */
-export function __setTestDb(db: Db | null): void {
-  testDb = db;
+export function setDb(db: Db | null): void {
+  override = db;
 }
 
 /**
@@ -56,7 +62,7 @@ async function cloudflareDb(): Promise<Db> {
 }
 
 export async function getDb(): Promise<Db> {
-  if (testDb) return testDb;
+  if (override) return override;
   return cloudflareDb();
 }
 

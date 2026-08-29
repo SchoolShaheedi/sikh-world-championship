@@ -82,6 +82,34 @@ npx wrangler secret put NEXT_PUBLIC_SITE_URL   # https://sikhchampionships.com
 > register `sikhworldchampionship.com`. Decide which is canonical and redirect the other;
 > having both live and unlinked is worse than either alone.
 
+## The retention worker
+
+A **second, separate worker** (`03_App/web/workers/retention/`), on a daily cron at
+`15 3 * * *`. It applies `04_Legal/RETENTION-POLICY.md`: deletes medical fields 30 days
+after an event, clears check-in tokens after 1 day, and writes an audit row for each.
+
+Separate from the website on purpose. It deletes children's data, so it should be
+deployable and reviewable on its own — a mistake there cannot take the site down, and a
+bad site deploy cannot silently stop the deletions. It shares `applyRetention()` and the
+stores with the app, so the two cannot drift.
+
+```bash
+cd 03_App/web/workers/retention
+npx wrangler deploy
+npx wrangler tail                     # watch a real run
+# fire it locally against the app's D1 state:
+npx wrangler dev --test-scheduled --persist-to ../../.wrangler/state
+curl http://localhost:8787/__scheduled
+```
+
+> Each wrangler config keeps its **own** local D1 state, so without `--persist-to` the
+> retention worker sees an empty database locally and reports "nothing due".
+
+**It deletes nothing until an event has a date.** `sikh-fifa-26` has `date: null`, so
+today every run logs a skip. That is deliberate — guessing a date would either destroy a
+child's medical details before the first aider read them, or hold them long past the
+policy.
+
 ## What was set up
 
 Hosting target is Cloudflare, via the OpenNext adapter (`@opennextjs/cloudflare`). A Next

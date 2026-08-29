@@ -1189,3 +1189,50 @@ exists to prevent, and it is worth fixing there too.
      reaching any process. The Cloudflare token line had also been left commented out.
      Both fixed — worth knowing as a pattern: a value present in the file is not the same
      as a value in the environment.
+
+
+---
+
+# Round 33 (2026-08-29) — Retention job; DMARC still blocked
+
+143. **Scheduled retention worker built and deployed** — `swc-retention`, daily at
+     `15 3 * * *`. Deletes medical fields 30 days after an event, clears check-in tokens
+     after 1 day, and writes an audit row for every action.
+     **DPIA risk #8 ("data kept indefinitely") is now closed in code.**
+144. **Deliberately a separate worker from the website.** It deletes children's data, so it
+     should be deployable, rollback-able and reviewable on its own: a mistake there cannot
+     take the site down, and a bad site deploy cannot silently stop the deletions. It also
+     avoids wrapping OpenNext's generated worker to bolt on a `scheduled` handler, which
+     would couple us to generated output. The logic itself is shared with the app
+     (`applyRetention()` and the stores), so the two cannot drift.
+145. **It refuses to act on an undated event, loudly.** `sikh-fifa-26` has `date: null`, so
+     every run currently logs
+     `SKIPPED sikh-fifa-26 — No event date set, so nothing can be measured from.`
+     Guessing would mean either destroying a child's medical details before the first aider
+     had read them, or holding them long past the policy. Neither is acceptable, so the job
+     says so instead of assuming. **It starts working the day a date is set.**
+146. **Everything is anchored to the EVENT date, never to row creation or "now".** A
+     registration's medical notes exist for the event; the clock starts when the event
+     happens. Tested with two events whose rows were written at the same moment — only the
+     past one is purged.
+147. **The audit table holds no personal data**, so it never needs purging itself. There is
+     a test asserting that no name, email, phone or medical string can leak into it.
+148. **Verified end to end**, not just unit tested: with a temporary event date 60 days
+     back, a real run against a real D1 left `medical`, `medical_conditions` and
+     `check_in_token` all NULL, `medical_purged_at` stamped, the registration's reference
+     and name intact, and two audit rows written. The temporary date was reverted and the
+     remote database confirmed untouched (0 registrations, 0 runs).
+     A gotcha worth recording: **each wrangler config keeps its own local D1 state**, so
+     the retention worker sees an empty database locally unless run with
+     `--persist-to ../../.wrangler/state`.
+
+## Still blocked on access
+
+149. **DMARC is still not set.** The rotated API token reports `active` and can see the
+     zone, but both DNS read and write return `Authentication error` — so
+     Zone → DNS → Edit did not land on this token, most likely because the rotation created
+     a fresh one without it. The record to add by hand:
+     `_dmarc` TXT → `v=DMARC1; p=none; rua=mailto:media@shaheedibunga.com; fo=1`
+     Without it, guardian notifications are far more likely to be filed as spam — and a
+     safeguarding email that silently lands in junk is worse than one never promised.
+150. Mail sender confirmed as `no-reply@sikhchampionships.com`.

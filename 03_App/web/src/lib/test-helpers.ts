@@ -9,7 +9,7 @@
  * The principle is unchanged and worth restating: tests must never touch real data. A
  * test suite people are afraid to run is a test suite nobody runs.
  */
-import { __setTestDb } from "./db";
+import { setDb } from "./db";
 import { createTestDb } from "./test-db";
 
 let current: (ReturnType<typeof createTestDb>) | null = null;
@@ -24,7 +24,7 @@ let current: (ReturnType<typeof createTestDb>) | null = null;
 function freshDb(): void {
   current?.close();
   current = createTestDb();
-  __setTestDb(current);
+  setDb(current);
 }
 
 export async function useTempDataDir(): Promise<string> {
