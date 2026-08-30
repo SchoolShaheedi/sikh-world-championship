@@ -48,7 +48,7 @@ export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {
             );
           })}
           <Link
-            href="/events/sikh-fifa-26/signup"
+            href="/events/sikh-fc-27/signup"
             className="pill ml-2 bg-kesri px-5 py-2 text-sm font-bold text-ink transition-colors hover:bg-kesrisoft"
           >
             Sign up
@@ -79,7 +79,7 @@ export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {
             </Link>
           ))}
           <Link
-            href="/events/sikh-fifa-26/signup"
+            href="/events/sikh-fc-27/signup"
             onClick={() => setOpen(false)}
             className="mt-4 block rounded-full bg-kesri px-4 py-3 text-center font-bold text-ink"
           >
@@ -107,8 +107,8 @@ export function SiteFooter({ logoSrc = null }: { logoSrc?: string | null }) {
           <h3 className="text-xs font-bold tracking-[0.18em] text-muted">EVENTS</h3>
           <ul className="mt-3 space-y-2 text-sm">
             <li><Link href="/events" className="text-body hover:text-kesri">All events</Link></li>
-            <li><Link href="/events/sikh-fifa-26" className="text-body hover:text-kesri">Sikh FIFA 26</Link></li>
-            <li><Link href="/events/sikh-fifa-26/bracket" className="text-body hover:text-kesri">Live bracket</Link></li>
+            <li><Link href="/events/sikh-fc-27" className="text-body hover:text-kesri">Sikh FC 27</Link></li>
+            <li><Link href="/events/sikh-fc-27/bracket" className="text-body hover:text-kesri">Live bracket</Link></li>
             <li><Link href="/volunteer" className="text-body hover:text-kesri">Volunteer with us</Link></li>
           </ul>
         </div>

@@ -3,7 +3,7 @@
  *
  * The one that matters most is "an undated event deletes nothing". Getting that wrong
  * means either destroying a child's medical details before the first aider has read them,
- * or keeping them long past the policy — and `sikh-fifa-26` has no date set today, so this
+ * or keeping them long past the policy — and `sikh-fc-27` has no date set today, so this
  * is the live case, not a hypothetical.
  */
 import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";

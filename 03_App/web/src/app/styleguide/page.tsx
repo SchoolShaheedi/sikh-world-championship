@@ -60,7 +60,7 @@ export default function StyleguidePage() {
               division="16+"
               region="Birmingham"
               avatarId="kesri-1"
-              eventTitle="FIFA 26"
+              eventTitle="FC 27"
               seed={seed}
               tier={tier}
             />

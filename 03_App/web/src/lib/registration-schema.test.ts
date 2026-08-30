@@ -9,15 +9,29 @@ import { describe, it, expect } from "vitest";
 import { validateRegistration, ageOnEventDay } from "./registration-schema";
 import { getEvent } from "@/data/events";
 
-const event = getEvent("sikh-fifa-26")!;
+const event = getEvent("sikh-fc-27")!;
 const division = event.divisions[0];
+
+/**
+ * A synthetic event spanning every guardian tier.
+ *
+ * The guardian tiers are generic logic, but event 1 only admits ages 12 to 21, so its own
+ * division can never reach the under-12 "guardian on site" tier. Testing the tiers against
+ * the real event would silently drop that coverage the moment an age range changes — which
+ * is exactly what happened when the event became FC 27 for ages 12–21.
+ */
+const wideEvent = {
+  ...event,
+  divisions: [{ id: "open", name: "Open", minAge: 8, maxAge: 99, capacity: 64 }],
+};
+const wideDivision = wideEvent.divisions[0];
 
 /** A complete, valid adult submission. Tests override single keys off this. */
 function adult(over: Record<string, unknown> = {}) {
   return {
     divisionId: "open",
     fullName: "Real User",
-    dob: "1995-04-10",
+    dob: "2006-04-10",
     email: "real@example.com",
     mobile: "07700 900123",
     rulesAgreed: true,
@@ -44,7 +58,7 @@ const guardianContact = {
 /** A complete 8–11 submission: guardian stays on site. */
 function onSite(over: Record<string, unknown> = {}) {
   return adult({
-    dob: "2017-05-02",
+    dob: "2017-05-02", // 9 — needs wideEvent
     ...guardianContact,
     guardianOnSite: true,
     skill: "First time competing",
@@ -88,13 +102,13 @@ describe("ageOnEventDay", () => {
 
 describe("guardian tiers", () => {
   it("accepts each tier when its own block is complete", () => {
-    expect(validateRegistration(event, division, onSite()).ok).toBe(true);
+    expect(validateRegistration(wideEvent, wideDivision, onSite()).ok).toBe(true);
     expect(validateRegistration(event, division, dropOff()).ok).toBe(true);
     expect(validateRegistration(event, division, independent()).ok).toBe(true);
   });
 
   it("REJECTS any under-18 with no guardian details at all", () => {
-    const r = validateRegistration(event, division, adult({ dob: "2016-01-01" }));
+    const r = validateRegistration(event, division, adult({ dob: "2013-01-01" }));
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.fieldErrors).toHaveProperty("guardianEmail");
@@ -109,7 +123,7 @@ describe("guardian tiers", () => {
   });
 
   it("requires the on-site promise from an under-12, and nothing weaker", () => {
-    const r = validateRegistration(event, division, onSite({ guardianOnSite: false }));
+    const r = validateRegistration(wideEvent, wideDivision, onSite({ guardianOnSite: false }));
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.fieldErrors?.guardianOnSite).toMatch(/under 12/i);
@@ -119,7 +133,7 @@ describe("guardian tiers", () => {
     // A guardian who is present does the collecting; asking again is noise.
     const body = onSite();
     delete (body as Record<string, unknown>).guardianDistance;
-    expect(validateRegistration(event, division, body).ok).toBe(true);
+    expect(validateRegistration(wideEvent, wideDivision, body).ok).toBe(true);
   });
 
   it("requires drop-off AND a distance from a 12–15", () => {
@@ -161,7 +175,7 @@ describe("guardian tiers", () => {
 
   it("treats a 17-year-old as a minor, not an adult", () => {
     // Born 2008-12-31 -> 17 today (2026). Must still need a guardian.
-    const r = validateRegistration(event, division, adult({ dob: "2008-12-31" }));
+    const r = validateRegistration(event, division, adult({ dob: "2009-12-31" }));
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.fieldErrors).toHaveProperty("guardianEmail");
@@ -323,10 +337,19 @@ describe("field hygiene", () => {
   });
 
   it("still enforces the division's own age floor", () => {
-    const r = validateRegistration(event, division, onSite({ dob: "2022-01-01" }));
+    // Event 1 admits 12 to 21, so a four-year-old is turned away with that range named.
+    const r = validateRegistration(event, division, dropOff({ dob: "2022-01-01" }));
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.error).toMatch(/ages 8/);
+    expect(r.error).toMatch(/ages 12/);
+  });
+
+  it("enforces the division's age CEILING too", () => {
+    // New with FC 27: the event has an upper bound of 21, which no previous event had.
+    const r = validateRegistration(event, division, adult({ dob: "1990-01-01" }));
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error).toMatch(/ages 12/);
   });
 
   it("rejects a body that is not an object at all", () => {
@@ -358,11 +381,16 @@ describe("emergency contact", () => {
   it("is NOT asked of an under-18 a second time — the guardian is the contact", () => {
     // Duplicating a child's guardian into a second set of fields would mean holding the
     // same personal data twice for no gain.
-    for (const body of [onSite(), dropOff(), independent()]) {
+    // onSite is an under-12, which event 1 does not admit — check it on the wide event.
+    for (const [ev, div, body] of [
+      [wideEvent, wideDivision, onSite()],
+      [event, division, dropOff()],
+      [event, division, independent()],
+    ] as const) {
       delete (body as Record<string, unknown>).emergencyName;
       delete (body as Record<string, unknown>).emergencyRelation;
       delete (body as Record<string, unknown>).emergencyPhone;
-      expect(validateRegistration(event, division, body).ok).toBe(true);
+      expect(validateRegistration(ev, div, body).ok).toBe(true);
     }
   });
 

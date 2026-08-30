@@ -324,7 +324,7 @@ export function SignupForm({
             {event.divisions.length === 1 ? (
               <>
                 <strong className="font-bold text-ok">You&apos;re eligible.</strong>{" "}
-                Everyone competes in one open bracket, whatever their age.
+                Everyone aged 12 to 21 competes in the same open bracket.
               </>
             ) : (
               <>

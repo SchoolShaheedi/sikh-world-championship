@@ -28,7 +28,7 @@ export default function EventsPage() {
       <h2 className="display-xl mt-3 text-[clamp(1.5rem,3vw,2.1rem)] text-muted">Past</h2>
       {past.length === 0 ? (
         <p className="mt-4 rounded-2xl border border-dashed border-line p-8 text-center text-muted">
-          No past events yet — Sikh FIFA 26 is the first.
+          No past events yet — Sikh FC 27 is the first.
         </p>
       ) : (
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

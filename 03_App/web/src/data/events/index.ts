@@ -1,12 +1,12 @@
 import type { ChampionshipEvent } from "@/lib/types";
-import { sikhFifa26 } from "./sikh-fifa-26";
+import { sikhFc27 } from "./sikh-fc-27";
 
 /**
  * The event registry. To add an event: create a file in this folder exporting a
  * ChampionshipEvent, then add it to this array. Nothing else needs to change —
  * the homepage, events list, sign-up form and bracket all read from here.
  */
-export const EVENTS: ChampionshipEvent[] = [sikhFifa26];
+export const EVENTS: ChampionshipEvent[] = [sikhFc27];
 
 export function getEvent(slug: string): ChampionshipEvent | undefined {
   return EVENTS.find((e) => e.slug === slug);

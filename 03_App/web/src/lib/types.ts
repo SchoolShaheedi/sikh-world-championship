@@ -36,7 +36,7 @@ export type EventFormat =
 
 /**
  * A division is a separate bracket within an event, with its own champion.
- * Sikh FIFA 26 runs a single open division — everyone in one bracket, one champion.
+ * Sikh FC 27 runs a single open division — everyone in one bracket, one champion.
  *
  * The type still supports several, because future events may want age or weight
  * categories (kabaddi almost certainly will), and splitting later should be data, not

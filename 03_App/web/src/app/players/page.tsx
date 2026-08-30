@@ -6,8 +6,8 @@ export const metadata: Metadata = { title: "Players" };
 
 /** PREVIEW — replace with a real profile read once accounts are wired up. */
 const demoTrophies = [
-  { id: "1", label: "Champion",   tier: "gold" as const,        event: "Sikh FIFA 26 Championship", division: "16+" },
-  { id: "2", label: "Golden Boot", tier: "special" as const,    event: "Sikh FIFA 26 Championship", division: "16+" },
+  { id: "1", label: "Champion",   tier: "gold" as const,        event: "Sikh FC 27 Championship", division: "16+" },
+  { id: "2", label: "Golden Boot", tier: "special" as const,    event: "Sikh FC 27 Championship", division: "16+" },
   { id: "3", label: "Semi-finalist", tier: "bronze" as const,   event: "Sikh Chess Championship",   division: "Open" },
   { id: "4", label: "Competitor", tier: "participant" as const, event: "Sikh Kabaddi Cup",          division: "U18" },
 ];
@@ -32,7 +32,7 @@ export default function PlayersPage() {
             division="16+"
             region="Birmingham"
             avatarId="kesri-1"
-            eventTitle="FIFA 26"
+            eventTitle="FC 27"
             seed="demo-player"
             tier="gold"
           />
@@ -45,14 +45,14 @@ export default function PlayersPage() {
           <TrophyCabinet trophies={demoTrophies} />
           <p className="mt-6 text-sm text-muted">
             This is a preview. Cabinets fill up as events are held — the first trophies go
-            out at Sikh FIFA 26.
+            out at Sikh FC 27.
           </p>
         </div>
       </div>
 
       {/* Coming next */}
       <section className="mt-20 rounded-3xl border border-line bg-surface/60 p-8">
-        <h2 className="font-display text-2xl">Find players — coming after FIFA 26</h2>
+        <h2 className="font-display text-2xl">Find players — coming after FC 27</h2>
         <div className="mt-6 grid gap-6 sm:grid-cols-3">
           {[
             {

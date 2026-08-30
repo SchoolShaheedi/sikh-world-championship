@@ -1,39 +1,55 @@
 import type { ChampionshipEvent } from "@/lib/types";
 
 /**
- * EVENT 1 — Sikh FIFA 26 Championship.
+ * EVENT 1 — Sikh FC 27 Championship.
  *
  * Fields marked TBC are placeholders. Fill them in and the whole site updates:
  * homepage, events list, event page, sign-up form and bracket all read from here.
  * When date + venue are confirmed, also flip `detailsConfirmed` to true.
  */
-export const sikhFifa26: ChampionshipEvent = {
-  slug: "sikh-fifa-26",
-  title: "Sikh FIFA 26 Championship",
-  shortTitle: "FIFA 26",
+export const sikhFc27: ChampionshipEvent = {
+  slug: "sikh-fc-27",
+  title: "Sikh FC 27 Championship",
+  shortTitle: "FC 27",
   discipline: "fifa",
   status: "announced",
   format: "groups-then-knockout",
 
   tagline: "64 players. One bracket. One champion. PS5.",
   description:
-    "The first Sikh World Championship event. Sixty-four players, in one hall, on PS5 — " +
-    "group stage into knockouts, so everyone plays at least three matches. One open " +
-    "division, all ages, one champion. Free to enter, langar on the day, and a live " +
-    "bracket on the big screen from first whistle to final.",
+    "The first Sikh World Championship event. Sixty-four players aged 12 to 21, in one " +
+    "hall in Leicester, on PS5 — group stage into knockouts, so everyone plays at least " +
+    "three matches. One open division, one champion. Free to enter, langar on the day, " +
+    "and a live bracket on the big screen from first whistle to final.",
 
-  date: null,        // TODO
-  times: null,       // TODO — suggested 09:30–16:30
-  venue: null,       // TODO
+  date: "2026-10-03",
+  times: "09:30 – 16:30",
+  venue: {
+    name: "Venue to be confirmed",
+    addressLines: ["Leicester"],
+    postcode: "TBC",
+  },
+  // Date and city are confirmed; the exact venue is not. Kept false until the address is
+  // real, because this flag is what the sign-up page uses to stop promising details we
+  // cannot yet give.
   detailsConfirmed: false,
 
   capacity: 64,
-  // ONE open division: everyone in the same bracket, all ages, one champion.
-  // minAge is the only judgement call here — set at 8. Change this single number to
-  // raise or lower the floor; the sign-up form reads it and turns anyone younger away
-  // with an explanation.
+  /**
+   * ONE open division, ages 12 to 21, one champion.
+   *
+   * CONSIDERED AND DEFERRED (round 37): splitting into 12–17 and 18–21. The argument for
+   * it is that this event puts unrelated adults and children in the same bracket, seated
+   * together at a station for a match, with no parent present — and that a 12-year-old
+   * drawn against a 21-year-old is a poor game for both. The owner chose to keep it open
+   * for now with the reasoning recorded, so this is a decision to revisit rather than one
+   * nobody thought about.
+   *
+   * If it is revisited, the app needs no new capability: the sign-up form derives division
+   * from date of birth, so nobody can pick the easier bracket.
+   */
   divisions: [
-    { id: "open", name: "Open", minAge: 8, maxAge: 99, capacity: 64 },
+    { id: "open", name: "Open", minAge: 12, maxAge: 21, capacity: 64 },
   ],
 
   entryFee: 0,
@@ -44,7 +60,7 @@ export const sikhFifa26: ChampionshipEvent = {
     "Kick-off mode only. No Ultimate Team, no custom squads.",
     "Teams must be equal star rating. Both players agree, or the referee assigns.",
     "6-minute halves in the group stage. The final is played with 8-minute halves.",
-    "One open division — all ages compete in the same bracket.",
+    "One open division — ages 12 to 21 compete in the same bracket.",
     "Group stage: 16 groups of 4. Top two in each group go through to the knockouts.",
     "Knockouts are single elimination. Draws go to extra time, then penalties.",
     "Default game settings. Legacy defending off. No custom tactics carried in on a USB.",

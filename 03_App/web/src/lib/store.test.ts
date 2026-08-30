@@ -15,7 +15,7 @@ beforeAll(useTempDataDir);
 beforeEach(clearDataDir);
 
 const entry = (playerId: string, capacity = 3) => ({
-  eventSlug: "sikh-fifa-26",
+  eventSlug: "sikh-fc-27",
   divisionId: "u16",
   divisionCapacity: capacity,
   playerId,
@@ -31,7 +31,7 @@ describe("event capacity", () => {
     expect(overflow.status).toBe("waitlisted");
     expect(overflow.waitlistPosition).toBe(1);
 
-    expect(await confirmedCount("sikh-fifa-26", "u16")).toBe(3);
+    expect(await confirmedCount("sikh-fc-27", "u16")).toBe(3);
   });
 
   it("numbers the waitlist in order", async () => {
@@ -92,18 +92,18 @@ describe("waitlist promotion", () => {
     await register(entry("first"));
     await register(entry("second"));
 
-    const promoted = await promoteFromWaitlist("sikh-fifa-26", "u16");
+    const promoted = await promoteFromWaitlist("sikh-fc-27", "u16");
     expect(promoted?.playerId).toBe("first");
     expect(promoted?.status).toBe("confirmed");
     expect(promoted?.waitlistPosition).toBeNull();
 
     // The person behind them moves to the front rather than being stranded at 2.
-    const next = await promoteFromWaitlist("sikh-fifa-26", "u16");
+    const next = await promoteFromWaitlist("sikh-fc-27", "u16");
     expect(next?.playerId).toBe("second");
   });
 
   it("returns null when the waitlist is empty", async () => {
-    expect(await promoteFromWaitlist("sikh-fifa-26", "u16")).toBeNull();
+    expect(await promoteFromWaitlist("sikh-fc-27", "u16")).toBeNull();
   });
 });
 
@@ -127,7 +127,7 @@ describe("check-in", () => {
     // Otherwise checking someone in would silently free up their place.
     const r = await register(entry("p1"));
     await checkIn(r.checkInToken);
-    expect(await confirmedCount("sikh-fifa-26", "u16")).toBe(1);
+    expect(await confirmedCount("sikh-fc-27", "u16")).toBe(1);
   });
 });
 

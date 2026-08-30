@@ -105,10 +105,11 @@ curl http://localhost:8787/__scheduled
 > Each wrangler config keeps its **own** local D1 state, so without `--persist-to` the
 > retention worker sees an empty database locally and reports "nothing due".
 
-**It deletes nothing until an event has a date.** `sikh-fifa-26` has `date: null`, so
-today every run logs a skip. That is deliberate — guessing a date would either destroy a
-child's medical details before the first aider read them, or hold them long past the
-policy.
+**The event now has a date (3 October 2026), so the job is armed.** It will do nothing
+until 4 October (check-in tokens) and 2 November (medical fields), because everything is
+measured from the event date. Before the date was set it logged a skip every run rather
+than guessing — guessing would either destroy a child's medical details before the first
+aider read them, or hold them long past the policy.
 
 ## What was set up
 
@@ -159,8 +160,8 @@ the same runtime Cloudflare runs. This is not a simulation.
 
 **Works (200):**
 
-`/` · `/about` · `/safeguarding` · `/events` · `/events/sikh-fifa-26` ·
-`/events/sikh-fifa-26/signup` · `/players` · `/sponsors` · `/volunteer` · `/support` ·
+`/` · `/about` · `/safeguarding` · `/events` · `/events/sikh-fc-27` ·
+`/events/sikh-fc-27/signup` · `/players` · `/sponsors` · `/volunteer` · `/support` ·
 `/styleguide`
 
 Every marketing and informational page renders correctly, including the 3D hero and the
