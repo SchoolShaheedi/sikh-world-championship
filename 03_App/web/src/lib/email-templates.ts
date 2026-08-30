@@ -47,6 +47,34 @@ function wrap(heading: string, bodyHtml: string): string {
 </body></html>`;
 }
 
+/**
+ * Escape anything that came from a person before it goes into HTML.
+ *
+ * These emails carry names, gamertags, regions and notes typed by users. Interpolated
+ * raw, a "name" of `<a href="...">Click here</a>` would put an attacker's link inside a
+ * safeguarding email sent from our own verified domain to a parent — which is a far better
+ * phishing position than they would have on their own. Every user-supplied value in this
+ * file goes through here.
+ */
+export function esc(v: string): string {
+  return v
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/** One date format across every email, so they read as coming from the same place. */
+function longDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 const button = (href: string, label: string) =>
   `<p style="margin:22px 0;">
      <a href="${href}" style="display:inline-block;background:#c8891a;color:#ffffff;
@@ -94,12 +122,12 @@ export function guardianApprovalRequest(n: {
   const html = wrap(
     `${n.childDisplayName} needs your permission`,
     `<p style="margin:0 0 14px;">
-       <strong>${n.childDisplayName}</strong> has asked to use our &ldquo;Find a game&rdquo;
+       <strong>${esc(n.childDisplayName)}</strong> has asked to use our &ldquo;Find a game&rdquo;
        board, which helps Sikh players find someone to practise against. They need your
        permission first.
      </p>
      <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
-       We have your email because it was given when ${n.childDisplayName} registered for one
+       We have your email because it was given when ${esc(n.childDisplayName)} registered for one
        of our events.
      </p>
      <p style="margin:18px 0 8px;font-weight:700;">What you would be agreeing to</p>
@@ -108,7 +136,7 @@ export function guardianApprovalRequest(n: {
      </ul>
      ${button(n.approvalUrl, "Say yes or no")}
      <p style="margin:0;font-size:14px;color:#55554f;">
-       No account or password needed. If you do nothing, ${n.childDisplayName} simply does
+       No account or password needed. If you do nothing, ${esc(n.childDisplayName)} simply does
        not get access — the link expires in 30 days. You can change your mind at any time
        using the same link.
      </p>`,
@@ -154,7 +182,7 @@ export function guardianConnectionNotice(n: {
   ].join("\n");
 
   const html = wrap(
-    `${n.childDisplayName} has arranged a game`,
+    `${esc(n.childDisplayName)} has arranged a game`,
     `<p style="margin:0 0 14px;">
        We tell you every time this happens, so you always know who your child is playing with.
      </p>
@@ -169,7 +197,7 @@ export function guardianConnectionNotice(n: {
          .map(
            ([k, v]) =>
              `<tr><td style="padding:5px 18px 5px 0;color:#6b6b66;">${k}</td>
-                  <td style="padding:5px 0;font-weight:600;">${v}</td></tr>`,
+                  <td style="padding:5px 0;font-weight:600;">${esc(v)}</td></tr>`,
          )
          .join("")}
      </table>
@@ -217,7 +245,7 @@ export function guardianDecisionConfirmed(n: {
     `Permission ${n.decision}`,
     `<p style="margin:0 0 14px;">
        This confirms that you have <strong>${what}</strong> for
-       <strong>${n.childDisplayName}</strong> to use our &ldquo;Find a game&rdquo; board.
+       <strong>${esc(n.childDisplayName)}</strong> to use our &ldquo;Find a game&rdquo; board.
      </p>
      <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
        ${
@@ -267,7 +295,7 @@ export function signInLink(n: {
 
   const html = wrap(
     `Sign in to ${BRAND}`,
-    `<p style="margin:0 0 14px;">Hi ${n.displayName},</p>
+    `<p style="margin:0 0 14px;">Hi ${esc(n.displayName)},</p>
      <p style="margin:0 0 4px;">
        Here is your sign-in link. It works once and expires in ${n.minutes} minutes.
      </p>
@@ -297,14 +325,7 @@ export function applicationOutcome(n: {
   eventDate: string | null;
   reference: string;
 }): Rendered {
-  const when = n.eventDate
-    ? new Date(n.eventDate).toLocaleDateString("en-GB", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
-    : "the event date";
+  const when = n.eventDate ? longDate(n.eventDate) : "the event date";
 
   if (n.selected) {
     const subject = `You have a place — ${n.eventTitle}`;
@@ -315,9 +336,9 @@ export function applicationOutcome(n: {
       ``,
       `Your reference is ${n.reference}. Keep it; you will need it at the desk.`,
       ``,
-      `We have created your SWC profile so your results and trophies are saved across`,
-      `every event you play in. You can sign in at any time at`,
-      `https://sikhchampionships.com/signin using this email address — no password.`,
+      `Your SWC profile keeps your results and trophies across every event you play in.`,
+      `Sign in at any time at https://sikhchampionships.com/signin using this email`,
+      `address — no password.`,
       ``,
       `We will email again with the venue address and what to bring.`,
       ``,
@@ -328,16 +349,16 @@ export function applicationOutcome(n: {
     const html = wrap(
       `You have a place`,
       `<p style="margin:0 0 14px;">
-         Good news ${n.displayName} — you have a place at <strong>${n.eventTitle}</strong>
+         Good news ${esc(n.displayName)} — you have a place at <strong>${esc(n.eventTitle)}</strong>
          on ${when}.
        </p>
        <p style="margin:0 0 14px;">
-         Your reference is <strong style="font-family:monospace;">${n.reference}</strong>.
+         Your reference is <strong style="font-family:monospace;">${esc(n.reference)}</strong>.
          Keep it; you will need it at the desk.
        </p>
        <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
-         We have created your SWC profile so your results and trophies are saved across every
-         event you play in. Sign in any time with this email address — no password.
+         Your SWC profile keeps your results and trophies across every event you play in.
+         Sign in any time with this email address — no password.
        </p>
        ${button("https://sikhchampionships.com/signin", "Sign in to your profile")}
        <p style="margin:0;font-size:14px;color:#55554f;">
@@ -367,9 +388,9 @@ export function applicationOutcome(n: {
 
   const html = wrap(
     `About your application`,
-    `<p style="margin:0 0 14px;">Hi ${n.displayName},</p>
+    `<p style="margin:0 0 14px;">Hi ${esc(n.displayName)},</p>
      <p style="margin:0 0 14px;">
-       We had more applications than places for <strong>${n.eventTitle}</strong>, so places
+       We had more applications than places for <strong>${esc(n.eventTitle)}</strong>, so places
        were decided by a draw. You did not get one this time.
      </p>
      <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
@@ -378,6 +399,149 @@ export function applicationOutcome(n: {
      <p style="margin:0;font-size:14px;color:#55554f;">
        We would genuinely like to see you at the next one, and we will email you when it is
        announced. If a place frees up before ${when} we will be in touch.
+     </p>`,
+  );
+  return { subject, text, html };
+}
+
+/**
+ * Acknowledging that we received someone's interest in an event.
+ *
+ * Sent the moment the form is submitted. Until round 42 nothing was sent at all: a person
+ * filled in twenty fields including their child's medical details and got a screen, then
+ * silence, with no way to tell whether it arrived. For a parent that reads as a scam.
+ *
+ * It must be honest about what has and has not happened. Registering interest is NOT a
+ * place — places are drawn — and this email is the last chance to say so before someone
+ * tells their child they are going.
+ */
+export function interestReceived(n: {
+  displayName: string;
+  eventTitle: string;
+  eventDate: string | null;
+  reference: string;
+  /** When the draw happens, i.e. when applications close. Null if not yet fixed. */
+  drawAfter: string | null;
+}): Rendered {
+  const when = n.eventDate ? longDate(n.eventDate) : "the event date";
+  const draw = n.drawAfter
+    ? `after applications close on ${longDate(n.drawAfter)}`
+    : "once applications close";
+
+  const subject = `We have your interest — ${n.eventTitle}`;
+  const text = [
+    `${BRAND}`,
+    ``,
+    `Thanks ${n.displayName} — we have your interest in ${n.eventTitle} on ${when}.`,
+    ``,
+    `THIS IS NOT A PLACE YET. There are more people who want to play than there are`,
+    `places, so places are decided by a random draw ${draw}. We will email you either`,
+    `way, so you do not need to check or chase.`,
+    ``,
+    `Your reference is ${n.reference}.`,
+    ``,
+    `We have created your ${BRAND} profile with this email address. You keep it for every`,
+    `future event — sign in any time at https://sikhchampionships.com/signin. There is no`,
+    `password; we email you a link.`,
+    ``,
+    `Need to change or withdraw anything? https://sikhchampionships.com/support`,
+  ].join("\n");
+
+  const html = wrap(
+    `We have your interest`,
+    `<p style="margin:0 0 14px;">
+       Thanks ${esc(n.displayName)} — we have your interest in
+       <strong>${esc(n.eventTitle)}</strong> on ${when}.
+     </p>
+     <p style="margin:0 0 14px;padding:12px 14px;background:#fdf6e7;border-radius:8px;font-size:14px;">
+       <strong>This is not a place yet.</strong> More people want to play than there are
+       places, so places are decided by a random draw ${draw}. We will email you either
+       way — you do not need to check or chase.
+     </p>
+     <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+       Your reference is
+       <strong style="font-family:monospace;">${esc(n.reference)}</strong>.
+     </p>
+     <p style="margin:0 0 4px;font-size:14px;color:#55554f;">
+       We have created your ${BRAND} profile with this email address. You keep it for every
+       future event — no password, we email you a link.
+     </p>
+     ${button("https://sikhchampionships.com/signin", "Sign in to your profile")}
+     <p style="margin:0;font-size:14px;color:#55554f;">
+       Need to change or withdraw anything? Get in touch and we will sort it.
+     </p>`,
+  );
+  return { subject, text, html };
+}
+
+/**
+ * Telling a parent or guardian that their child has registered interest.
+ *
+ * Sent at the same time as the acknowledgement above, to the guardian address on the
+ * form. This is the only check that a real adult knows: everything else on the form was
+ * typed by whoever filled it in, and a child can type a parent's name and tick a box
+ * saying the parent agreed. This email is what makes that claim visible to the person it
+ * was made about, while there is still time to say no.
+ *
+ * It therefore states plainly what was agreed on their behalf, and what to do if it was
+ * not them.
+ */
+export function guardianInterestNotice(n: {
+  childDisplayName: string;
+  eventTitle: string;
+  eventDate: string | null;
+  venue: string | null;
+  /** What supervision this age tier requires — from guardian-rules. */
+  supervision: string;
+  reference: string;
+}): Rendered {
+  const when = n.eventDate ? longDate(n.eventDate) : "a date still to be confirmed";
+
+  const subject = `${n.childDisplayName} has registered for ${n.eventTitle}`;
+  const text = [
+    `${BRAND}`,
+    ``,
+    `${n.childDisplayName} has registered interest in ${n.eventTitle}, a free gaming`,
+    `tournament for Sikh young people, on ${when}${n.venue ? ` in ${n.venue}` : ""}.`,
+    ``,
+    `Your email was given as their parent or guardian, and the form recorded that you`,
+    `agreed to them taking part.`,
+    ``,
+    `WHAT THIS MEANS FOR YOU: ${n.supervision}`,
+    ``,
+    `This is not a place yet — places are decided by a random draw, and we will email`,
+    `again either way.`,
+    ``,
+    `Reference ${n.reference}.`,
+    ``,
+    `IF THIS WAS NOT AGREED WITH YOU, or you do not want them to take part, tell us at`,
+    `https://sikhchampionships.com/support and we will remove the registration. You do not`,
+    `need an account and you do not have to give a reason.`,
+  ].join("\n");
+
+  const html = wrap(
+    `${esc(n.childDisplayName)} has registered for ${esc(n.eventTitle)}`,
+    `<p style="margin:0 0 14px;">
+       <strong>${esc(n.childDisplayName)}</strong> has registered interest in
+       <strong>${esc(n.eventTitle)}</strong>, a free gaming tournament for Sikh young
+       people, on ${when}${n.venue ? ` in ${esc(n.venue)}` : ""}.
+     </p>
+     <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+       Your email was given as their parent or guardian, and the form recorded that you
+       agreed to them taking part.
+     </p>
+     <p style="margin:0 0 14px;padding:12px 14px;background:#fdf6e7;border-radius:8px;font-size:14px;">
+       <strong>What this means for you:</strong> ${esc(n.supervision)}
+     </p>
+     <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+       This is not a place yet — places are decided by a random draw, and we will email
+       again either way. Reference
+       <strong style="font-family:monospace;">${esc(n.reference)}</strong>.
+     </p>
+     ${button("https://sikhchampionships.com/support", "This was not agreed with me")}
+     <p style="margin:0;font-size:14px;color:#55554f;">
+       If you do not want them to take part, tell us and we will remove the registration.
+       No account needed, and no reason required.
      </p>`,
   );
   return { subject, text, html };

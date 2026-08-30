@@ -54,7 +54,7 @@ export default async function EventPage({
 
       <div className="mt-7 flex flex-wrap gap-3">
         <Link
-          href={`/events/${event.slug}/signup`}
+          href={`/events/${event.slug}/register-interest`}
           className="rounded-xl bg-kesri px-6 py-3 font-bold text-ink transition-colors hover:bg-kesrisoft"
         >
           Register interest — it&apos;s free

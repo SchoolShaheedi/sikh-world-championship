@@ -54,3 +54,19 @@ export function registrationDemo(): boolean {
 export function boardOpen(): boolean {
   return flag("SWC_BOARD_OPEN");
 }
+
+/**
+ * Should invented preview data be rendered?
+ *
+ * OFF in production, unconditionally — there is no environment variable to turn it on,
+ * because the failure mode is not a broken page but a convincing lie. The bracket's demo
+ * entrants are thirty-two plausible Sikh names; on a public page they are indistinguishable
+ * from a real draw, and the day of the event the hall would be watching a screen full of
+ * people who do not exist. The demo trophy cabinet is the same problem in miniature.
+ *
+ * Deliberately NOT the `flag()` helper above: those can be overridden by an env var, and
+ * this one must not be.
+ */
+export function showDemoData(): boolean {
+  return process.env.NODE_ENV !== "production";
+}

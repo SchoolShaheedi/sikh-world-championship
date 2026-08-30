@@ -143,9 +143,11 @@ const str = (v: unknown): string | null =>
 /**
  * Record an application.
  *
- * Deliberately does NOT: check capacity, assign a queue position, issue a check-in token,
- * or create an account. None of those are true yet — a place is decided by the draw, and
- * pretending otherwise at submission is what the old "You're in" screen got wrong.
+ * Deliberately does NOT: check capacity, assign a queue position, or issue a check-in
+ * token. None of those are true yet — a place is decided by the draw, and pretending
+ * otherwise at submission is what the old "You're in" screen got wrong. The check-in token
+ * in particular is the credential that marks someone present, so it must not exist before
+ * there is a place to attend; it is issued in selection.ts.
  *
  * Applications are uncapped. Turning people away at the form would defeat the point of
  * drawing, and the number of applicants is not something we reveal anyway.
@@ -154,6 +156,15 @@ export async function apply(input: {
   eventSlug: string;
   divisionId: string;
   answers: Record<string, string | boolean | string[]>;
+  /**
+   * The profile this application belongs to.
+   *
+   * Optional here so the store stays a plain write and the tests do not all need a
+   * player. In the real flow it is always set — `registerInterest()` creates or finds the
+   * profile first, because from round 42 registration is for the platform and a person
+   * has a profile from the moment they register interest, not only if they are drawn.
+   */
+  playerId?: string | null;
 }): Promise<ApplyResult> {
   const db = await getDb();
   const a = input.answers;
@@ -175,12 +186,13 @@ export async function apply(input: {
         guardian_consent, guardian_on_site,
         guardian_independent_consent, may_leave_unaccompanied,
         guardian_photo_consent, rules_agreed, photo_consent, avatar_id, answers
-      ) VALUES (?,?,?,NULL,'applied',?,NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      ) VALUES (?,?,?,?,'applied',?,NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     )
     .bind(
       crypto.randomUUID(),
       input.eventSlug,
       input.divisionId,
+      input.playerId ?? null,
       reference,
       new Date().toISOString(),
       String(a.fullName ?? ""),

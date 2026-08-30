@@ -17,6 +17,11 @@ import type { AgeBand } from "./types";
 
 export interface SessionPlayer {
   id: string;
+  /**
+   * Their own address, shown only to them. Used to prefill the interest form so a
+   * returning player is not retyping it — never rendered anywhere another player can see.
+   */
+  email: string;
   displayName: string;
   ageBand: AgeBand;
   region: string;
@@ -47,6 +52,7 @@ export async function currentPlayer(): Promise<SessionPlayer | null> {
 
   return {
     id: player.id,
+    email: player.email,
     displayName: player.displayName,
     ageBand: player.ageBand,
     region: player.region ?? "",

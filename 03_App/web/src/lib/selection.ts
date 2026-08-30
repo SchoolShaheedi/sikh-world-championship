@@ -1,12 +1,14 @@
 /**
  * Turning a drawn application into a place.
  *
- * THIS is where an account is created — not at submission. Filling in a form does not make
- * someone a player, and creating profiles for everyone who applied would mean holding
- * accounts for people who never got in.
+ * THIS is where the check-in token is issued — the credential that marks someone present,
+ * which must not exist before there is a place to attend.
  *
- * It is also where the check-in token is issued, for the same reason: it is the credential
- * that marks someone present, and it should not exist before there is a place to attend.
+ * The account is NOT created here. Since round 42 a profile exists from the moment someone
+ * registers interest (src/lib/interest.ts), because registration is for the platform
+ * rather than for one event. The upsert below is kept deliberately: it is idempotent, and
+ * it is what makes this safe to run against an application recorded before that change, or
+ * one whose profile was removed.
  */
 import crypto from "node:crypto";
 import { getDb } from "./db";
@@ -21,7 +23,7 @@ function makeCheckInToken(): string {
 }
 
 /**
- * Create the account, issue the check-in token, and tell them.
+ * Attach the profile, issue the check-in token, and tell them.
  *
  * Safe to re-run: an application that already has a player keeps it, and the email is
  * idempotent on the reference, so a repeated pass will not create a second account or send

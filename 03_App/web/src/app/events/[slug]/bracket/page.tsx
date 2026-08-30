@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { EVENTS, getEvent } from "@/data/events";
 import { BracketView } from "@/components/BracketView";
 import { generateKnockout, advanceWinners, type Entrant } from "@/lib/bracket";
+import { showDemoData } from "@/lib/features";
 
 export function generateStaticParams() {
   return EVENTS.map((e) => ({ slug: e.slug }));
@@ -19,9 +20,15 @@ export async function generateMetadata({
 }
 
 /**
- * PREVIEW DATA. Until real registrations exist, the page shows a demo bracket so the
- * layout can be checked on a projector and on a phone. Replace `demoEntrants` with a
- * read from the registration store once sign-ups are in.
+ * PREVIEW DATA — never shown in production. See `showDemoData()`.
+ *
+ * Thirty-two invented Sikh names, so the layout can be checked on a projector and on a
+ * phone before anyone has registered. Shown publicly they are indistinguishable from a
+ * real draw: someone would look for their own name, and on the day the hall would be
+ * looking at a screen full of people who do not exist.
+ *
+ * NOT YET WIRED to real registrations. That needs a decision first about what name to put
+ * on a public screen for a 12-year-old — see 00_Docs/MEETING-QUESTIONS.md.
  */
 function demoEntrants(divisionId: string, n: number): Entrant[] {
   const names = [
@@ -63,12 +70,29 @@ export default async function BracketPage({
         </Link>
       </div>
 
-      <p className="mt-6 rounded-xl border border-line bg-surface/60 p-4 text-sm text-muted">
-        <strong className="text-body">Preview.</strong> This is demo data showing how the
-        bracket will look. On the day it updates live as scores come in — on the big screen
-        in the hall, and on this page for anyone following from home.
-      </p>
+      {showDemoData() ? (
+        <p className="mt-6 rounded-xl border border-kesri/40 bg-kesri/10 p-4 text-sm text-kesrisoft">
+          <strong>Demo data — not real players.</strong> Shown outside production only, so
+          the layout can be checked before anyone has registered.
+        </p>
+      ) : (
+        <div className="mt-10 rounded-3xl border border-line bg-surface/60 p-8">
+          <h2 className="font-display text-2xl text-kesri">The bracket goes live on the day</h2>
+          <p className="mt-4 text-muted">
+            Once places are drawn and the group stage is played, the knockout bracket
+            appears here and updates as scores come in — on the big screen in the hall, and
+            on this page for anyone following from home.
+          </p>
+          <Link
+            href={`/events/${event.slug}`}
+            className="mt-6 inline-block rounded-xl bg-kesri px-6 py-3 font-bold text-ink transition-colors hover:bg-kesrisoft"
+          >
+            Event details
+          </Link>
+        </div>
+      )}
 
+      {showDemoData() && (
       <div className="mt-12 space-y-16">
         {event.divisions.map((d) => {
           const bracket = advanceWinners(
@@ -90,6 +114,7 @@ export default async function BracketPage({
           );
         })}
       </div>
+      )}
     </div>
   );
 }

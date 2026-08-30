@@ -4,6 +4,8 @@ import { currentPlayer } from "@/lib/session";
 import { getAvatar } from "@/data/avatars";
 import { Avatar } from "@/components/Avatar";
 import { signOut } from "./actions";
+import { boardOpen } from "@/lib/features";
+import { PROFILE_BENEFITS } from "@/data/profile-benefits";
 
 export const metadata: Metadata = { title: "Your profile" };
 export const dynamic = "force-dynamic";
@@ -53,15 +55,39 @@ export default async function ProfilePage() {
               ? `We contact ${me.guardianEmail} about your account.`
               : "We don't have a parent or guardian's email for you. Get in touch through Support and we'll add one."}
           </p>
-          <p className="mt-2 text-sm text-muted">
-            Find a game is{" "}
-            <span className="text-body">
-              {me.guardianApprovedForBoard ? "switched on" : "switched off"}
-            </span>{" "}
-            for you. They can change that at any time.
-          </p>
+          {/* Only while the board exists. Telling a child that a feature nobody can reach
+              is "switched off for you" invites them to ask a parent to switch on something
+              that is not there. */}
+          {boardOpen() && (
+            <p className="mt-2 text-sm text-muted">
+              Find a game is{" "}
+              <span className="text-body">
+                {me.guardianApprovedForBoard ? "switched on" : "switched off"}
+              </span>{" "}
+              for you. They can change that at any time.
+            </p>
+          )}
         </section>
       )}
+
+      {/* What the profile is for, in the same words as /join — so what someone was told
+          when they registered is what they see once they have one. */}
+      <section className="mt-6 rounded-2xl border border-line bg-surface/60 p-6">
+        <h2 className="font-display text-lg text-kesri">What your profile gives you</h2>
+        <ul className="mt-4 space-y-3">
+          {PROFILE_BENEFITS.map((b) => (
+            <li key={b.title} className="text-sm">
+              <span className="font-semibold text-body">{b.title}</span>
+              {!b.live && (
+                <span className="ml-2 rounded-full border border-line px-2 py-0.5 text-[11px] tracking-wide text-muted uppercase">
+                  coming
+                </span>
+              )}
+              <span className="mt-0.5 block text-muted">{b.detail}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section className="mt-6 rounded-2xl border border-line bg-surface/60 p-6">
         <h2 className="font-display text-lg text-kesri">Your trophies</h2>

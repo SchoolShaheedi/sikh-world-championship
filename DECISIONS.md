@@ -1515,3 +1515,137 @@ exists to prevent, and it is worth fixing there too.
      the allergy; it removes the warning. If the uncertainty is about langar itself, the
      cleaner fix is to keep the question and change its wording. Left in place and raised in
      the meeting questions rather than decided here.
+
+# Round 42 (2026-08-31) — Registration is for the platform
+
+## The problem, in the owner's words
+
+> "registration is for the platform, which includes register interest for the first event.
+> next time user with existing profile will just need to register interest for the next
+> event. url doesn't seem to reflect that if you see what I mean."
+
+It did not. The site had one call to action, `/events/sikh-fc-27/signup`, which said this
+is how you enter *this event*. Everything about the information architecture said the
+event was the product. It is not — the platform is, and FC 27 is the first thing on it.
+
+Same with the footer, which linked straight to the FC 27 bracket under the label "Live
+bracket". With one event that reads fine. With two it is wrong, and it was already wrong
+in the sense that most people clicking it wanted the event, not a knockout diagram.
+
+## What changed
+
+| Was | Is |
+|---|---|
+| `/events/:slug/signup` | `/events/:slug/register-interest` (old URL 301s) |
+| Header CTA → the FC 27 form | Header CTA → `/join` |
+| Footer: All events, Sikh FC 27, **Live bracket**, Volunteer | Footer: All events, **every upcoming event by name**, Volunteer |
+| Nothing at the platform level | `/join` — what a profile is, then pick an event |
+
+The footer now maps over `upcomingEvents()`, so a second event appears there by adding its
+data file. Nothing needs editing to keep it right, which is the point.
+
+## The real change: a profile now exists from registration, not from selection
+
+Round 38 was explicit that an account is created **on selection**, reasoning that filling
+in a form does not make you a player and that minting accounts for everyone would mean
+holding records for people who never got in. That was correct while a profile did nothing
+for anyone who was not drawn.
+
+It stopped being correct here:
+
+> "profile users will have access to sponsor discounts like 10% off or preorder game
+> merchandise, or other sikh businesses sponsors discounts etc."
+
+A benefit only 64 people can have is not a platform. And a person who registered interest,
+was not drawn, and is wanted back for the next event is exactly who a profile is for.
+
+So `src/lib/interest.ts` now creates the profile, records the application against it, and
+sends the emails — one function, one place, mirroring `selection.ts`.
+
+**The check-in token did not move.** It is the credential that marks someone present and
+there is no place to attend yet, so it is still issued only on selection.
+
+### The cost, stated plainly
+
+We now hold an account for **everyone who ever registered interest, including children who
+were never selected and never attended**. That is more children's data, held longer, than
+before this change. It is defensible — they asked for a profile and it does something for
+them — but it is defensible only while `04_Legal/RETENTION-POLICY.md` is actually enforced.
+The DPIA needs re-signing with this in it. Recorded here rather than discovered later.
+
+## Acknowledgement emails — a launch blocker that had been sitting as a TODO
+
+The register endpoint carried this since round 38:
+
+```
+// TODO before launch: email an acknowledgement, and copy the guardian in for under-18s
+```
+
+Nothing was sent. Someone filled in twenty fields including their child's medical details,
+saw a screen, and then silence with no way to tell whether it arrived. For a parent that
+reads as a scam, and it is the first impression the project makes.
+
+Two templates now go out at submission:
+
+- **`interestReceived`** to the applicant. Leads with the reference and, in a highlighted
+  block, *this is not a place yet* — the last chance to say so before someone tells their
+  child they are going.
+- **`guardianInterestNotice`** to the guardian of anyone under 18. This is the important
+  one. It states what was agreed on their behalf, what supervision their child's age tier
+  requires, and gives a button that says **"This was not agreed with me"**. Everything else
+  on the form was typed by whoever was at the keyboard, and a child can type a parent's
+  name and tick a box. This email is the only thing that puts that claim in front of the
+  adult it was made about while there is still time to say no.
+
+Sent even when the guardian address matches the applicant's, because the case it guards
+against is precisely the one where a child controls both.
+
+Neither can lose an application: `sendEmail` records failures instead of throwing, and
+there is a test asserting the registration survives a 500 from the provider.
+
+## Found while writing those templates: user text goes into email HTML unescaped
+
+Every template interpolated names, gamertags and regions straight into HTML. A person
+registering as `<a href="...">Click here</a>` would have had their link delivered inside a
+safeguarding email, from our own verified domain, to a parent — a better phishing position
+than an attacker could build on their own. `esc()` added and applied to every user-supplied
+value in the file.
+
+## Invented data no longer renders in production
+
+`showDemoData()`, and deliberately **not** using the `flag()` helper: there is no
+environment variable that can turn it on. The bracket's thirty-two invented Sikh names are
+indistinguishable from a real draw. On 3 October the hall would have been looking at a
+screen full of people who do not exist, and before then anyone visiting the page would look
+for their own name. Same for the demo trophy cabinet on `/players`.
+
+The bracket is **not** wired to real registrations, because that needs a decision first
+about what name to put on a public screen for a 12-year-old. It is in
+`00_Docs/MEETING-QUESTIONS.md`.
+
+## Also removed
+
+- The "Find players — coming after FC 27" section on `/players`, which advertised the
+  board to the public. The board is switched off and launching it has not been decided;
+  round 40 removed chat references and this was one that survived because the page is not
+  in the navigation.
+- The "Find a game is switched off for you" line on `/profile` for under-16s. Telling a
+  child a feature nobody can reach is switched off invites them to ask a parent to switch
+  on something that is not there.
+
+## Admin access
+
+`scripts/grant-moderator.mjs` creates a staff account and grants it. There was no way for
+the owner to reach `/admin` at all: accounts only came into existence through selection, so
+nobody had one. Still a database grant with no button — a moderator reads safeguarding
+disclosures, applicants' names and guardians' contacts, and runs the draw.
+
+No revoke script, on purpose. Removing access is urgent and belongs in a one-line UPDATE
+you can read, not a script whose behaviour you have to trust.
+
+## Docs rewritten rather than patched
+
+`03_App/web/CLAUDE.md` and `00_Docs/NEXT-STEPS.md` both described a product from around
+round 20 — JSON stores, a session stub returning a fixed moderator, `notify.ts` that only
+logs, ages 8+, a domain that was never bought. All of it long since untrue. A backlog
+nobody trusts is worse than no backlog.

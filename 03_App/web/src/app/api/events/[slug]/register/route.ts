@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getEvent } from "@/data/events";
-import { apply } from "@/lib/store";
+import { registerInterest } from "@/lib/interest";
 import { validateRegistration } from "@/lib/registration-schema";
 import { registrationOpen, registrationDemo } from "@/lib/features";
 
@@ -66,27 +66,24 @@ export async function POST(
   if (registrationDemo()) {
     return NextResponse.json({
       demo: true,
-      status: "confirmed",
+      status: "applied",
       reference: "DEMO-ONLY",
-      checkInToken: "",
     });
   }
 
   /**
    * An APPLICATION, not a booking.
    *
-   * No account is created here and no check-in token is issued. Both happen on selection
-   * — see src/lib/selection.ts. Creating profiles for everyone who applied would mean
-   * holding accounts for people who never got a place.
+   * A profile is created and the acknowledgement emails go out here; no check-in token is
+   * issued, because that is the credential that marks someone present and there is no
+   * place to attend yet. See src/lib/interest.ts and src/lib/selection.ts.
    */
-  const registration = await apply({
-    eventSlug: slug,
-    divisionId,
-    // Only what the schema returned — never the raw body.
-    answers: result.answers,
-  });
+  const registration = await registerInterest(event, division, result.answers);
 
-  // TODO before launch: email an acknowledgement, and copy the guardian in for under-18s
-  // so they know their child applied.
-  return NextResponse.json(registration);
+  // playerId is internal — it identifies a profile and has no business in a response body
+  // that a browser keeps.
+  return NextResponse.json({
+    status: registration.status,
+    reference: registration.reference,
+  });
 }

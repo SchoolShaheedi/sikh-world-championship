@@ -79,13 +79,34 @@ const inputCx =
 export function SignupForm({
   event,
   demo = false,
+  prefill,
 }: {
   event: ChampionshipEvent;
   /** Preview mode: the form works, the submission is discarded. See lib/features.ts. */
   demo?: boolean;
+  /**
+   * Values carried over from an existing profile, for a signed-in player registering
+   * interest in a second event.
+   *
+   * Only identity fields that do not change between events. Medical, dietary and
+   * accessibility are deliberately NOT prefilled: they are purged after each event
+   * (04_Legal/RETENTION-POLICY.md), they genuinely change, and a stale allergy shown as
+   * already-answered is worse than an empty box. Consents are never prefilled either —
+   * a consent has to be given for this event, not inherited from the last one.
+   */
+  prefill?: Record<string, string>;
 }) {
-  const [values, setValues] = useState<Record<string, string | boolean | string[]>>({});
-  const [avatarId, setAvatarId] = useState<string>(AVATARS[0].id);
+  const [values, setValues] = useState<Record<string, string | boolean | string[]>>(
+    () =>
+      Object.fromEntries(
+        Object.entries(prefill ?? {}).filter(([, v]) => v !== ""),
+      ) as Record<string, string>,
+  );
+  // Checked against the real list: the server rejects an unknown avatar, so a stale id
+  // on an old profile would break the form rather than just look wrong.
+  const [avatarId, setAvatarId] = useState<string>(() =>
+    AVATARS.some((a) => a.id === prefill?.avatarId) ? prefill!.avatarId : AVATARS[0].id,
+  );
   const [submitting, setSubmitting] = useState(false);
   /**
    * A rejected submission. The form used to pass the response straight to `setResult`
@@ -99,11 +120,8 @@ export function SignupForm({
   }>(null);
   const [result, setResult] = useState<null | {
     demo?: boolean;
-    status: "confirmed" | "waitlisted";
+    status: string;
     reference: string;
-    /** Goes in the QR code — not shown on screen, and never printed on a public list. */
-    checkInToken: string;
-    waitlistPosition?: number;
   }>(null);
 
   const set = (k: string, v: string | boolean | string[]) =>
@@ -217,10 +235,14 @@ export function SignupForm({
           </p>
         )}
 
-        <p className="mx-auto mt-6 max-w-md text-sm text-muted">
-          If you get a place we&apos;ll create your SWC profile at that point, and send you
-          a check-in code for the day.
-        </p>
+        {!result.demo && (
+          <p className="mx-auto mt-6 max-w-md text-sm text-muted">
+            We&apos;ve emailed you a copy{isMinor && " and told your parent or guardian"}.
+            Your Sikh World Championship profile is set up with this email address — you
+            can sign in any time, and it carries over to every future event. If you get a
+            place we&apos;ll send a check-in code for the day.
+          </p>
+        )}
       </div>
     );
   }

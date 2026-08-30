@@ -51,7 +51,7 @@ export default function HomePage() {
                 style={{ animationDelay: "0.7s" }}
               >
                 <Link
-                  href={`/events/${featured.slug}/signup`}
+                  href={`/events/${featured.slug}/register-interest`}
                   className="group pill relative inline-flex items-center gap-2 overflow-hidden bg-kesri px-7 py-3.5 font-bold text-ink shadow-lg shadow-black/30 transition-transform hover:scale-[1.04] active:scale-95 sm:px-8"
                 >
                   Enter {featured.shortTitle} →
@@ -244,7 +244,7 @@ export default function HomePage() {
 
               <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
                 <Link
-                  href={`/events/${featured.slug}/signup`}
+                  href={`/events/${featured.slug}/register-interest`}
                   className="group pill relative inline-flex items-center gap-2 overflow-hidden bg-kesri px-8 py-4 font-bold text-ink shadow-lg shadow-black/30 transition-transform hover:scale-[1.04] active:scale-95"
                 >
                   Enter {featured.shortTitle} →

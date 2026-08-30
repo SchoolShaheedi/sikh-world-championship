@@ -71,6 +71,18 @@ Applications close **26 September**. That is the date everything else runs backw
 
 ## 4. Smaller, but decide before the day
 
+- **What name goes on the public bracket.** The big screen in the hall, and the same page
+  for anyone at home, will show the players in each match. For a 12-year-old that is
+  publishing a child's name on a public website. First name and last initial ("Tegh S.")
+  is what the demo uses and what most tournaments do; first name only is safer but two
+  Harmans cannot tell which one they are. Nothing is wired to real players until this is
+  decided.
+
+- **Sponsor offers for profile holders.** A profile is now advertised as carrying sponsor
+  discounts — money off merchandise, pre-orders, offers from Sikh businesses. It is shown
+  as "coming" and no offer is live. Has any sponsor actually agreed one? Until one has,
+  this is a promise with a date attached to it.
+
 - **Photography.** Consent is opt-in and recorded per applicant, but nothing on the day
   tells a photographer who said no. Wristbands are the usual answer. Who briefs them?
 
@@ -88,5 +100,10 @@ Applications close **26 September**. That is the date everything else runs backw
 - No under-12s. 12–15 accompanied all day. 16–17 with permission. 18+ independent.
 - Places by draw: referred first, then everyone else, both random within themselves.
 - No messaging between players, at any age.
-- A profile is created only if someone is selected, and it is stated rather than opted into.
+- Registration is for the platform: a profile is created when someone registers interest,
+  not only if they are drawn. Stated rather than opted into. (Changed round 42 — the
+  consequence is that we hold an account for every child who ever registered interest,
+  which is why the retention policy matters more than it did.)
+- The applicant is emailed an acknowledgement, and an under-18's guardian is emailed
+  separately saying what was agreed on their behalf and how to stop it.
 - No email address published anywhere; everything goes through the support form.

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Wordmark } from "./Logo";
 import { BrandLockup } from "./BrandLockup";
 import { ORG } from "@/data/org";
+import { upcomingEvents } from "@/data/events";
 
 /**
  * "Find a game" (/play) and "Players" (/players) are hidden for now — the routes, the
@@ -47,7 +48,7 @@ export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {
             );
           })}
           <Link
-            href="/events/sikh-fc-27/signup"
+            href="/join"
             className="pill ml-2 bg-kesri px-5 py-2 text-sm font-bold text-ink transition-colors hover:bg-kesrisoft"
           >
             Register interest
@@ -78,7 +79,7 @@ export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {
             </Link>
           ))}
           <Link
-            href="/events/sikh-fc-27/signup"
+            href="/join"
             onClick={() => setOpen(false)}
             className="mt-4 block rounded-full bg-kesri px-4 py-3 text-center font-bold text-ink"
           >
@@ -106,8 +107,13 @@ export function SiteFooter({ logoSrc = null }: { logoSrc?: string | null }) {
           <h3 className="text-xs font-bold tracking-[0.18em] text-muted">EVENTS</h3>
           <ul className="mt-3 space-y-2 text-sm">
             <li><Link href="/events" className="text-body hover:text-kesri">All events</Link></li>
-            <li><Link href="/events/sikh-fc-27" className="text-body hover:text-kesri">Sikh FC 27</Link></li>
-            <li><Link href="/events/sikh-fc-27/bracket" className="text-body hover:text-kesri">Live bracket</Link></li>
+            {upcomingEvents().map((e) => (
+              <li key={e.slug}>
+                <Link href={`/events/${e.slug}`} className="text-body hover:text-kesri">
+                  {e.title}
+                </Link>
+              </li>
+            ))}
             <li><Link href="/volunteer" className="text-body hover:text-kesri">Volunteer with us</Link></li>
           </ul>
         </div>
@@ -119,7 +125,8 @@ export function SiteFooter({ logoSrc = null }: { logoSrc?: string | null }) {
             <li><Link href="/sponsors" className="text-body hover:text-kesri">Sponsors</Link></li>
             {/* In the footer rather than the header: signing in is for the handful of
                 people who already have an account, and the header's one call to action
-                should stay on entering an event. */}
+                should stay on creating a profile. */}
+            <li><Link href="/join" className="text-body hover:text-kesri">Create a profile</Link></li>
             <li><Link href="/signin" className="text-body hover:text-kesri">Sign in</Link></li>
             <li><Link href="/support" className="text-body hover:text-kesri">Contact us</Link></li>
             <li>

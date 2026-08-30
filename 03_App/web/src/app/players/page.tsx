@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PlayerCard } from "@/components/PlayerCard";
 import { TrophyCabinet } from "@/components/TrophyCabinet";
+import { showDemoData } from "@/lib/features";
 
 export const metadata: Metadata = { title: "Players" };
 
-/** PREVIEW — replace with a real profile read once accounts are wired up. */
+/**
+ * PREVIEW — never rendered in production, see `showDemoData()`. An invented player with
+ * an invented cabinet full of trophies from events that have not happened reads as real
+ * to anyone who did not write it.
+ */
 const demoTrophies = [
   { id: "1", label: "Champion",   tier: "gold" as const,        event: "Sikh FC 27 Championship", division: "16+" },
   { id: "2", label: "Golden Boot", tier: "special" as const,    event: "Sikh FC 27 Championship", division: "16+" },
@@ -21,60 +27,50 @@ export default function PlayersPage() {
         card, and a trophy cabinet that follows them across every sport and every year.
       </p>
 
-      <div className="mt-12 grid gap-12 lg:grid-cols-[300px_1fr]">
-        <div>
-          <h2 className="mb-4 text-xs font-bold tracking-[0.18em] text-muted uppercase">
-            Player card
-          </h2>
-          <PlayerCard
-            name="Jagdeep Singh"
-            gamertag="jagdeep_10"
-            division="16+"
-            region="Birmingham"
-            avatarId="kesri-1"
-            eventTitle="FC 27"
-            seed="demo-player"
-            tier="gold"
-          />
-        </div>
+      {showDemoData() ? (
+        <div className="mt-12 grid gap-12 lg:grid-cols-[300px_1fr]">
+          <div>
+            <h2 className="mb-4 text-xs font-bold tracking-[0.18em] text-muted uppercase">
+              Player card
+            </h2>
+            <PlayerCard
+              name="Jagdeep Singh"
+              gamertag="jagdeep_10"
+              division="16+"
+              region="Birmingham"
+              avatarId="kesri-1"
+              eventTitle="FC 27"
+              seed="demo-player"
+              tier="gold"
+            />
+          </div>
 
-        <div>
-          <h2 className="mb-4 text-xs font-bold tracking-[0.18em] text-muted uppercase">
-            Trophy cabinet
-          </h2>
-          <TrophyCabinet trophies={demoTrophies} />
-          <p className="mt-6 text-sm text-muted">
-            This is a preview. Cabinets fill up as events are held — the first trophies go
-            out at Sikh FC 27.
+          <div>
+            <h2 className="mb-4 text-xs font-bold tracking-[0.18em] text-muted uppercase">
+              Trophy cabinet
+            </h2>
+            <TrophyCabinet trophies={demoTrophies} />
+            <p className="mt-6 text-sm text-muted">
+              Demo data, shown outside production only.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-12 rounded-3xl border border-line bg-surface/60 p-8">
+          <h2 className="font-display text-2xl text-kesri">Nobody has competed yet</h2>
+          <p className="mt-4 max-w-2xl text-muted">
+            Player cards and trophy cabinets fill up as events are held. The first ones go
+            out at Sikh FC 27 in Leicester.
           </p>
+          <Link
+            href="/join"
+            className="mt-6 inline-block rounded-xl bg-kesri px-6 py-3 font-bold text-ink transition-colors hover:bg-kesrisoft"
+          >
+            Create your profile
+          </Link>
         </div>
-      </div>
+      )}
 
-      {/* Coming next */}
-      <section className="mt-20 rounded-3xl border border-line bg-surface/60 p-8">
-        <h2 className="font-display text-2xl">Find players — coming after FC 27</h2>
-        <div className="mt-6 grid gap-6 sm:grid-cols-3">
-          {[
-            {
-              t: "Looking for a game",
-              d: "Post what you play, when you're free, and what platform you're on. Other Sikh players send you a request. Open to every age.",
-            },
-            {
-              t: "No typing, by design",
-              d: "Posts and requests are built from fixed menus — a game, a platform, when you're free, and a note from a short list. There's no box to type into, so there's nothing a stranger can say to your child.",
-            },
-            {
-              t: "Separate by age, moderated by people",
-              d: "Under-16s and 16-plus never mix. Report and block sit on every post and profile, and every report goes to a named moderator.",
-            },
-          ].map((c) => (
-            <div key={c.t}>
-              <h3 className="font-display text-lg text-kesri">{c.t}</h3>
-              <p className="mt-2 text-sm text-muted">{c.d}</p>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }

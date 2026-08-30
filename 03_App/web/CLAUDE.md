@@ -9,12 +9,27 @@ of what was chosen and why, by round. `../../00_Docs/NEXT-STEPS.md` is the live 
 
 A multi-event competition platform. **An event is data, not code**: adding one means
 adding `src/data/events/<slug>.ts` and registering it in `src/data/events/index.ts` —
-homepage, events list, event page, sign-up form and bracket all pick it up. Never
+homepage, events list, event page, interest form and bracket all pick it up. Never
 special-case an event in a component.
+
+**Registration is for the PLATFORM, not for one event** (round 42). A person creates one
+profile and then registers interest in each event. The routes follow that shape:
+
+| Route | What it is |
+|---|---|
+| `/join` | The front door. Explains what a profile is, then hands off to an event. |
+| `/events/<slug>/register-interest` | The form. Creates the profile *and* records interest. |
+| `/signin` | Magic link, for anyone who already has a profile. |
+| `/profile` | Their own record. |
+| `/admin` | Counts and the draw. Moderators only. |
+| `/moderation` | Reports and the support queue. Moderators only. |
+
+`/events/<slug>/signup` is a permanent redirect to `register-interest`; it was the URL
+until round 42 and is in things already shared.
 
 ## This app holds children's data
 
-Event 1 is open to ages 8+. The stores hold guardian contact details and children's
+Event 1 is open to ages 12–21. The stores hold guardian contact details and children's
 medical notes. That single fact drives most of the rules below.
 
 - Read `../../00_Docs/DATA-LAYER.md` before touching a store
@@ -22,47 +37,51 @@ medical notes. That single fact drives most of the rules below.
 
 ## Invariants — do not weaken these without a decision in DECISIONS.md
 
-1. **No free text or messaging between players, anywhere.** Posts and requests are built from fixed
-   moderation rota is staffed. The only free-text fields in the app are the support form
-   and a report's `detail`, and both go to moderators only — never to another player.
+1. **No free text or messaging between players, anywhere.** The only free-text fields in
+   the app are the support form and a report's `detail`, and both go to moderators only —
+   never to another player.
 2. **Age-band segregation is enforced in the data layer, not the UI.** U16 and 16+ are
    separate pools. Checked in `boardFor()` *and* again in `createRequest()`, because a
    request is the moment two people actually connect.
-3. **Both guardians are notified on every connection.** Accepting a request exchanges
-   gamertags in both directions, so both children's guardians are told. Locked by
-   `src/app/play/guardian-notification.test.ts`.
-4. **Gamertags are released only on an accepted request**, to those two players. They are
-   the one piece of data that lets someone make contact outside the platform.
-5. **A guardian email never comes from a form a child can fill in.** It comes from the
+3. **A guardian email never comes from a form a child can fill in.** It comes from the
    registration record.
-6. **The UI is not a security boundary.** Every server action re-checks the gate. Values
+4. **An under-18 registering means their guardian is emailed**, at submission, saying what
+   was agreed on their behalf and how to stop it. `src/lib/interest.ts`. It is the only
+   check that a real adult knows — everything else on that form was typed by whoever was
+   at the keyboard.
+5. **The UI is not a security boundary.** Every server action re-checks the gate. Values
    arriving from a client are only accepted if they appear in our own lists — see
    `pick()` in `src/app/play/actions.ts` and `src/lib/registration-schema.ts`.
-7. **Access decisions fail closed.** `currentPlayer()` returns `SessionPlayer | null`;
+6. **Access decisions fail closed.** `currentPlayer()` returns `SessionPlayer | null`;
    there is no fallback viewer. It once returned a fixed player who was also a moderator,
    which made `/moderation` readable by anyone. Nothing may invent a viewer again.
-   Moderator is a database grant — `setModerator()` in `src/lib/players.ts` — with no
-   button anywhere in the app.
+   Moderator is a database grant — `scripts/grant-moderator.mjs`, or `setModerator()` in
+   `src/lib/players.ts` — with no button anywhere in the app.
+7. **Nothing invented is ever rendered in production.** `showDemoData()` in
+   `src/lib/features.ts` has no environment-variable override, deliberately: a bracket of
+   plausible invented names is not a broken page, it is a convincing lie on a projector.
+8. **User-supplied text is escaped before it reaches email HTML.** `esc()` in
+   `src/lib/email-templates.ts`. A "name" containing an anchor tag would otherwise put an
+   attacker's link inside a safeguarding email sent from our verified domain to a parent.
 
-## Things that are stubs, not finished work
+## The registration lifecycle
 
-Each one is load-bearing and each one is a launch blocker. Do not build features that
-assume they work.
+```
+register interest ──> profile created + application recorded ──> emails out
+        │                    (src/lib/interest.ts)
+        │
+        └──> draw (src/lib/draw.ts, referred pool first) ──> selected / not selected
+                     │
+                     └──> confirmSelection() issues the check-in token (src/lib/selection.ts)
+```
 
-| File | Reality |
-|---|---|
-| `src/lib/session.ts` | Returns a fixed demo player. No auth exists. |
-| `src/lib/notify.ts` | Every notification only `console.info`s. **No email sends.** |
-| `src/lib/rate-limit.ts` | In-memory, so per-instance. Move it into D1 before relying on it. |
-| `src/lib/play-seed.ts` | Demo data. Delete once real players exist. |
-
-`/safeguarding` makes public promises that the stubs above do not yet keep. Treat a gap
-between that page and the code as a bug in the code *or* the page — never as acceptable.
+A check-in token is the credential that marks someone present, so it is issued **only** on
+selection, never at submission.
 
 ## Storage is Cloudflare D1
 
-The stores were JSON files until round 30; they are now D1. Schema in `migrations/`,
-access layer in `src/lib/db.ts`. Read `../../00_Docs/DATA-LAYER.md` before touching one.
+Schema in `migrations/`, access layer in `src/lib/db.ts`. Read `../../00_Docs/DATA-LAYER.md`
+before touching one.
 
 - Add a column with a new numbered file in `migrations/`, then
   `npx wrangler d1 migrations apply swc-production --local` (and `--remote` to deploy it).
@@ -71,24 +90,25 @@ access layer in `src/lib/db.ts`. Read `../../00_Docs/DATA-LAYER.md` before touch
   makes `04_Legal/RETENTION-POLICY.md` enforceable. Do not move them into `answers`.
 - Only event-specific answers (`psnId`, `skill`) belong in the `answers` column.
 
-## Two feature flags gate the player-facing features
+## Feature flags
 
-`src/lib/features.ts`. Both default **off in production, on in development**.
-`SWC_REGISTRATION_OPEN` and `SWC_BOARD_OPEN`. Turning registration on is a **safeguarding
-decision**, not a technical one — read `04_Legal/DPIA.md` first. `SWC_REGISTRATION_DEMO`
-renders the real form and skips only the write, for showing people the flow.
+`src/lib/features.ts`. `SWC_REGISTRATION_OPEN` and `SWC_BOARD_OPEN` default **off in
+production, on in development**. Turning registration on is a **safeguarding decision**,
+not a technical one — read `04_Legal/DPIA.md` first. `SWC_REGISTRATION_DEMO` renders the
+real form and skips only the write, for showing people the flow.
 
 ## Commands
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 125 tests
+npm test                         # 195 tests
 npx tsc --noEmit
 npm run lint
 npm run build
 npm run cf:preview               # run the built Worker in workerd — catches what
                                  # `next dev` cannot, e.g. anything touching node:fs
 npm run cf:deploy
+node scripts/grant-moderator.mjs you@example.com "Name" --remote
 ```
 
 Tests run against an in-memory SQLite database with the real migrations applied
@@ -99,6 +119,10 @@ that way — a test suite people are afraid to run is a test suite nobody runs.
 locally and fails or silently returns nothing in production. That cost us the site logo
 once (round 30). Anything filesystem-shaped must be resolved at build time — see
 `scripts/brand-manifest.mjs`.
+
+**Delete `.next` before a deploy that removed or renamed a route.** A stale
+`.next/dev/types` referencing a deleted page fails the build quietly and ships the old
+route (round 40, `/safeguarding`; round 42, `/events/[slug]/signup`).
 
 ## Conventions
 

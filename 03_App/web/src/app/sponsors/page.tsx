@@ -24,7 +24,20 @@ export default function SponsorsPage() {
         <li>Named awards — the Golden Boot or Fair Play award can carry your name</li>
         <li>Presence at the event, and mentions across the day</li>
         <li>Association with a community event that is free to enter, by design</li>
+        <li>
+          An offer to profile holders — a discount or early access that only people with a
+          Sikh World Championship profile can use, reaching them directly rather than
+          through an advert they scroll past
+        </li>
       </ul>
+
+      {/* Stated as a plan, not a live benefit. No sponsor has agreed an offer yet, and a
+          person deciding whether to make a profile must not be promised a discount that
+          does not exist — see src/data/profile-benefits.ts. */}
+      <p className="mt-6 text-sm text-muted">
+        Sponsor offers are new and none are live yet. If you would like yours to be the
+        first, say so when you get in touch.
+      </p>
 
       <p className="mt-10 rounded-2xl border border-line bg-surface/60 p-5 text-muted">
         To sponsor an event,{" "}

@@ -37,6 +37,24 @@ const nextConfig: NextConfig = {
         destination: `https://${CANONICAL_HOST}/:path+`,
         permanent: true,
       },
+
+      /**
+       * Round 42 renamed the event entry route. Registration is for the platform and
+       * "sign up" read as though it were for one event only; the page is now
+       * /events/:slug/register-interest, reached from /join.
+       *
+       * Kept permanently, not for a grace period: this URL has been in the header, on
+       * the homepage and in anything already shared, and a dead link on the one page
+       * that takes entries is the most expensive 404 on the site.
+       */
+      {
+        source: "/events/:slug/signup",
+        destination: "/events/:slug/register-interest",
+        permanent: true,
+      },
+      // People type this. Send them to the platform front door rather than a 404.
+      { source: "/signup", destination: "/join", permanent: false },
+      { source: "/register", destination: "/join", permanent: false },
     ];
   },
 };

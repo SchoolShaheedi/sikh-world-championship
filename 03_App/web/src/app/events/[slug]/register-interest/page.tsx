@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { EVENTS, getEvent } from "@/data/events";
 import { SignupForm } from "@/components/SignupForm";
 import { registrationOpen, registrationDemo } from "@/lib/features";
+import { currentPlayer } from "@/lib/session";
 
 /**
  * Rendered per request, not prerendered.
@@ -26,10 +28,10 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  return { title: `Sign up · ${getEvent(slug)?.title ?? "Event"}` };
+  return { title: `Register interest · ${getEvent(slug)?.title ?? "Event"}` };
 }
 
-export default async function SignupPage({
+export default async function RegisterInterestPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -38,15 +40,41 @@ export default async function SignupPage({
   const event = getEvent(slug);
   if (!event) notFound();
 
+  const me = await currentPlayer();
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="font-display text-4xl">Sign up</h1>
+      <h1 className="font-display text-4xl">Register interest</h1>
       <p className="mt-2 text-xl text-kesri">{event.title}</p>
       <p className="mt-4 text-muted">
         {registrationOpen()
-          ? `Free to enter, ${event.capacity} places. Takes about two minutes — and you get your player card at the end.`
+          ? `Free to enter, ${event.capacity} places. Takes about two minutes.`
           : `Free to enter, ${event.capacity} places.`}
       </p>
+
+      {/* Registration is for the platform, not for one event. Said here rather than only
+          on /join, because most people arrive on this page from a link and never see the
+          explainer. */}
+      {(registrationOpen() || registrationDemo()) && (
+        <p className="mt-4 text-muted">
+          {me ? (
+            <>
+              You&apos;re signed in as{" "}
+              <span className="text-body">{me.displayName}</span>, so this attaches to your
+              existing profile — no second account.
+            </>
+          ) : (
+            <>
+              This also creates your Sikh World Championship profile, which you keep for
+              every future event.{" "}
+              <Link href="/join" className="text-kesri hover:underline">
+                What a profile gives you
+              </Link>
+              .
+            </>
+          )}
+        </p>
+      )}
 
       {/* "Sign up now to hold your place" is only true when there is a form to do it
           with. Shown alongside a closed notice it reads as a broken promise. */}
@@ -71,7 +99,19 @@ export default async function SignupPage({
 
       {registrationOpen() || registrationDemo() ? (
         <div className="mt-10">
-          <SignupForm event={event} demo={registrationDemo()} />
+          <SignupForm
+            event={event}
+            demo={registrationDemo()}
+            prefill={
+              me
+                ? {
+                    email: me.email,
+                    region: me.region ?? "",
+                    avatarId: me.avatarId ?? "",
+                  }
+                : undefined
+            }
+          />
         </div>
       ) : (
         /* Registration is not open. Showing the form would be dishonest — it cannot
