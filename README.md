@@ -36,9 +36,7 @@ currently the largest gap in the project.
 | `NEXT-STEPS.md` | The live backlog — what is built, what blocks launch |
 | `DEPLOYMENT.md` | Cloudflare hosting: what works, what 500s, and why it is not live |
 | `DATA-LAYER.md` | Storage design; **read before touching any store** |
-| `CHAT-AND-SAFETY.md` | Safeguarding reasoning behind the player-facing features |
-| `ONLINE-PLAY-AND-CHAT.md` | The LFG board and why free-text chat is deferred |
-| `PLAYER-CARDS.md` | Player card design and the Panj Gun stats |
+| | `PLAYER-CARDS.md` | Player card design and the Panj Gun stats |
 | `BRAINSTORM.md`, `FEATURE-IDEAS.md` | Early and parked ideas |
 | `DESIGN-AUDIT.md`, `HERO-OPTIONS.md`, `3D-ANIMATION-RESEARCH.md` | Design and 3D work |
 
@@ -58,7 +56,6 @@ npx tsc --noEmit             # typecheck
 This is the part to get right. The app holds guardian contacts and children's medical
 notes, and event 1 is open to ages 8+.
 
-- Read `00_Docs/CHAT-AND-SAFETY.md` before touching anything player-facing
 - Read `00_Docs/DATA-LAYER.md` before touching the data layer
 - `04_Legal/README.md` lists the paperwork that must exist before real registrations open
 

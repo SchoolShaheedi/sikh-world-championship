@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ORG } from "@/data/org";
 import { SupportForm } from "@/components/SupportForm";
 
 export const metadata: Metadata = {
@@ -84,15 +82,9 @@ export default function SupportPage() {
       </section>
 
       <p className="mt-12 rounded-2xl border border-line bg-surface/50 p-5 text-sm text-muted">
-        You can also email us directly at{" "}
-        <span className="text-kesri">{ORG.email}</span>. For anything about a young
-        person&apos;s safety, our safeguarding lead is{" "}
-        <span className="text-body">{ORG.safeguarding.leadName}</span> —{" "}
-        <span className="text-kesri">{ORG.safeguarding.leadEmail}</span>. More detail on{" "}
-        <Link href="/safeguarding" className="text-kesri hover:underline">
-          how we keep players safe
-        </Link>
-        .
+        This form is the way to reach us. Anything about a young person&apos;s safety jumps
+        to the top of the queue and is read by a moderator. You can send it without an
+        account and without giving your name.
       </p>
     </div>
   );

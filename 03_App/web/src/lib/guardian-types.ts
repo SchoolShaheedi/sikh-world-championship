@@ -51,7 +51,7 @@ export const APPROVAL_REQUEST_LIFETIME_DAYS = 30;
  *  kept here so the page, the email and the safeguarding policy can never drift apart. */
 export const GUARDIAN_TERMS = [
   "Your child will only ever see, and be seen by, other under-16 players. Adults cannot see or contact them here at all.",
-  "There is no chat and no free typing. Posts and requests are built from a fixed set of options.",
+  "There is no messaging and no free typing. Posts and requests are built from a fixed set of options.",
   "Their gamertag is only shared with another player once they have both agreed to a game.",
   "You will get an email each time your child connects with someone, telling you who, where they're from, and what game.",
   "Their profile never shows a surname, a school, an exact age, or an address — only a first name and a region.",

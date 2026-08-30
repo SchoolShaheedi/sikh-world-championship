@@ -1,5 +1,5 @@
+import Link from "next/link";
 import type { Metadata } from "next";
-import { ORG } from "@/data/org";
 
 export const metadata: Metadata = { title: "Volunteer" };
 
@@ -26,7 +26,7 @@ export default function VolunteerPage() {
       <p className="mt-10 rounded-2xl border border-line bg-surface/60 p-5 text-muted">
         {/* TODO: replace with a real volunteer sign-up form (same form engine as event
             registration — see src/lib/types.ts FormField). */}
-        To volunteer, email <span className="text-kesri">{ORG.email}</span> and tell us
+        To volunteer, <Link href="/support" className="text-kesri hover:underline">get in touch</Link> and tell us
         which role suits you.
       </p>
     </div>

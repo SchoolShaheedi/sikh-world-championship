@@ -17,14 +17,12 @@ special-case an event in a component.
 Event 1 is open to ages 8+. The stores hold guardian contact details and children's
 medical notes. That single fact drives most of the rules below.
 
-- Read `../../00_Docs/CHAT-AND-SAFETY.md` before touching anything player-facing
 - Read `../../00_Docs/DATA-LAYER.md` before touching a store
 - `../../04_Legal/README.md` lists the paperwork that must exist before real sign-ups
 
 ## Invariants — do not weaken these without a decision in DECISIONS.md
 
-1. **No free text between players, anywhere.** Posts and requests are built from fixed
-   menus in `src/lib/play-types.ts`. Free-text chat is deliberately deferred until the
+1. **No free text or messaging between players, anywhere.** Posts and requests are built from fixed
    moderation rota is staffed. The only free-text fields in the app are the support form
    and a report's `detail`, and both go to moderators only — never to another player.
 2. **Age-band segregation is enforced in the data layer, not the UI.** U16 and 16+ are

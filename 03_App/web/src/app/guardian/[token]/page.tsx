@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { findByToken, isExpired } from "@/lib/guardian-store";
 import { GUARDIAN_TERMS } from "@/lib/guardian-types";
-import { ORG } from "@/data/org";
 import { decide } from "./actions";
 
 export const metadata: Metadata = {
@@ -24,8 +23,11 @@ export default async function GuardianPage({
       <Shell title="This link isn't valid">
         <p className="text-muted">
           It may have been mistyped, or replaced by a newer request. Ask your child to
-          request permission again, or email us at{" "}
-          <span className="text-kesri">{ORG.email}</span> and we&apos;ll sort it out.
+          request permission again, or{" "}
+          <Link href="/support" className="text-kesri hover:underline">
+            get in touch
+          </Link>{" "}
+          and we&apos;ll sort it out.
         </p>
       </Shell>
     );
@@ -154,12 +156,11 @@ export default async function GuardianPage({
       )}
 
       <p className="mt-10 rounded-2xl border border-line bg-surface/50 p-5 text-sm text-muted">
-        Questions, or something doesn&apos;t look right? Email{" "}
-        <span className="text-kesri">{ORG.email}</span>, or read{" "}
-        <Link href="/safeguarding" className="text-kesri hover:underline">
-          how we keep players safe
+        Questions, or something doesn&apos;t look right?{" "}
+        <Link href="/support" className="text-kesri hover:underline">
+          Tell us
         </Link>
-        . If you didn&apos;t expect this email, tell us — it matters.
+        . If you didn&apos;t expect this email, say so — it matters.
       </p>
     </Shell>
   );

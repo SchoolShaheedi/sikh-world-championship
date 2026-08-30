@@ -31,8 +31,6 @@ actually sell to sponsors. Needed before you can ask anyone for money.
 **7. Player profiles.** Gamertag, division, region, games played, events attended, trophies
 won. The spine everything else attaches to.
 
-**8. LFG board + quick messages.** See CHAT-AND-SAFETY.md. This is the retention engine.
-
 **9. Cross-event trophy cabinet.** A player who wins FIFA, enters chess, and places in
 kabaddi has a profile that shows all three. This is what makes it a *championship
 organisation* rather than a series of unrelated events. Strongly recommended — it's the
@@ -57,7 +55,6 @@ their own community's tournament broadcast is genuinely powerful. Needs one pers
 OBS and a capture card.
 
 **14. Parent/guardian portal.** Guardians see their child's registrations, consents, and
-chat settings in one place. Turns your biggest compliance burden into a trust feature.
 
 **15. Seva / community layer.** Tie events to something beyond the game — a food bank
 collection at the door, a charity total on the site, langar at every event. It's also,
@@ -69,7 +66,6 @@ and for the diaspora outside the UK.
 ## THINGS TO DELIBERATELY NOT BUILD (yet)
 - Native apps before there's a reason. The web app works on every phone today.
 - Payments. Free entry avoids an entire category of problems. Keep it free as long as you can.
-- Open DMs for under-16s. See CHAT-AND-SAFETY.md.
 - A custom bracket engine for 64 players when a whiteboard works. Build the *public view*
   of the bracket; the admin side can be manual for event one.
 - Leaderboards before there are multiple events to rank across.

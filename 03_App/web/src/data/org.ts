@@ -1,4 +1,16 @@
-/** Organisation-level brand config. One place to change names, links and contacts. */
+/**
+ * Organisation-level brand config. One place to change names and links.
+ *
+ * NO EMAIL ADDRESS HERE, deliberately. Every "contact us" goes to /support, which is a
+ * form: it reaches a moderator queue with assignment and an audit trail, it works without
+ * an account or a name, and it puts no address on a public page to be scraped. An address
+ * can be added later if there is a reason; a form is the better default for a service used
+ * by children.
+ *
+ * The safeguarding contact block was removed with the /safeguarding page (round 40). The
+ * obligation did not go away — see 04_Legal/SAFEGUARDING-POLICY.md, which still needs its
+ * named people.
+ */
 export const ORG = {
   name: "Sikh World Championship",
   short: "SWC",
@@ -6,23 +18,10 @@ export const ORG = {
   intro:
     "Sikh World Championship brings Sikhs together through competition — esports, sport, and mind games. We run events where players meet, compete, and build something that lasts beyond the final whistle.",
 
-  // TODO: confirm before launch
-  email: "TBC@sikhworldchampionship.com",
+  // TODO: claim these and fill them in before announcing publicly.
   socials: {
     instagram: "TBC",
     tiktok: "TBC",
     youtube: "TBC",
-  },
-
-  /** Safeguarding contacts — required before any under-18 event goes live. */
-  safeguarding: {
-    leadName: "TBC",
-    leadEmail: "TBC",
-    /**
-     * Named moderators who work the report and support queue. At least two real people,
-     * with a 24h response commitment — /safeguarding says so publicly.
-     * Not "moderators for chat": there is no chat (DECISIONS.md round 25).
-     */
-    moderators: ["TBC", "TBC"] as string[],
   },
 } as const;

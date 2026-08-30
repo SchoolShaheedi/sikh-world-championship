@@ -16,12 +16,13 @@
  *  3. GUARDIAN NOTIFIED ON EVERY CONNECTION. When an under-16 swaps gamertags with
  *     someone, their guardian gets an email saying who with. Transparency beats blocking:
  *     a guardian who can see what's happening can step in early.
- *  4. NO FREE TEXT, ANYWHERE. Posts and requests are built from fixed menus.
+ *  4. NO FREE TEXT, ANYWHERE. Posts and requests are built from fixed menus, and there
+ *     is no messaging of any kind between players.
  *
  * Plus report and block on everything, with a moderation queue behind them.
  */
 
-/** Availability windows, not "online now" — see ONLINE-PLAY-AND-CHAT.md recommendation 2. */
+/** Availability windows rather than "online now": nobody has to be watching a screen. */
 export const WINDOWS = [
   "Weekday mornings",
   "Weekday afternoons",
@@ -139,7 +140,7 @@ export const REPORT_REASONS = [
   "Bullying or harassment",
   "Adult or inappropriate content",
   "Asking for personal information",
-  "Trying to move the chat elsewhere",
+  "Trying to move the conversation elsewhere",
   "Someone under 16 using the board",
   "Spam or advertising",
   "Something else",

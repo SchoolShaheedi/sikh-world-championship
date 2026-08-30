@@ -64,7 +64,7 @@ simply unreachable.
 
 Stated to match the code exactly, as of round 25:
 
-- **There is no chat, for anyone, at any age.** No private messaging exists. Finding a
+- **There is no messaging, for anyone, at any age.** No private messaging exists. Finding a
   practice partner works from fixed menus only — there is no free-text field a player can
   type into and send to another player.
 - Under-16s and 16-plus are strictly separated. An adult cannot see, contact or be

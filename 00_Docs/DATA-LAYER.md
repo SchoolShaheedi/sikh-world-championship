@@ -1,6 +1,6 @@
-> **STATUS (2026-08-28, round 30): MIGRATED. This document's Supabase plan is superseded.**
+> **STATUS (2026-08-28, round 30): MIGRATED. This document's Cloudflare D1 plan is superseded.**
 >
-> The stores are now **Cloudflare D1**. Supabase was chosen before Cloudflare was picked
+> The stores are now **Cloudflare D1**. Cloudflare D1 was chosen before Cloudflare was picked
 > for hosting; see DECISIONS.md round 29 for why that reversed, and round 30 for the
 > migration itself. The reasoning below about *why* the JSON files had to go is still
 > accurate and worth reading — it is only the destination that changed.
@@ -25,7 +25,7 @@ The JSON file is not safe for real registrations:
    conditions and allergies for children. That needs encryption at rest, access control,
    and a retention policy (delete it a set period after the event).
 
-## Recommended: Supabase (Postgres)
+## Recommended: Cloudflare D1 (Postgres)
 Chosen because it gives auth, database and row-level security in one, has a generous
 free tier, and the accounts requirement means auth is needed anyway.
 
@@ -39,7 +39,7 @@ Row-level security rules that matter:
 - Public player profiles expose display name, avatar, region and age band. Nothing else.
 
 ## Migration path
-`src/lib/store.ts` is the only file that touches storage. Swapping to Supabase means
+`src/lib/store.ts` is the only file that touches storage. Swapping to Cloudflare D1 means
 reimplementing these functions against the database and changing nothing else:
 
     registrationsFor(eventSlug)

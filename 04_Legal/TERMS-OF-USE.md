@@ -45,7 +45,7 @@ regardless of the wishes of the person concerned or their family.
 
 ## 7. The online board
 
-Finding a practice partner is a matchmaking tool, not a chat service — **there is no
+Finding a practice partner is a matchmaking tool — **there is no
 messaging on this platform.** Games happen on PlayStation, outside our control, and we are
 not responsible for what happens on another company's network. Report anything that
 concerns you.

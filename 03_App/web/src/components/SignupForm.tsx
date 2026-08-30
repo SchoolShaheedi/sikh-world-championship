@@ -366,11 +366,7 @@ export function SignupForm({
           </legend>
           <p className="text-sm text-muted">
             You&apos;re under 18, so we need a parent or guardian&apos;s details and their
-            permission. This is how we keep everyone safe on the day — see our{" "}
-            <a href="/safeguarding" className="text-kesri hover:underline">
-              safeguarding policy
-            </a>
-            .
+            permission. This is how we keep everyone safe on the day.
           </p>
           {tier && tier !== "none" && (
             <p className="mt-3 rounded-xl border border-kesri/30 bg-kesri/[0.08] p-3 text-sm text-body">

@@ -160,7 +160,7 @@ the same runtime Cloudflare runs. This is not a simulation.
 
 **Works (200):**
 
-`/` · `/about` · `/safeguarding` · `/events` · `/events/sikh-fc-27` ·
+`/` · `/about` · `/events` · `/events/sikh-fc-27` ·
 `/events/sikh-fc-27/signup` · `/players` · `/sponsors` · `/volunteer` · `/support` ·
 `/styleguide`
 
@@ -195,12 +195,10 @@ the deny-by-default fix from round 24 working, not the page working.
 
 ## What has to happen first
 
-**Finish the database migration.** `00_Docs/DATA-LAYER.md` and `NEXT-STEPS.md` both already
-specify **Supabase**, and that decision still holds on Cloudflare — the Supabase client is
-HTTP-based and runs fine on Workers. Nothing about hosting here forces a different database.
+**Finish the database migration.** The database is **Cloudflare D1** — see `00_Docs/DATA-LAYER.md`.
 
 > Cloudflare's own D1 would also work, but choosing it would contradict a recorded
-> decision and tie the data layer to one host. Prefer Supabase unless there is a reason to
+> decision and tie the data layer to one host. Prefer Cloudflare D1 unless there is a reason to
 > revisit it, and if you do revisit it, record that in `DECISIONS.md`.
 
 Migrating the four stores is the same work either way, and it also clears **DPIA risk #4**

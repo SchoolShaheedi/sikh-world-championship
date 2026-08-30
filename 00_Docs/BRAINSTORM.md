@@ -11,7 +11,6 @@ Two products that share one account system:
 
 **B. Sikh gamer network** (the long-term reason people stay)
 - Find other Sikh players by game / platform / region / age band / skill.
-- Add friend, see who's online, challenge to a match, chat.
 - Without this, the app is dead 3 days after the tournament ends. This is the retention engine.
 
 ## 2. Why the second part is the hard part
@@ -24,17 +23,15 @@ That triggers real obligations, not optional nice-to-haves:
   full name/school/city, report+block on every profile, message filtering, adult accounts
   cannot DM minor accounts, verified moderators.
 Design decision that solves most of this cheaply: **age bands (13-15, 16-17, 18+) with strict
-separation, and no free-form DMs for under-16 in v1** — only in-tournament chat and preset
 messages ("gg", "rematch?", "add me"). Open DMs can come later once moderation exists.
 
 ## 3. Suggested build order
 - **Phase 0 (weeks 0-2): Landing page + sign-up form.** Ship a one-page site with a form
-  (Google Form / Typeform / simple Next.js + Supabase). Collect registrations for FIFA 26 now.
+  (Google Form / Typeform / simple Next.js + Cloudflare D1). Collect registrations for FIFA 26 now.
   Do NOT block the tournament on building an app.
 - **Phase 1 (weeks 2-8): Tournament engine.** Accounts, event pages, bracket generation,
   match reporting with screenshot proof, admin panel, standings, results.
 - **Phase 2 (months 3-6): Player network.** Profiles, gamertag linking, "looking for a game"
-  board, friends, safe chat, presence.
 - **Phase 3: Multi-event platform.** Recurring seasons, leaderboards across events, chapters
   by country/gurdwara, sponsor/donation layer.
 

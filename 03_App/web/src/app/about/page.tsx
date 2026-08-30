@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { ORG } from "@/data/org";
 
@@ -44,7 +45,7 @@ export default function AboutPage() {
       </ul>
 
       <p className="mt-10 rounded-2xl border border-line bg-surface/60 p-5 text-muted">
-        Get in touch: <span className="text-kesri">{ORG.email}</span>
+        Get in touch through <Link href="/support" className="text-kesri hover:underline">our contact form</Link>.
       </p>
     </div>
   );

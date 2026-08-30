@@ -55,7 +55,7 @@ school, year group, gender, ethnicity, photographs of the player as a profile de
 - Guardian presence tiered by age rather than blanket, so we do not demand a parent's
   whole Saturday where the risk does not justify it (round 24)
 - Emergency contact not duplicated for under-18s — the guardian record serves it (round 25)
-- **No chat at all** (round 25), which removes an entire category of processing: there are
+- **No messaging at all** (round 25), which removes an entire category of processing: there are
   no private messages between users, so there is nothing to filter, retain, or breach
 
 **Lawful bases:** contract for the registration itself; explicit consent for health data;
@@ -69,7 +69,7 @@ of these describe the system as it stands today, not as we would like it to be.
 
 | # | Risk | Likelihood | Severity | Mitigation | Residual |
 |---|---|---|---|---|---|
-| 1 | **Adult contacts a child through the platform** | Low | High | No chat at all. Age bands strictly separated, enforced in the data layer and re-checked when a request is created. PlayStation IDs released only on mutual agreement. Guardian consent required before an under-16 uses the board; both guardians notified on every exchange. | Low |
+| 1 | **Adult contacts a child through the platform** | Low | High | No messaging at all. Age bands strictly separated, enforced in the data layer and re-checked when a request is created. PlayStation IDs released only on mutual agreement. Guardian consent required before an under-16 uses the board; both guardians notified on every exchange. | Low |
 | 2 | **Child is taken from the venue by the wrong adult** | Low | High | Tiered supervision recorded at sign-up: under-12 guardian on site, 12–15 collected, explicit "may not leave unaccompanied" default. Check-in via QR. `[NEEDS: a sign-out procedure at the desk to match — the app records the permission but nothing enforces it at the door]` | `[Medium until the desk procedure exists]` |
 | 3 | **Medical information not available when a child collapses** | Medium | High | Collected in advance as a structured tick-list plus detail, so a first aider can scan it. `[NEEDS: a printed or offline copy at the first aid point — the venue may have no signal]` | `[Medium]` |
 | 4 | **Children's data breached from the store** | **Medium** | High | **Not yet mitigated.** Data currently sits in unencrypted JSON files on the application host. Must move to a managed database with encryption at rest and role-based access before any real registration. | **High until migrated** |

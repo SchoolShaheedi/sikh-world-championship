@@ -16,7 +16,7 @@
 - [ ] Line up the safeguarding leads and start their DBS checks (these take time)
 
 ## Build — next up
-- [ ] Replace the JSON store with Supabase (see DATA-LAYER.md)
+- [ ] Replace the JSON store with Cloudflare D1 (see DATA-LAYER.md)
 - [ ] Confirmation emails + QR check-in code
 - [ ] Guardian notification email when an under-18 registers
 - [ ] Admin area: registration list, check-in scanner, score entry
@@ -29,7 +29,6 @@
 - [ ] Player accounts and public profiles
 - [ ] Trophy cabinet populated from real results
 - [ ] Looking For Game board + preset quick messages (all ages)
-- [ ] Free-text chat for 16+, with report/block and moderation tooling
 - [ ] Capacitor wrap for iOS/Android
 
 ## Adding a second event
@@ -49,17 +48,16 @@ Sport-specific sign-up questions go in that event's `formFields`.
 
 ### Before it goes live
 - [ ] Replace `src/lib/session.ts` — it's a stub returning a fixed demo player
-- [ ] Replace `src/lib/play-store.ts` JSON files with Supabase (same caveats as
+- [ ] Replace `src/lib/play-store.ts` JSON files with Cloudflare D1 (same caveats as
       registrations — see DATA-LAYER.md)
 - [ ] Delete `src/lib/play-seed.ts` once real players exist
 - [ ] Email or push when a request arrives or is accepted — without this the board only
       works for people who happen to open the site
 - [ ] Expire pending requests after ~7 days
 - [ ] Restrict `/moderation` properly (currently gated on a stub flag)
-- [ ] Name the moderators publicly on /safeguarding before the board opens
+- [ ] Name the safeguarding lead, deputy and moderators — see 04_Legal/SAFEGUARDING-POLICY.md
 
 ### Deferred, deliberately
-- Free-text chat (needs the moderation rota staffed and proven first)
 - Under-16 access, via event-verified connections
 - Match result logging, ladder and seasons
 
@@ -74,7 +72,7 @@ Sport-specific sign-up questions go in that event's `formFields`.
 
 ### Before under-16 access goes live — BLOCKING
 - [ ] `src/lib/notify.ts` currently only logs. The guardian notification is a
-      safeguarding promise made publicly on /safeguarding, so it MUST actually send
+      safeguarding promise made to guardians, so it MUST actually send
       before under-16 access is switched on for real players.
 - [ ] Build the guardian approval flow itself (email with a one-click approve/revoke link)
 - [ ] Confirm the safeguarding page wording matches what the code actually does

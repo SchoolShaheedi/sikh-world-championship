@@ -1,5 +1,5 @@
+import Link from "next/link";
 import type { Metadata } from "next";
-import { ORG } from "@/data/org";
 
 export const metadata: Metadata = { title: "Sponsors" };
 
@@ -27,8 +27,11 @@ export default function SponsorsPage() {
       </ul>
 
       <p className="mt-10 rounded-2xl border border-line bg-surface/60 p-5 text-muted">
-        To sponsor an event, get in touch:{" "}
-        <span className="text-kesri">{ORG.email}</span>
+        To sponsor an event,{" "}
+        <Link href="/support" className="text-kesri hover:underline">
+          get in touch
+        </Link>
+        .
       </p>
     </div>
   );

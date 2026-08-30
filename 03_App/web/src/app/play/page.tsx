@@ -16,7 +16,7 @@ export default async function PlayPage() {
   // Checked before touching the store, which is the thing that cannot work on a host
   // with no writable filesystem. Also honest: the board is built but not launched —
   // guardian notification emails do not send yet, and that is a promise made on
-  // /safeguarding which has to be true before an under-16 can be here.
+  // a promise we make to guardians, which has to be true before an under-16 is here.
   if (!boardOpen()) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-20">
@@ -29,7 +29,7 @@ export default async function PlayPage() {
         <div className="mt-8 rounded-2xl border border-line bg-surface/60 p-6">
           <h2 className="font-display text-lg text-kesri">How it will work</h2>
           <ul className="mt-4 space-y-2.5 text-sm text-muted">
-            <li>— No chat and no typing, for anyone. Everything is built from set options.</li>
+            <li>— No messaging and no typing, for anyone. Everything is built from set options.</li>
             <li>— Under-16s and over-16s never mix, and adults cannot reach an under-16.</li>
             <li>— Under-16s need a parent or guardian to switch it on, and they can switch it off again at any time.</li>
             <li>— Gamertags are only shared once two players have both agreed to a game.</li>
@@ -89,7 +89,7 @@ export default async function PlayPage() {
           </h2>
           <ul className="mt-4 space-y-2.5 text-sm text-muted">
             <li>— You&apos;ll only ever see, and be seen by, other under-16 players. Adults cannot reach you here at all.</li>
-            <li>— There&apos;s no chat and no typing. Posts and requests are built from set options.</li>
+            <li>— There&apos;s no messaging and no typing. Posts and requests are built from set options.</li>
             <li>— Your gamertag is only shared when you both agree to a game.</li>
             <li>— They&apos;ll get an email telling them each time you connect with someone.</li>
             <li>— They can switch it off again whenever they want.</li>
@@ -97,19 +97,14 @@ export default async function PlayPage() {
         </div>
         {(approval?.status === "declined" || approval?.status === "revoked") && (
           <p className="mt-8 rounded-xl border border-line bg-surface p-4 text-sm text-muted">
-            Your parent or guardian has said no for now. Have a chat with them — they can
+            Your parent or guardian has said no for now. Talk to them — they can
             change their mind at any time using the link we sent them.
           </p>
         )}
 
         <div className="mt-8 space-y-4">
           <AskGuardianButton status={approval?.status ?? null} />
-          <Link
-            href="/safeguarding"
-            className="inline-block rounded-xl border border-line px-6 py-3 font-semibold text-body"
-          >
-            How we keep you safe
-          </Link>
+
         </div>
       </div>
     );
@@ -267,10 +262,7 @@ export default async function PlayPage() {
         are kept completely separate, there&apos;s no free typing at strangers, and
         gamertags are only shared once you both agree to a game. Report and block are on
         every post, a moderator reads every report, and under-16s need a guardian&apos;s
-        permission to be here at all.{" "}
-        <Link href="/safeguarding" className="text-kesri hover:underline">
-          More on safety
-        </Link>
+        permission to be here at all.
       </p>
     </div>
   );

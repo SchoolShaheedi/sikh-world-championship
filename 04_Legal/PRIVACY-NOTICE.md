@@ -30,7 +30,7 @@ data, we do not advertise to you, and we do not use it to profile you. Most of i
 deleted within a year of the event. If you are under 18, a parent or guardian has to give
 permission, and they can withdraw it at any time.
 
-There is **no chat on our platform**, for anyone, at any age — so there are no private
+There is **no messaging on our platform**, for anyone, at any age — so there are no private
 messages for us to hold.
 
 ---
@@ -121,7 +121,7 @@ Most of our players are children. Under the ICO's Age Appropriate Design Code we
 - require a parent or guardian's permission before an under-16 can use the board at all,
   and let them withdraw it instantly
 - tell a parent when their child connects with another player
-- provide **no chat**, so there is no private channel between a child and a stranger
+- provide **no messaging**, so there is no private channel between a child and a stranger
 - explain all of this in language a child can read — see below
 
 We do not profile children, target them with advertising, use nudge techniques to keep
@@ -142,7 +142,7 @@ them online, or use their data to train anything.
 > name, your avatar, your region and your age group — never your surname, your school, your
 > address or your exact age.
 >
-> **There's no chat here.** Nobody can send you a message. You pick from lists instead, so
+> **There's no messaging here.** Nobody can send you a message. You pick from lists instead, so
 > nobody can type anything at you.
 >
 > **You can ask us to delete everything** about you, at any time, and we will. You don't
@@ -155,7 +155,7 @@ them online, or use their data to train anything.
 - **Our volunteers**, only what they need: the check-in desk sees names and references;
   the first aider sees medical notes; moderators see reports.
 - **Suppliers** who process data on our behalf, under contract: `[HOSTING — e.g. Vercel]`,
-  `[DATABASE — e.g. Supabase]`, `[EMAIL — e.g. Resend]`. Each needs a data processing
+  `[DATABASE — Cloudflare D1]`, `[EMAIL — e.g. Resend]`. Each needs a data processing
   agreement in place before it holds real data.
 - **Nobody else.** We do not sell or share your data for marketing. Ever.
 - We may share information with the police, social services or another safeguarding

@@ -1,8 +1,7 @@
 /**
  * Database access — Cloudflare D1.
  *
- * Replaces the JSON files. See 00_Docs/DATA-LAYER.md and DECISIONS.md round 29 for why
- * D1 rather than Supabase.
+ * Replaces the JSON files. See 00_Docs/DATA-LAYER.md.
  *
  * TWO BACKENDS, ONE INTERFACE. D1's query API (`prepare().bind().all()/first()/run()`) is
  * small, so tests run against `node:sqlite` instead of spinning up workerd. That keeps the

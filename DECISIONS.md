@@ -1429,3 +1429,44 @@ exists to prevent, and it is worth fixing there too.
      adult into the building. If a good share of 64 players are in that band, the venue
      needs to seat well over a hundred people, and langar has to stretch. That is a
      capacity question for the Leicester venue, not just a policy one.
+
+
+---
+
+# Round 40 (2026-08-30) — Removals
+
+189. **`/safeguarding` deleted**, at the owner's decision. The case against was put twice:
+     the sign-up form linked to it, it is an app-store requirement for the planned native
+     wrap, venues and insurers ask for it, and deleting the page removes the evidence of
+     meeting the obligation rather than the obligation. A six-line replacement stating only
+     what is true was offered and declined. Recorded here so the reasoning is not lost.
+     Every link to it is gone — nav, footer, sign-up form, support page, guardian approval
+     page and the board — so nothing points at a 404.
+     **The obligation stands.** `04_Legal/SAFEGUARDING-POLICY.md` still exists and still
+     needs its named people; it is now the only place the policy lives.
+190. **No email address anywhere on the site.** `ORG.email` is gone rather than corrected —
+     it still read `TBC@sikhworldchampionship.com`, the wrong domain. Every "contact us"
+     now goes to `/support`, which is better than an address for this audience: it reaches
+     a moderator queue with assignment and an audit trail, it works without an account or a
+     name, and it puts nothing on a public page to be scraped. The safeguarding contact
+     block went with it.
+191. **Supabase references removed** outside the decision log. It was still named in
+     `DATA-LAYER.md`, `BRAINSTORM.md`, `NEXT-STEPS.md`, `DEPLOYMENT.md`, the privacy notice
+     and a comment in `db.ts`, three rounds after D1 replaced it.
+192. **Chat references removed.** `00_Docs/CHAT-AND-SAFETY.md` and
+     `00_Docs/ONLINE-PLAY-AND-CHAT.md` deleted; the remaining copy says "messaging" where
+     it needs to describe the absence of one. Kept deliberately, in three places, is the
+     statement that there is **no messaging between players** — in the guardian consent
+     terms, on the board, and in the DPIA. Those are not references to a feature; they are
+     the assurance itself, and deleting them would weaken a real protection. Say so if they
+     should go too.
+193. `DECISIONS.md` is untouched by all of this. Superseded entries are the point of a
+     decision log, and rounds 25 and 29 already say what they supersede.
+
+## Not removed, and why
+
+194. The demo data flagged in the round-40 audit — `play-seed.ts`, `demoTrophies` on
+     `/players`, `demoEntrants` on the bracket — is still there. It was on the list and the
+     owner did not call it, so it stays until they do. It matters most for the bracket,
+     which will show 64 invented players on a projector at a real event if nobody replaces
+     it.
