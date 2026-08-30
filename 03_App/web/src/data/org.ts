@@ -18,10 +18,9 @@ export const ORG = {
   intro:
     "Sikh World Championship brings Sikhs together through competition — esports, sport, and mind games. We run events where players meet, compete, and build something that lasts beyond the final whistle.",
 
-  // TODO: claim these and fill them in before announcing publicly.
   socials: {
-    instagram: "TBC",
-    tiktok: "TBC",
-    youtube: "TBC",
+    // Only what actually exists. An empty or "TBC" social link is worse than none — it
+    // sends someone to a dead page and looks abandoned.
+    instagram: "https://www.instagram.com/sikhworldchampionships/",
   },
 } as const;

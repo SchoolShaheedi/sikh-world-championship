@@ -34,6 +34,7 @@ currently the largest gap in the project.
 | Doc | What it covers |
 |---|---|
 | `NEXT-STEPS.md` | The live backlog — what is built, what blocks launch |
+| `MEETING-QUESTIONS.md` | Open decisions the build is waiting on |
 | `DEPLOYMENT.md` | Cloudflare hosting: what works, what 500s, and why it is not live |
 | `DATA-LAYER.md` | Storage design; **read before touching any store** |
 | | `PLAYER-CARDS.md` | Player card design and the Panj Gun stats |

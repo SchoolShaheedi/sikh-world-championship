@@ -1470,3 +1470,48 @@ exists to prevent, and it is worth fixing there too.
      owner did not call it, so it stays until they do. It matters most for the bracket,
      which will show 64 invented players on a projector at a real event if nobody replaces
      it.
+
+
+---
+
+# Round 41 (2026-08-30) — Support page, socials, admin panel
+
+195. **Support page rewritten.** Its FAQ described a product we do not run: blocking people
+     on a board that is switched off, a waitlist that no longer exists, and account deletion
+     "that actually deletes" when deletion is a person editing records by hand. Six answers
+     now, every one true today, and the page carries a comment saying they must stay that way.
+196. **Socials: Instagram only.** `https://www.instagram.com/sikhworldchampionships/`, added
+     to the footer. TikTok and YouTube removed rather than left as "TBC" — a dead social
+     link is worse than none, it sends someone to nothing and looks abandoned. Note the
+     handle is `sikhworldchampionships`, plural, which is a fourth spelling of the name.
+197. **Admin panel built** at `/admin`: application counts, how many of those waiting were
+     referred, the draw, and a full draw history showing the seed each one used.
+198. **Preview is separated from commit**, deliberately. Committing creates accounts and
+     emails sixty-odd people, several of them children. Preview shows the exact outcome and
+     changes nothing; commit then asks for confirmation, because emails cannot be recalled.
+     Telling the unselected is a third, separate action — backfilling drop-outs is easier
+     before it runs.
+199. **Moderator is a database grant with no button anywhere.** `setModerator()` in
+     `players.ts` documents it, and the actual grant is a `wrangler d1 execute`. Moderators
+     read safeguarding disclosures, applicants' names and guardians' contact details, and
+     run the draw; that is a decision someone makes once, on purpose, not something
+     clickable by whoever already has access.
+200. **`SWC_DEV_MODERATOR` was dead config** and is gone from `.env.example` and `CLAUDE.md`.
+     It drove the old session stub, which real auth replaced in round 35 — so for several
+     rounds the documentation described a switch that did nothing. Found by trying to use it.
+201. `confirmSelection` is now tested (9 tests): the account it creates, the age band derived
+     from date of birth, that an adult gets no guardian attached, that the check-in token is
+     issued only here, and that running it twice creates no second account, sends no second
+     email, and **keeps the existing check-in token** — otherwise a re-run to backfill
+     drop-outs would invalidate a QR code already sent to someone.
+202. `00_Docs/MEETING-QUESTIONS.md` written — the open decisions, ordered by what they cost
+     to leave unanswered.
+
+## Recommendation recorded: do not drop dietary needs
+
+203. The brief asked whether to remove langar and dietary preferences. **Recommend keeping
+     the dietary question.** It is where allergies get declared, and the answer goes to
+     whoever runs the kitchen and to the first aider. Removing the question does not remove
+     the allergy; it removes the warning. If the uncertainty is about langar itself, the
+     cleaner fix is to keep the question and change its wording. Left in place and raised in
+     the meeting questions rather than decided here.

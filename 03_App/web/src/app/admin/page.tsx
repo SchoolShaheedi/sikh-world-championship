@@ -1,0 +1,136 @@
+import type { Metadata } from "next";
+import { currentPlayer } from "@/lib/session";
+import { EVENTS } from "@/data/events";
+import { registrationsFor } from "@/lib/store";
+import { getDb } from "@/lib/db";
+import { isReferred } from "@/data/referral-orgs";
+import { DrawPanel } from "@/components/DrawPanel";
+
+export const metadata: Metadata = { title: "Admin" };
+
+/**
+ * Never prerender. What this shows depends entirely on who is asking, and it holds
+ * applicants' names — the same reasoning as /moderation.
+ */
+export const dynamic = "force-dynamic";
+
+export default async function AdminPage() {
+  const me = await currentPlayer();
+  if (!me?.isModerator) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-20 text-center">
+        <h1 className="font-display text-3xl">Moderators only</h1>
+        <p className="mt-3 text-muted">You don&apos;t have access to this page.</p>
+      </div>
+    );
+  }
+
+  const db = await getDb();
+
+  const events = await Promise.all(
+    EVENTS.map(async (event) => {
+      const rows = await registrationsFor(event.slug);
+      const applied = rows.filter((r) => r.status === "applied");
+      const { results: draws } = await db
+        .prepare("SELECT * FROM draws WHERE event_slug = ? ORDER BY ran_at DESC")
+        .bind(event.slug)
+        .all<{ id: string; ran_at: string; seed: string; applicants: number; places: number }>();
+
+      return {
+        event,
+        counts: {
+          applied: applied.length,
+          selected: rows.filter((r) => r.status === "selected").length,
+          notSelected: rows.filter((r) => r.status === "not-selected").length,
+          checkedIn: rows.filter((r) => r.status === "checked-in").length,
+          // Only among those still waiting — what the next draw actually has to work with.
+          referredWaiting: applied.filter((r) => isReferred(r.answers.referralOrg as string)).length,
+        },
+        draws,
+      };
+    }),
+  );
+
+  return (
+    <div className="mx-auto max-w-4xl px-4 py-12">
+      <h1 className="font-display text-4xl">Admin</h1>
+      <p className="mt-3 text-muted">
+        Applications and the draw. Everything here is recorded — see the draw history under
+        each event.
+      </p>
+
+      {events.map(({ event, counts, draws }) => (
+        <section
+          key={event.slug}
+          className="mt-10 rounded-3xl border border-line bg-surface/60 p-6"
+        >
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="font-display text-2xl">{event.title}</h2>
+            <p className="text-sm text-muted">
+              {event.capacity} places
+              {event.applicationsCloseAt && (
+                <>
+                  {" · "}applications close{" "}
+                  {new Date(event.applicationsCloseAt).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "long",
+                  })}
+                </>
+              )}
+            </p>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-4">
+            {[
+              ["Awaiting the draw", counts.applied],
+              ["— of those, referred", counts.referredWaiting],
+              ["Selected", counts.selected],
+              ["Not selected", counts.notSelected],
+            ].map(([label, n]) => (
+              <div key={label} className="rounded-2xl border border-line bg-ink/30 p-4">
+                <p className="text-[11px] tracking-[0.16em] text-muted uppercase">{label}</p>
+                <p className="font-display mt-1.5 text-2xl text-body">{n}</p>
+              </div>
+            ))}
+          </div>
+
+          <DrawPanel
+            slug={event.slug}
+            capacity={event.capacity}
+            placesLeft={Math.max(0, event.capacity - counts.selected - counts.checkedIn)}
+            waiting={counts.applied}
+            latestDrawId={draws[0]?.id ?? null}
+          />
+
+          {draws.length > 0 && (
+            <div className="mt-8">
+              <h3 className="font-display text-lg text-kesri">Draw history</h3>
+              <p className="mt-1 text-sm text-muted">
+                Each draw records the seed it used, so the same result can be recomputed and
+                shown to be honest.
+              </p>
+              <ul className="mt-3 space-y-2">
+                {draws.map((d) => (
+                  <li
+                    key={d.id}
+                    className="rounded-xl border border-line bg-ink/20 p-3 text-sm"
+                  >
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      <span className="text-body">
+                        {new Date(d.ran_at).toLocaleString("en-GB")}
+                      </span>
+                      <span className="text-muted">
+                        {d.places} places from {d.applicants} applicants
+                      </span>
+                      <span className="font-mono text-xs text-muted">seed {d.seed}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      ))}
+    </div>
+  );
+}

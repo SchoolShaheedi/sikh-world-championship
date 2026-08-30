@@ -160,3 +160,31 @@ export async function markEventVerified(playerId: string): Promise<void> {
     .bind(playerId)
     .run();
 }
+
+
+/**
+ * Grant or revoke moderator.
+ *
+ * Deliberately NOT reachable from the app — there is no button for it anywhere. Moderators
+ * read safeguarding disclosures, applicants' names and guardians' contact details, and run
+ * the draw. Granting that is a decision someone makes once, on purpose, with a record of
+ * it, not something clickable by whoever already has access.
+ *
+ * Run it against the database directly:
+ *
+ *   npx wrangler d1 execute swc-production --remote \
+ *     --command "UPDATE players SET is_moderator = 1 WHERE email = 'them@example.com'"
+ *
+ * The function exists so the same rule is expressible in a script or a test, and so
+ * there is one documented place describing how the grant happens.
+ */
+export async function setModerator(email: string, isModerator: boolean): Promise<boolean> {
+  const db = await getDb();
+  const player = await playerByEmail(email);
+  if (!player) return false;
+  await db
+    .prepare("UPDATE players SET is_moderator = ? WHERE id = ?")
+    .bind(bool(isModerator), player.id)
+    .run();
+  return true;
+}

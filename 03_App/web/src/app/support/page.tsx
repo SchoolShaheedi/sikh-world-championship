@@ -38,34 +38,39 @@ export default function SupportPage() {
         <SupportForm />
       </div>
 
-      {/* Common answers, so people don't have to wait for a reply to simple questions. */}
+      {/* Common answers, so people don't have to wait for a reply to simple questions.
+
+          EVERY ONE OF THESE MUST BE TRUE OF THE SITE AS IT STANDS. The previous set
+          described a product we do not run: blocking people on a board that is switched
+          off, a waitlist that no longer exists, and account deletion "that actually
+          deletes" when deletion is a person editing records by hand. */}
       <section className="mt-16">
         <h2 className="font-display text-2xl">Quick answers</h2>
         <div className="mt-6 space-y-4">
           {[
             {
-              q: "How do I stop someone contacting me?",
-              a: "Tap Block on their post. They disappear from your board and you disappear from theirs — they aren't told, so there's nothing to retaliate to. If they've done something wrong, report them too.",
+              q: "I filled in the form — do I have a place?",
+              a: "Not yet. There are more applications than places, so places are decided by a draw after applications close. We'll email you either way, so you don't need to chase us.",
             },
             {
-              q: "My child is under 16 — how do I switch the board on or off?",
-              a: "Under-16s can't use the board until a parent or guardian turns it on, and you can turn it off again at any time. Email us and we'll sort it, or use the form above.",
+              q: "How are places decided?",
+              a: "Applicants referred by one of our partner organisations are drawn first; the remaining places are drawn from everyone else. Within each group it's random — nobody is judged or ranked.",
             },
             {
-              q: "Who can see my child on the board?",
-              a: "Only other under-16s. The under-16 and over-16 boards are entirely separate — an adult account cannot see, contact, or be contacted by an under-16 at all.",
+              q: "My child is under 16 — do I need to stay?",
+              a: "Yes. Players aged 12 to 15 need a parent or guardian at the venue for the whole event. You don't have to sit with them. Players aged 16 and 17 can come on their own if you give permission when they apply.",
             },
             {
-              q: "How long will a report take?",
-              a: "Safety concerns and player reports go to the top of the moderators' queue and we aim to look at them within 24 hours. Everything else, usually a few days.",
+              q: "Something's wrong, or I'm worried about a young person",
+              a: "Use the form above and pick the safety option. It goes to the top of the queue and a moderator reads it. You can send it without an account and without giving your name.",
             },
             {
-              q: "Can I delete my account?",
-              a: "Yes, and deletion actually deletes. Use the form above and pick 'Account or sign-up problem'.",
+              q: "I've got a place but can't make it",
+              a: "Tell us as soon as you can. Places are limited and we can offer yours to someone else.",
             },
             {
-              q: "I signed up for an event but can't make it",
-              a: "Tell us as soon as you can — places are limited and someone on the waitlist would love yours.",
+              q: "Can you delete my details?",
+              a: "Yes — ask us through the form and we'll delete everything we hold about you. Tell us the email address you applied with so we can find it.",
             },
           ].map((f) => (
             <details

@@ -122,6 +122,16 @@ export function SiteFooter({ logoSrc = null }: { logoSrc?: string | null }) {
                 should stay on entering an event. */}
             <li><Link href="/signin" className="text-body hover:text-kesri">Sign in</Link></li>
             <li><Link href="/support" className="text-body hover:text-kesri">Contact us</Link></li>
+            <li>
+              <a
+                href={ORG.socials.instagram}
+                target="_blank"
+                rel="noreferrer"
+                className="text-body hover:text-kesri"
+              >
+                Instagram
+              </a>
+            </li>
           </ul>
         </div>
       </div>

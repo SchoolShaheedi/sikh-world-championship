@@ -38,9 +38,11 @@ medical notes. That single fact drives most of the rules below.
 6. **The UI is not a security boundary.** Every server action re-checks the gate. Values
    arriving from a client are only accepted if they appear in our own lists — see
    `pick()` in `src/app/play/actions.ts` and `src/lib/registration-schema.ts`.
-7. **Access decisions fail closed.** `stubModeratorAccess()` in `src/lib/session.ts`
-   denies by default; it used to return `true`, which made `/moderation` public. Any new
-   gate written against the session stub must default to deny.
+7. **Access decisions fail closed.** `currentPlayer()` returns `SessionPlayer | null`;
+   there is no fallback viewer. It once returned a fixed player who was also a moderator,
+   which made `/moderation` readable by anyone. Nothing may invent a viewer again.
+   Moderator is a database grant — `setModerator()` in `src/lib/players.ts` — with no
+   button anywhere in the app.
 
 ## Things that are stubs, not finished work
 
@@ -80,7 +82,6 @@ renders the real form and skips only the write, for showing people the flow.
 
 ```bash
 npm run dev                      # http://localhost:3000
-SWC_DEV_MODERATOR=1 npm run dev  # to work on /moderation locally
 npm test                         # 125 tests
 npx tsc --noEmit
 npm run lint
