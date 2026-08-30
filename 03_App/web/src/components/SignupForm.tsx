@@ -8,7 +8,6 @@ import { REFERRAL_OPTIONS } from "@/data/referral-orgs";
 import {
   guardianTier,
   TIER_EXPLANATION,
-  GUARDIAN_DISTANCE,
   MEDICAL_CONDITIONS,
   MEDICAL_NONE,
 } from "@/lib/guardian-rules";
@@ -34,8 +33,6 @@ const FIELD_LABELS: Record<string, string> = {
   guardianMobile: "Parent / guardian mobile",
   guardianConsent: "Parent / guardian permission",
   guardianOnSite: "Staying at the venue",
-  guardianDropOff: "Drop-off and collection",
-  guardianDistance: "How far away you'll be",
   guardianIndependentConsent: "Permission to attend independently",
   mayLeaveUnaccompanied: "Leaving unaccompanied",
   guardianPhotoConsent: "Photo permission",
@@ -443,38 +440,8 @@ export function SignupForm({
                 checked={!!values.guardianOnSite}
                 onChange={(v) => set("guardianOnSite", v)}
                 label="I will stay at the venue for the whole event."
-                hint="Required for players under 12. You don't need to sit with them — there's seating, langar and the bracket on the big screen — but we need you in the building."
+                hint="Required for players under 16. You don't need to sit with them — there's seating, langar and the bracket on the big screen — but we need you in the building."
               />
-            )}
-
-            {tier === "drop-off" && (
-              <>
-                <Check
-                  required
-                  checked={!!values.guardianDropOff}
-                  onChange={(v) => set("guardianDropOff", v)}
-                  label="I will drop my child off and collect them, and I'll be reachable on the number above all day."
-                  hint="Required for players aged 12 to 15. They won't be allowed to leave on their own."
-                />
-                <label className="block">
-                  <Label hint="So we know what to expect if we need to call you back to the venue.">
-                    How far away will you be during the event?
-                  </Label>
-                  <select
-                    required
-                    className={inputCx}
-                    value={(values.guardianDistance as string) ?? ""}
-                    onChange={(e) => set("guardianDistance", e.target.value)}
-                  >
-                    <option value="">Choose…</option>
-                    {GUARDIAN_DISTANCE.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </>
             )}
 
             {tier === "independent" && (
@@ -483,8 +450,8 @@ export function SignupForm({
                   required
                   checked={!!values.guardianIndependentConsent}
                   onChange={(v) => set("guardianIndependentConsent", v)}
-                  label="I'm happy for them to come to the event and leave on their own, and I'll be reachable on the number above."
-                  hint="For players aged 16 and 17."
+                  label="I'm happy for them to come to the event on their own, and I'll be reachable on the number above."
+                  hint="For players aged 16 and 17. Under 16s need a parent or guardian at the venue."
                 />
                 <Check
                   checked={!!values.mayLeaveUnaccompanied}

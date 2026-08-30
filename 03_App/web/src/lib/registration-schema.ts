@@ -26,7 +26,6 @@ import { AVATARS } from "@/data/avatars";
 import { REFERRAL_OPTIONS } from "@/data/referral-orgs";
 import {
   guardianTier,
-  GUARDIAN_DISTANCE,
   MEDICAL_CONDITIONS,
   type GuardianTier,
 } from "./guardian-rules";
@@ -196,10 +195,8 @@ function guardianSchema(tier: GuardianTier) {
       guardianMobile: optional(phone),
       guardianConsent: optionalConsent,
       guardianOnSite: optionalConsent,
-      guardianDropOff: optionalConsent,
       guardianIndependentConsent: optionalConsent,
       mayLeaveUnaccompanied: optionalConsent,
-      guardianDistance: optional(z.enum(GUARDIAN_DISTANCE)),
       guardianPhotoConsent: optionalConsent,
     });
   }
@@ -233,43 +230,24 @@ function guardianSchema(tier: GuardianTier) {
       return z.object({
         ...contact,
         guardianOnSite: required(
-          "For a player under 12, a parent or guardian must stay at the venue",
+          "A parent or guardian must stay at the venue for a player under 16",
         ),
-        // Not asked at this tier — a guardian who is present does the collecting.
-        guardianDropOff: optionalConsent,
+        // Not asked at this tier — a guardian who is present does the collecting, and
+        // an under-16 does not leave on their own.
         guardianIndependentConsent: optionalConsent,
         mayLeaveUnaccompanied: optionalConsent,
-        guardianDistance: optional(z.enum(GUARDIAN_DISTANCE)),
       });
 
-    case "drop-off":
-      return z.object({
-        ...contact,
-        guardianDropOff: required(
-          "For a player aged 12 to 15, a parent or guardian must drop off and collect",
-        ),
-        // Defaults to false, and the form does not offer it at this tier: a 12–15 may not
-        // leave on their own. Stated explicitly rather than left absent so the record
-        // shows the answer was "no", not "never asked".
-        mayLeaveUnaccompanied: optionalConsent,
-        guardianDistance: z.enum(GUARDIAN_DISTANCE, {
-          message: "Choose how far away you'll be during the event",
-        }),
-        guardianOnSite: optionalConsent,
-        guardianIndependentConsent: optionalConsent,
-      });
 
     case "independent":
       return z.object({
         ...contact,
         guardianIndependentConsent: required(
-          "A parent or guardian must consent to a 16 or 17-year-old attending on their own",
+          "A parent or guardian must give permission for a 16 or 17-year-old to come on their own",
         ),
-        // The one tier where leaving alone is a real choice the guardian makes.
+        // The one tier where coming and going alone is a real choice the guardian makes.
         mayLeaveUnaccompanied: optionalConsent,
         guardianOnSite: optionalConsent,
-        guardianDropOff: optionalConsent,
-        guardianDistance: optional(z.enum(GUARDIAN_DISTANCE)),
       });
   }
 }

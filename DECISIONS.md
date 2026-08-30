@@ -1403,3 +1403,29 @@ exists to prevent, and it is worth fixing there too.
      young person who put their details in and did not get a place, and the difference
      between "you were not chosen" and "there were more applications than places, and it
      was a draw" is the difference between feeling judged and understanding what happened.
+
+
+---
+
+# Round 39 (2026-08-30) — Supervision tiers tightened
+
+185. **New policy, superseding round 24's tiering:**
+     - **no under-12s** (already the case: the division floor is 12)
+     - **12–15** — a parent or guardian stays at the venue for the whole event
+     - **16–17** — may attend alone, if their guardian permits it
+     - **18+** — no guardian involvement
+186. **The "dropped off and collected" tier is gone entirely**, along with the
+     how-far-away-will-you-be question. Under-16s are no longer left at the venue without
+     their own adult. Removed from the rules module, the validator, the form and the store
+     rather than left as dead safeguarding code, which is worse than none.
+187. **!! The boundary at 16 is an assumption.** The brief said "12–16 parents must remain"
+     and "16–18 parents can give permission", which overlap at 16. It is implemented as
+     12–15 and 16–17, matching the U16 / 16+ split the rest of the app already uses.
+     `GUARDIAN_PRESENCE_UNTIL` is one number — change it if 16-year-olds should need a
+     parent on site. Four tests pin the boundary down so any change is deliberate,
+     including that a 15-year-old cannot substitute independent-attendance permission for
+     the on-site promise.
+188. **Operational consequence worth planning for:** every 12–15 entrant now brings an
+     adult into the building. If a good share of 64 players are in that band, the venue
+     needs to seat well over a hundred people, and langar has to stretch. That is a
+     capacity question for the Leicester venue, not just a policy one.

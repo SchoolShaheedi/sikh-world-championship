@@ -24,8 +24,8 @@ const CORE_FIELDS = [
   "medicalConditions", "medical", "dietary", "accessibility",
   "emergencyName", "emergencyRelation", "emergencyPhone",
   "guardianName", "guardianRelation", "guardianEmail", "guardianMobile",
-  "guardianConsent", "guardianOnSite", "guardianDropOff",
-  "guardianIndependentConsent", "mayLeaveUnaccompanied", "guardianDistance",
+  "guardianConsent", "guardianOnSite",
+  "guardianIndependentConsent", "mayLeaveUnaccompanied",
   "guardianPhotoConsent", "rulesAgreed", "photoConsent",
   "avatarId", "divisionId", "referralOrg",
 ] as const;
@@ -44,7 +44,6 @@ function toRegistration(r: Row): Registration {
     photoConsent: fromBool(r.photo_consent),
     guardianConsent: fromBool(r.guardian_consent),
     guardianOnSite: fromBool(r.guardian_on_site),
-    guardianDropOff: fromBool(r.guardian_drop_off),
     guardianIndependentConsent: fromBool(r.guardian_independent_consent),
     mayLeaveUnaccompanied: fromBool(r.may_leave_unaccompanied),
     guardianPhotoConsent: fromBool(r.guardian_photo_consent),
@@ -66,7 +65,6 @@ function toRegistration(r: Row): Registration {
     guardianRelation: r.guardian_relation,
     guardianEmail: r.guardian_email,
     guardianMobile: r.guardian_mobile,
-    guardianDistance: r.guardian_distance,
     avatarId: r.avatar_id,
   };
   for (const [k, v] of Object.entries(optional)) {
@@ -174,10 +172,10 @@ export async function apply(input: {
         medical_conditions, medical, dietary, accessibility,
         emergency_name, emergency_relation, emergency_phone,
         guardian_name, guardian_relation, guardian_email, guardian_mobile,
-        guardian_consent, guardian_on_site, guardian_drop_off,
-        guardian_independent_consent, may_leave_unaccompanied, guardian_distance,
+        guardian_consent, guardian_on_site,
+        guardian_independent_consent, may_leave_unaccompanied,
         guardian_photo_consent, rules_agreed, photo_consent, avatar_id, answers
-      ) VALUES (?,?,?,NULL,'applied',?,NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      ) VALUES (?,?,?,NULL,'applied',?,NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     )
     .bind(
       crypto.randomUUID(),
@@ -204,10 +202,8 @@ export async function apply(input: {
       str(a.guardianMobile),
       bool(a.guardianConsent),
       bool(a.guardianOnSite),
-      bool(a.guardianDropOff),
       bool(a.guardianIndependentConsent),
       bool(a.mayLeaveUnaccompanied),
-      str(a.guardianDistance),
       bool(a.guardianPhotoConsent),
       bool(a.rulesAgreed),
       bool(a.photoConsent),

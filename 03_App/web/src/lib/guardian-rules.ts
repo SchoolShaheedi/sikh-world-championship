@@ -5,27 +5,38 @@
  * the questions a registrant is asked and the questions the server insists on can never
  * drift apart. If they drift, a child gets in without the consent we think we hold.
  *
- * Round 24 decision: tiered, not blanket. Requiring a parent to stay on site for a
- * 17-year-old is out of step with what 16–17s already do independently, and it quietly
- * excludes families who cannot spare an adult for a whole Saturday — which works against
- * the point of the event. Requiring it for an 8-year-old is obviously right. So the rule
- * sits where the risk actually is.
+ * ROUND 39 POLICY (supersedes the round 24 tiering):
+ *
+ *   12–15  a parent or guardian stays at the venue for the whole event
+ *   16–17  may attend without a guardian, IF their guardian permits it
+ *   18+    no guardian involvement
+ *
+ * The middle "dropped off and collected" tier is gone. Under-16s are no longer left at
+ * the venue without their own adult.
+ *
+ * !! THE BOUNDARY AT 16 IS AN ASSUMPTION. The brief said "12–16 parents must remain" and
+ * "16–18 parents can give permission", which overlap at 16. This reads it as 12–15 and
+ * 16–17, matching the U16 / 16+ split the rest of the app already uses. If 16-year-olds
+ * should instead need a parent on site, change GUARDIAN_PRESENCE_UNTIL below — it is one
+ * number and everything follows.
  */
 
+/** Below this age, a guardian must remain at the venue. */
+export const GUARDIAN_PRESENCE_UNTIL = 16;
+/** From this age, no guardian involvement at all. */
+export const ADULT_FROM = 18;
+
 export type GuardianTier =
-  /** 8–11: a guardian stays on site for the whole event. */
+  /** 12–15: a guardian stays on site for the whole event. */
   | "on-site"
-  /** 12–15: dropped off and collected, guardian contactable, no unaccompanied exit. */
-  | "drop-off"
-  /** 16–17: may attend and leave independently, with guardian consent on record. */
+  /** 16–17: may attend alone, with their guardian's permission on record. */
   | "independent"
   /** 18+: no guardian block. */
   | "none";
 
 export function guardianTier(age: number): GuardianTier {
-  if (age >= 18) return "none";
-  if (age >= 16) return "independent";
-  if (age >= 12) return "drop-off";
+  if (age >= ADULT_FROM) return "none";
+  if (age >= GUARDIAN_PRESENCE_UNTIL) return "independent";
   return "on-site";
 }
 
@@ -37,33 +48,13 @@ export function needsGuardian(age: number): boolean {
 /** Shown on the form so a parent understands why they are being asked. */
 export const TIER_EXPLANATION: Record<Exclude<GuardianTier, "none">, string> = {
   "on-site":
-    "Players under 12 need a parent or guardian to stay at the venue for the whole event. " +
-    "You don't need to sit with them — there's seating, langar and a big screen — but we " +
-    "need you contactable in the building.",
-  "drop-off":
-    "Players aged 12 to 15 need a parent or guardian to drop them off and collect them. " +
-    "You don't have to stay, but you do need to be reachable and able to get back to the " +
-    "venue if we call.",
+    "Players under 16 need a parent or guardian to stay at the venue for the whole event. " +
+    "You don't need to sit with them — there's seating, langar and the bracket on the big " +
+    "screen — but we need you in the building.",
   independent:
-    "Players aged 16 and 17 can come and go on their own, but we still need a parent or " +
-    "guardian's permission and their contact details on record.",
+    "Players aged 16 and 17 can come on their own if you're happy for them to, but we " +
+    "still need your permission and your contact details on record.",
 };
-
-/**
- * How far a 12–15's guardian will be during the event.
- *
- * A fixed menu rather than a text box: it is answerable honestly in one tap, and it gives
- * a volunteer something comparable to act on at the desk. "Roughly an hour away" is a
- * different conversation from "in the car park".
- */
-export const GUARDIAN_DISTANCE = [
-  "Staying at the venue anyway",
-  "Within 15 minutes",
-  "Within 30 minutes",
-  "Within an hour",
-  "More than an hour away",
-] as const;
-export type GuardianDistance = (typeof GUARDIAN_DISTANCE)[number];
 
 /**
  * Medical tick-list.
