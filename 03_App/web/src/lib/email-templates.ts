@@ -280,3 +280,105 @@ export function signInLink(n: {
 
   return { subject, text, html };
 }
+
+
+/**
+ * The outcome of an application.
+ *
+ * The "not selected" version matters more than the other one. It goes to a young person
+ * who put their details in and did not get a place, and the difference between "you were
+ * not chosen" and "there were more applications than places, and it was a draw" is the
+ * difference between feeling judged and understanding what happened.
+ */
+export function applicationOutcome(n: {
+  selected: boolean;
+  displayName: string;
+  eventTitle: string;
+  eventDate: string | null;
+  reference: string;
+}): Rendered {
+  const when = n.eventDate
+    ? new Date(n.eventDate).toLocaleDateString("en-GB", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "the event date";
+
+  if (n.selected) {
+    const subject = `You have a place — ${n.eventTitle}`;
+    const text = [
+      `${BRAND}`,
+      ``,
+      `Good news ${n.displayName} — you have a place at ${n.eventTitle} on ${when}.`,
+      ``,
+      `Your reference is ${n.reference}. Keep it; you will need it at the desk.`,
+      ``,
+      `We have created your SWC profile so your results and trophies are saved across`,
+      `every event you play in. You can sign in at any time at`,
+      `https://sikhchampionships.com/signin using this email address — no password.`,
+      ``,
+      `We will email again with the venue address and what to bring.`,
+      ``,
+      `Can't make it any more? Tell us as soon as you can so we can offer your place to`,
+      `someone else: https://sikhchampionships.com/support`,
+    ].join("\n");
+
+    const html = wrap(
+      `You have a place`,
+      `<p style="margin:0 0 14px;">
+         Good news ${n.displayName} — you have a place at <strong>${n.eventTitle}</strong>
+         on ${when}.
+       </p>
+       <p style="margin:0 0 14px;">
+         Your reference is <strong style="font-family:monospace;">${n.reference}</strong>.
+         Keep it; you will need it at the desk.
+       </p>
+       <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+         We have created your SWC profile so your results and trophies are saved across every
+         event you play in. Sign in any time with this email address — no password.
+       </p>
+       ${button("https://sikhchampionships.com/signin", "Sign in to your profile")}
+       <p style="margin:0;font-size:14px;color:#55554f;">
+         We will email again with the venue address and what to bring. If you can no longer
+         come, tell us as soon as you can so we can offer your place to someone else.
+       </p>`,
+    );
+    return { subject, text, html };
+  }
+
+  const subject = `Your application — ${n.eventTitle}`;
+  const text = [
+    `${BRAND}`,
+    ``,
+    `Hi ${n.displayName},`,
+    ``,
+    `We had more applications than places for ${n.eventTitle}, so places were decided by a`,
+    `draw. You did not get one this time.`,
+    ``,
+    `This is not a judgement about you — everyone eligible went into the same draw.`,
+    ``,
+    `We would genuinely like to see you at the next one, and we will email you when it is`,
+    `announced. If a place frees up before ${when} we will be in touch.`,
+    ``,
+    `Your reference was ${n.reference}.`,
+  ].join("\n");
+
+  const html = wrap(
+    `About your application`,
+    `<p style="margin:0 0 14px;">Hi ${n.displayName},</p>
+     <p style="margin:0 0 14px;">
+       We had more applications than places for <strong>${n.eventTitle}</strong>, so places
+       were decided by a draw. You did not get one this time.
+     </p>
+     <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+       This is not a judgement about you — everyone eligible went into the same draw.
+     </p>
+     <p style="margin:0;font-size:14px;color:#55554f;">
+       We would genuinely like to see you at the next one, and we will email you when it is
+       announced. If a place frees up before ${when} we will be in touch.
+     </p>`,
+  );
+  return { subject, text, html };
+}

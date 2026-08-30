@@ -1350,3 +1350,56 @@ exists to prevent, and it is worth fixing there too.
      of the remainder is the 3D model.
 172. `public/brand/README.md` carries a note to check the weight before adding another PNG,
      since this is the kind of thing that creeps back.
+
+
+---
+
+# Round 38 (2026-08-30) — Registration becomes an application
+
+173. **Filling in the form no longer secures a place.** Applicants are checked for
+     eligibility and safeguarding, then places are drawn. Statuses are now
+     `applied → selected | not-selected`, plus `withdrawn` and `checked-in`.
+174. **A profile is created only on SELECTION, not on submission** — and it is no longer a
+     checkbox. `accountConsent` is gone; the form states plainly that a profile will be
+     created if they get a place. Offering a choice that does not exist was the wrong
+     shape. **This moves the lawful basis from consent to contract**, which the privacy
+     notice needs to reflect.
+175. **The check-in token is issued on selection too.** It is the credential that marks
+     someone present; handing it to everyone who filled in a form made it meaningless.
+176. **There is no waitlist any more.** A queue position ("you are number 7") also revealed
+     how many people had applied, which the owner asked not to expose. The concept and the
+     leak went together. References were already random — 6 characters from a 31-character
+     alphabet — so they never leaked volume.
+177. **The draw is two pools, not "random".** Referred applicants are drawn first, the rest
+     after; each pool shuffled independently. Described accurately because a published
+     policy saying "random" when it is weighted is the sort of inaccuracy that gets
+     challenged.
+     **Safeguarding survives randomisation**: only applicants who already passed
+     eligibility are in the pools at all.
+178. **Every draw is recorded with its seed and can be recomputed.** Fisher–Yates driven by
+     a SHA-256 keystream, with rejection sampling rather than modulo — a plain modulo biases
+     towards low indexes, which is exactly the quiet unfairness to avoid. There is a test
+     asserting no positional bias over 600 draws. "How were places decided?" is a question
+     a community event must be able to answer months later.
+179. **`runDraw` supports a dry run and backfilling.** Places already taken are subtracted,
+     so it can be re-run for drop-outs without displacing anyone.
+180. **Undrawn applicants stay `applied` until `closeDraw` runs.** Marking someone rejected
+     before you have told them is a state nobody can explain if they ring up.
+181. **The referral field is not a religion field**, and `src/data/referral-orgs.ts` says so
+     at length. "Another organisation" and "Nobody" are first-class options, it is stored
+     as a referral source only, and nothing infers anything from it. A list of Sikh
+     organisations makes the answer a proxy for religion — special category data by
+     inference — so this needs privacy-notice coverage saying it is used for draw order and
+     nothing else.
+182. Applications close **2026-09-26**, a week before the event, configurable in the event
+     file.
+
+## Copy that changed
+
+183. "Sign up" → "Register interest" throughout. The confirmation screen no longer says
+     "You're in": it says "Application received", explains there are more applications than
+     places, and that we will email either way. The person reading it is often a parent.
+184. The "not selected" email is written with more care than the acceptance. It goes to a
+     young person who put their details in and did not get a place, and the difference
+     between "you were not chosen" and "there were more applications than places, and it
+     was a draw" is the difference between feeling judged and understanding what happened.

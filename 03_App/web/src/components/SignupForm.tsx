@@ -4,8 +4,7 @@ import { useMemo, useState } from "react";
 import type { ChampionshipEvent, FormField } from "@/lib/types";
 import { AVATARS } from "@/data/avatars";
 import { Avatar } from "./Avatar";
-import { PlayerCard } from "./PlayerCard";
-import { qualityFor } from "@/data/qualities";
+import { REFERRAL_OPTIONS } from "@/data/referral-orgs";
 import {
   guardianTier,
   TIER_EXPLANATION,
@@ -44,7 +43,7 @@ const FIELD_LABELS: Record<string, string> = {
   emergencyRelation: "Emergency contact relationship",
   emergencyPhone: "Emergency contact phone",
   rulesAgreed: "Rules and code of conduct",
-  accountConsent: "SWC profile",
+  referralOrg: "How you heard about this",
   photoConsent: "Photo permission",
   psnId: "PSN ID",
   skill: "Self-rating",
@@ -186,70 +185,45 @@ export function SignupForm({
     return (
       <div className="rounded-3xl border border-line bg-surface/70 p-8 text-center">
         {result.demo && (
-          /* The whole point of the demo is to show the flow. The one thing it must never
-             do is let someone leave believing they have a place. */
           <p className="mx-auto mb-5 max-w-md rounded-xl border-2 border-dashed border-kesri/60 bg-kesri/[0.08] px-4 py-3 text-sm text-kesrisoft">
             <strong className="font-bold">Preview only — nothing was saved.</strong> This is
-            what an entrant would see. No place has been held and no details were stored.
+            what an applicant would see. No application has been recorded.
           </p>
         )}
-        <h2 className="font-display text-3xl">
-          {result.demo
-            ? "This is the confirmation screen"
-            : result.status === "confirmed"
-              ? "You're in."
-              : "You're on the waitlist."}
-        </h2>
+
+        {/* Deliberately NOT "You're in". Filling in this form does not secure a place —
+            there are more applications than places and they are decided by a draw. Saying
+            anything warmer here would be a promise we cannot keep, and the person who
+            reads it is often a parent. */}
+        <h2 className="font-display text-3xl">Application received</h2>
+
         <p className="mx-auto mt-3 max-w-md text-muted">
-          {result.demo ? (
-            <>
-              A real entrant would be told their place is confirmed here, and would get an
-              email with a QR check-in code to bring on the day. None of that happened.
-            </>
-          ) : result.status === "confirmed" ? (
-            <>
-              {event.divisions.length === 1 ? (
-                <>Your place is confirmed.</>
-              ) : (
-                <>
-                  Your place in the{" "}
-                  <strong className="text-body">{division?.name}</strong> division is
-                  confirmed.
-                </>
-              )}{" "}
-              Check your email for your check-in QR code — bring it on the day.
-            </>
-          ) : (
-            <>
-              All {event.capacity} places are taken, but you&apos;re number{" "}
-              <strong className="text-body">{result.waitlistPosition}</strong> in the
-              queue. Places usually open up — we&apos;ll email you the moment one does.
-            </>
-          )}
+          Thanks {String(values.fullName ?? "").split(" ")[0] || "—"}. This is an
+          application, not a place yet: there are {event.capacity} places and we expect more
+          applications than that.
         </p>
-        <p className="mt-4 text-sm text-muted">
-          Reference <span className="font-mono text-kesri">{result.reference}</span>
+        <p className="mx-auto mt-3 max-w-md text-muted">
+          Applications close{" "}
+          {event.applicationsCloseAt
+            ? new Date(event.applicationsCloseAt).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+              })
+            : "shortly"}
+          , then places are drawn. <span className="text-body">We&apos;ll email you either
+          way</span> — you don&apos;t need to do anything until then.
         </p>
 
-        <div className="mt-8">
-          <p className="micro">Your player card</p>
-          <div className="mt-4 flex justify-center">
-            <PlayerCard
-              name={(values.fullName as string) || "Player"}
-              gamertag={(values.psnId as string) || ""}
-              division={division?.name ?? ""}
-              region={(values.region as string) || ""}
-              avatarId={avatarId}
-              eventTitle={event.shortTitle}
-              seed={result.reference}
-            />
-          </div>
-          <p className="mx-auto mt-4 max-w-sm text-sm text-muted">
-            Your quality is <strong className="text-body">{qualityFor(result.reference).name}</strong>{" "}
-            — one of 32. Screenshot your card and post it, and see which one your friends
-            got.
+        {!result.demo && (
+          <p className="mt-5 text-sm text-muted">
+            Reference <span className="font-mono text-kesri">{result.reference}</span>
           </p>
-        </div>
+        )}
+
+        <p className="mx-auto mt-6 max-w-md text-sm text-muted">
+          If you get a place we&apos;ll create your SWC profile at that point, and send you
+          a check-in code for the day.
+        </p>
       </div>
     );
   }
@@ -539,6 +513,28 @@ export function SignupForm({
           {isMinor ? "5." : "4."} On the day
         </legend>
 
+        {/* Referral. Its only use is draw order — referred applicants are drawn first.
+            Deliberately NOT a religion question: "Another organisation" and "Nobody" are
+            real answers, and nothing infers anything from the choice. */}
+        <label className="mb-6 block">
+          <Label hint="Places are limited. Applicants referred by a partner organisation are drawn first.">
+            How did you hear about this?
+          </Label>
+          <select
+            required
+            className={inputCx}
+            value={(values.referralOrg as string) ?? ""}
+            onChange={(e) => set("referralOrg", e.target.value)}
+          >
+            <option value="">Choose…</option>
+            {REFERRAL_OPTIONS.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+        </label>
+
         {/* Emergency contact — adults only.
             Every participant has one on record: for an under-18 it is the parent or
             guardian captured above, so they are not asked twice. Round 25. */}
@@ -677,12 +673,17 @@ export function SignupForm({
             onChange={(v) => set("rulesAgreed", v)}
             label="I've read the rules and the code of conduct, and I'll play by them."
           />
-          <Check
-            required
-            checked={!!values.accountConsent}
-            onChange={(v) => set("accountConsent", v)}
-            label="Create my Sikh World Championship profile so my results and trophies are saved."
-          />
+          {/* A statement, not a checkbox. A profile is part of taking part, not an optional
+              extra — so offering it as a choice would be offering a choice that does not
+              exist. Note this also moves the lawful basis from consent to contract; the
+              privacy notice says so. */}
+          <p className="rounded-xl border border-line bg-ink/20 p-4 text-sm text-muted">
+            <span className="text-body">If you get a place, we&apos;ll create your SWC
+            profile.</span>{" "}
+            It saves your results and trophies across every event you play in, and you sign
+            in with this email address — no password. If you don&apos;t get a place this
+            time, no profile is created.
+          </p>
         </div>
       </fieldset>
 
@@ -717,10 +718,10 @@ export function SignupForm({
           disabled={submitting || !division}
           className="rounded-xl bg-kesri px-8 py-4 font-bold text-ink transition-colors hover:bg-kesrisoft disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {submitting ? "Sending…" : demo ? "Submit (preview — saves nothing)" : "Confirm my place"}
+          {submitting ? "Sending…" : demo ? "Submit (preview — saves nothing)" : "Register interest"}
         </button>
         <p className="text-sm text-muted">
-          Free to enter. {event.capacity} places.
+          Free to enter. {event.capacity} places, more applications than places expected.
         </p>
       </div>
     </form>

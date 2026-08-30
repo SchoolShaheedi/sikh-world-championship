@@ -57,7 +57,7 @@ export default async function EventPage({
           href={`/events/${event.slug}/signup`}
           className="rounded-xl bg-kesri px-6 py-3 font-bold text-ink transition-colors hover:bg-kesrisoft"
         >
-          Sign up — it&apos;s free
+          Register interest — it&apos;s free
         </Link>
         <Link
           href={`/events/${event.slug}/bracket`}

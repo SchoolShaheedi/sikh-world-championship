@@ -238,7 +238,7 @@ export default function HomePage() {
               </h2>
 
               <p className="mx-auto mt-5 max-w-md text-muted">
-                Two minutes to sign up, and you get your player card at the end. No
+                Two minutes to apply. Places are limited and decided by a draw — no
                 entry fee, langar on the day, and everyone plays at least three matches.
               </p>
 

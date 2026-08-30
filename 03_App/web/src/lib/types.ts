@@ -133,6 +133,12 @@ export interface ChampionshipEvent {
 
   /** Set false while details are still TBC — the page shows a notice. */
   detailsConfirmed: boolean;
+  /**
+   * When applications close and the draw runs. ISO date, or null while undecided.
+   * Separate from `date` because the two move independently — the draw needs to leave
+   * time to notify people and backfill drop-outs.
+   */
+  applicationsCloseAt: string | null;
 }
 
 /* ---------- People & registrations ---------- */
@@ -151,9 +157,17 @@ export interface PlayerProfile {
   joinedAt: string;
 }
 
+/**
+ * An application's life. Filling in the form does not secure a place — see
+ * migrations/0005_applications.sql.
+ *
+ * There is deliberately no "waitlisted": a queue position also revealed how many people
+ * had applied, and both the concept and the leak went together.
+ */
 export type RegistrationStatus =
-  | "confirmed"
-  | "waitlisted"
+  | "applied"
+  | "selected"
+  | "not-selected"
   | "withdrawn"
   | "checked-in"
   | "no-show";

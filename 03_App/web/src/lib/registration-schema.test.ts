@@ -35,7 +35,7 @@ function adult(over: Record<string, unknown> = {}) {
     email: "real@example.com",
     mobile: "07700 900123",
     rulesAgreed: true,
-    accountConsent: true,
+    referralOrg: "Nobody — I found it myself",
     psnId: "realuser",
     skill: "Casual player",
     // Round 25: required of every adult entrant.
@@ -249,7 +249,7 @@ describe("unknown keys", () => {
 });
 
 describe("required consents", () => {
-  it.each(["rulesAgreed", "accountConsent"])("requires %s", (key) => {
+  it.each(["rulesAgreed", "referralOrg"])("requires %s", (key) => {
     const body = adult();
     delete (body as Record<string, unknown>)[key];
     const r = validateRegistration(event, division, body);

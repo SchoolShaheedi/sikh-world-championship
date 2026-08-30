@@ -23,6 +23,7 @@
 import { z } from "zod";
 import type { ChampionshipEvent, Division, FormField } from "./types";
 import { AVATARS } from "@/data/avatars";
+import { REFERRAL_OPTIONS } from "@/data/referral-orgs";
 import {
   guardianTier,
   GUARDIAN_DISTANCE,
@@ -310,9 +311,16 @@ function schemaFor(event: ChampionshipEvent, division: Division, age: number) {
     rulesAgreed: requiredConsent(
       "You need to agree to the rules and code of conduct",
     ),
-    accountConsent: requiredConsent(
-      "You need to agree to an SWC profile being created",
-    ),
+
+    /**
+     * Who referred them. Required — "Nobody" is a real answer, so asking costs nothing and
+     * a blank tells us nothing.
+     *
+     * NOT a religion field. See src/data/referral-orgs.ts.
+     */
+    referralOrg: z.enum(REFERRAL_OPTIONS, {
+      message: "Let us know how you heard about this",
+    }),
     // Genuinely optional — decision 18 made the photo optional on purpose.
     photoConsent: optionalConsent,
   });

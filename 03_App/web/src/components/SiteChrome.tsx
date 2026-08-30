@@ -51,7 +51,7 @@ export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {
             href="/events/sikh-fc-27/signup"
             className="pill ml-2 bg-kesri px-5 py-2 text-sm font-bold text-ink transition-colors hover:bg-kesrisoft"
           >
-            Sign up
+            Register interest
           </Link>
         </nav>
 
@@ -83,7 +83,7 @@ export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {
             onClick={() => setOpen(false)}
             className="mt-4 block rounded-full bg-kesri px-4 py-3 text-center font-bold text-ink"
           >
-            Sign up
+            Register interest
           </Link>
         </nav>
       )}

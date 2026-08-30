@@ -26,8 +26,8 @@ const CORE_FIELDS = [
   "guardianName", "guardianRelation", "guardianEmail", "guardianMobile",
   "guardianConsent", "guardianOnSite", "guardianDropOff",
   "guardianIndependentConsent", "mayLeaveUnaccompanied", "guardianDistance",
-  "guardianPhotoConsent", "rulesAgreed", "accountConsent", "photoConsent",
-  "avatarId", "divisionId",
+  "guardianPhotoConsent", "rulesAgreed", "photoConsent",
+  "avatarId", "divisionId", "referralOrg",
 ] as const;
 
 type Row = Record<string, unknown>;
@@ -41,7 +41,6 @@ function toRegistration(r: Row): Registration {
     email: r.email as string,
     mobile: r.mobile as string,
     rulesAgreed: fromBool(r.rules_agreed),
-    accountConsent: fromBool(r.account_consent),
     photoConsent: fromBool(r.photo_consent),
     guardianConsent: fromBool(r.guardian_consent),
     guardianOnSite: fromBool(r.guardian_on_site),
@@ -56,6 +55,7 @@ function toRegistration(r: Row): Registration {
   // produced when an optional field was left blank.
   const optional: Record<string, unknown> = {
     region: r.region,
+    referralOrg: r.referral_org,
     medical: r.medical,
     dietary: r.dietary,
     accessibility: r.accessibility,
@@ -99,22 +99,6 @@ export async function registrationsFor(eventSlug: string): Promise<Registration[
   return results.map(toRegistration);
 }
 
-/** Confirmed players in a division — the number that counts against capacity. */
-export async function confirmedCount(
-  eventSlug: string,
-  divisionId: string,
-): Promise<number> {
-  const db = await getDb();
-  const row = await db
-    .prepare(
-      `SELECT COUNT(*) AS n FROM registrations
-       WHERE event_slug = ? AND division_id = ? AND status IN ('confirmed','checked-in')`,
-    )
-    .bind(eventSlug, divisionId)
-    .first<{ n: number }>();
-  return row?.n ?? 0;
-}
-
 /**
  * Alphabet with the confusable characters removed — no 0/O, no 1/I/L.
  * References get read aloud at a check-in desk and typed by volunteers, so "was that
@@ -150,56 +134,33 @@ async function makeReference(): Promise<string> {
   return `SWC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 }
 
-/**
- * The check-in token is a CREDENTIAL, not a reference — it's what the QR code carries,
- * and holding it is what lets someone be marked present. It is therefore long and random,
- * and deliberately NOT the same value as the human-readable reference, which gets read
- * aloud, printed on lists, and quoted in emails.
- */
-function makeCheckInToken(): string {
-  return crypto.randomBytes(24).toString("base64url");
-}
-
-export interface RegisterResult {
-  status: Extract<RegistrationStatus, "confirmed" | "waitlisted">;
+export interface ApplyResult {
+  status: Extract<RegistrationStatus, "applied">;
   reference: string;
-  /** Goes in the QR code. Never printed on a public list. */
-  checkInToken: string;
-  waitlistPosition?: number;
 }
 
 const str = (v: unknown): string | null =>
   typeof v === "string" && v !== "" ? v : null;
 
 /**
- * Register a player. Fills the division to capacity, then waitlists.
- * The waitlist matters: free events no-show at 20–30%, so places do open up.
+ * Record an application.
+ *
+ * Deliberately does NOT: check capacity, assign a queue position, issue a check-in token,
+ * or create an account. None of those are true yet — a place is decided by the draw, and
+ * pretending otherwise at submission is what the old "You're in" screen got wrong.
+ *
+ * Applications are uncapped. Turning people away at the form would defeat the point of
+ * drawing, and the number of applicants is not something we reveal anyway.
  */
-export async function register(input: {
+export async function apply(input: {
   eventSlug: string;
   divisionId: string;
-  divisionCapacity: number;
-  playerId: string;
   answers: Record<string, string | boolean | string[]>;
-}): Promise<RegisterResult> {
+}): Promise<ApplyResult> {
   const db = await getDb();
   const a = input.answers;
-
-  const taken = await confirmedCount(input.eventSlug, input.divisionId);
-  const waitedRow = await db
-    .prepare(
-      `SELECT COUNT(*) AS n FROM registrations
-       WHERE event_slug = ? AND division_id = ? AND status = 'waitlisted'`,
-    )
-    .bind(input.eventSlug, input.divisionId)
-    .first<{ n: number }>();
-  const waitlisted = waitedRow?.n ?? 0;
-
-  const isFull = taken >= input.divisionCapacity;
   const reference = await makeReference();
-  const checkInToken = makeCheckInToken();
 
-  // Anything the event defined itself, kept apart from the columns above.
   const extra: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(a)) {
     if (!(CORE_FIELDS as readonly string[]).includes(k)) extra[k] = v;
@@ -208,33 +169,28 @@ export async function register(input: {
   await db
     .prepare(
       `INSERT INTO registrations (
-        id, event_slug, division_id, player_id, status, waitlist_position,
-        reference, check_in_token, created_at,
-        full_name, dob, email, mobile, region,
+        id, event_slug, division_id, player_id, status, reference, check_in_token,
+        created_at, full_name, dob, email, mobile, region, referral_org,
         medical_conditions, medical, dietary, accessibility,
         emergency_name, emergency_relation, emergency_phone,
         guardian_name, guardian_relation, guardian_email, guardian_mobile,
         guardian_consent, guardian_on_site, guardian_drop_off,
         guardian_independent_consent, may_leave_unaccompanied, guardian_distance,
-        guardian_photo_consent, rules_agreed, account_consent, photo_consent,
-        avatar_id, answers
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        guardian_photo_consent, rules_agreed, photo_consent, avatar_id, answers
+      ) VALUES (?,?,?,NULL,'applied',?,NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     )
     .bind(
       crypto.randomUUID(),
       input.eventSlug,
       input.divisionId,
-      input.playerId,
-      isFull ? "waitlisted" : "confirmed",
-      isFull ? waitlisted + 1 : null,
       reference,
-      checkInToken,
       new Date().toISOString(),
       String(a.fullName ?? ""),
       String(a.dob ?? ""),
       String(a.email ?? ""),
       String(a.mobile ?? ""),
       str(a.region),
+      str(a.referralOrg),
       Array.isArray(a.medicalConditions) ? JSON.stringify(a.medicalConditions) : null,
       str(a.medical),
       str(a.dietary),
@@ -254,54 +210,38 @@ export async function register(input: {
       str(a.guardianDistance),
       bool(a.guardianPhotoConsent),
       bool(a.rulesAgreed),
-      bool(a.accountConsent),
       bool(a.photoConsent),
       str(a.avatarId),
       JSON.stringify(extra),
     )
     .run();
 
-  return isFull
-    ? { status: "waitlisted", reference, checkInToken, waitlistPosition: waitlisted + 1 }
-    : { status: "confirmed", reference, checkInToken };
+  return { status: "applied", reference };
 }
 
-/**
- * Promote the next person off the waitlist when someone withdraws.
- * Returns the promoted registration so the caller can email them.
- */
-export async function promoteFromWaitlist(
-  eventSlug: string,
-  divisionId: string,
-): Promise<Registration | null> {
+/** Everyone still awaiting a decision. The pool the draw runs over. */
+export async function applicantsFor(eventSlug: string): Promise<Registration[]> {
   const db = await getDb();
-  const next = await db
+  const { results } = await db
     .prepare(
-      `SELECT * FROM registrations
-       WHERE event_slug = ? AND division_id = ? AND status = 'waitlisted'
-       ORDER BY waitlist_position ASC LIMIT 1`,
+      "SELECT * FROM registrations WHERE event_slug = ? AND status = 'applied' ORDER BY created_at",
     )
-    .bind(eventSlug, divisionId)
-    .first<Row>();
-  if (!next) return null;
+    .bind(eventSlug)
+    .all<Row>();
+  return results.map(toRegistration);
+}
 
-  await db.batch([
-    db
-      .prepare(
-        "UPDATE registrations SET status = 'confirmed', waitlist_position = NULL WHERE id = ?",
-      )
-      .bind(next.id),
-    // Everyone behind them moves up one.
-    db
-      .prepare(
-        `UPDATE registrations SET waitlist_position = waitlist_position - 1
-         WHERE event_slug = ? AND division_id = ? AND status = 'waitlisted'
-           AND waitlist_position > ?`,
-      )
-      .bind(eventSlug, divisionId, next.waitlist_position),
-  ]);
-
-  return toRegistration({ ...next, status: "confirmed", waitlist_position: null });
+/** How many places are already taken. Never shown to applicants. */
+export async function selectedCount(eventSlug: string): Promise<number> {
+  const db = await getDb();
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM registrations
+        WHERE event_slug = ? AND status IN ('selected','checked-in')`,
+    )
+    .bind(eventSlug)
+    .first<{ n: number }>();
+  return row?.n ?? 0;
 }
 
 /** Mark a player present from their QR check-in token. */

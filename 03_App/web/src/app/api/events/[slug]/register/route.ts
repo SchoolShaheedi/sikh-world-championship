@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { getEvent } from "@/data/events";
-import { register } from "@/lib/store";
+import { apply } from "@/lib/store";
 import { validateRegistration } from "@/lib/registration-schema";
 import { registrationOpen, registrationDemo } from "@/lib/features";
-import { upsertPlayer, bandFor } from "@/lib/players";
 
 /**
  * Register for an event.
@@ -74,39 +73,20 @@ export async function POST(
   }
 
   /**
-   * The account is created here, as part of registering — decision 15: "account creation
-   * must be *part of* the registration flow, not a separate step before it. One form,
-   * account created at the end."
+   * An APPLICATION, not a booking.
    *
-   * The guardian email comes from this record and nowhere else. That is what makes the
-   * consent mechanism more than theatre: a child cannot type their own address into a
-   * field labelled "your parent's email" later on.
+   * No account is created here and no check-in token is issued. Both happen on selection
+   * — see src/lib/selection.ts. Creating profiles for everyone who applied would mean
+   * holding accounts for people who never got a place.
    */
-  const a = result.answers;
-  const player = await upsertPlayer({
-    email: String(a.email),
-    displayName: String(a.fullName).split(" ")[0] || String(a.fullName),
-    ageBand: bandFor(result.age),
-    dateOfBirth: String(a.dob),
-    region: typeof a.region === "string" ? a.region : null,
-    avatarId: typeof a.avatarId === "string" ? a.avatarId : null,
-    gamertag: typeof a.psnId === "string" ? a.psnId : null,
-    guardianEmail:
-      result.age < 18 && typeof a.guardianEmail === "string" ? a.guardianEmail : null,
-  });
-
-  const registration = await register({
+  const registration = await apply({
     eventSlug: slug,
     divisionId,
-    divisionCapacity: division.capacity,
-    playerId: player.id,
     // Only what the schema returned — never the raw body.
     answers: result.answers,
   });
 
-  // TODO before launch:
-  //  - send confirmation email with the QR check-in code
-  //  - if under 18, send the guardian a copy so they know their child signed up
-  //  - append a row to the volunteers' Google Sheet
+  // TODO before launch: email an acknowledgement, and copy the guardian in for under-18s
+  // so they know their child applied.
   return NextResponse.json(registration);
 }

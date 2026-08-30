@@ -7,10 +7,9 @@
  * is the live case, not a hypothetical.
  */
 import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
-import crypto from "node:crypto";
 import { useTempDataDir, clearDataDir } from "./test-helpers";
 import { getDb } from "./db";
-import { register, registrationsFor } from "./store";
+import { apply, registrationsFor } from "./store";
 import { MEDICAL_RETENTION_DAYS } from "./retention";
 
 /** Control the event list, so the tests do not depend on real event data. */
@@ -30,11 +29,9 @@ beforeEach(async () => {
 });
 
 async function entrantWithMedical(slug: string) {
-  return register({
+  return apply({
     eventSlug: slug,
     divisionId: "open",
-    divisionCapacity: 10,
-    playerId: crypto.randomUUID(),
     answers: {
       fullName: "A Child",
       dob: "2013-05-02",
@@ -119,10 +116,14 @@ describe("check-in tokens", () => {
   it("survives the event day itself", async () => {
     events = [{ slug: "e1", date: new Date().toISOString() }];
     await entrantWithMedical("e1");
+    // Tokens are issued on selection now, so seed one — the behaviour under test is that
+    // the purge leaves it alone on the day.
+    const db = await getDb();
+    await db.prepare("UPDATE registrations SET check_in_token = 'live' WHERE event_slug = 'e1'").run();
 
     await applyRetention();
     const [row] = await registrationsFor("e1");
-    expect(row.checkInToken).not.toBe("");
+    expect(row.checkInToken).toBe("live");
   });
 });
 

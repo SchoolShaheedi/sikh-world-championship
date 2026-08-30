@@ -34,6 +34,10 @@ export const sikhFc27: ChampionshipEvent = {
   // cannot yet give.
   detailsConfirmed: false,
 
+  // A week before the event, leaving time to notify everyone and backfill drop-outs.
+  // Configurable: move this date and the form, the countdown and the draw all follow.
+  applicationsCloseAt: "2026-09-26",
+
   capacity: 64,
   /**
    * ONE open division, ages 12 to 21, one champion.
