@@ -22,8 +22,8 @@ parent how long you keep their child's data until you have decided.
 | **A profile that never attended an event** | `players` | **DECIDED: delete after 24 months of no activity** — signed off 2026-08-31, enforced in `src/lib/retention.ts` | Since round 42 a profile is created for everyone who registers interest, not only for the 64 drawn. That was right for the person — a profile carries benefits they are entitled to either way — but it means holding an account for a child with **no event date to measure from**, which is the one case every other row here depends on. Activity is the latest of account creation, last sign-in and last registration of interest. Exempt: moderators, anyone who attended, and anyone named on a report or support ticket (a safeguarding record whose subject has been deleted cannot be acted on). Surfaced on `/admin` so a job that stops running is visible. |
 | **Medical conditions and notes** | `registrations.json` → `answers.medical*` | **`[30]` days after the event, then deleted from the record** | Its only purpose is that one day. There is no reason to hold a child's asthma details a year later. This is the shortest and most important one — and it means deleting *fields* from a record, not the whole record, which the store cannot currently do. |
 | **Dietary and accessibility needs** | same | `[30]` days after the event | Same reasoning. Useful to re-ask each event rather than assume it is unchanged. |
-| Registration record (name, DOB, contact, event answers) | `registrations.json` | `[12]` months after the event | Long enough to answer "was I there?", handle a dispute, and plan the next event. Not indefinite. |
-| Guardian contact details and permission record | `registrations.json`, `guardian-approvals.json` | `[12]` months after the event, **unless linked to a safeguarding concern** | Proof of consent is worth holding for as long as the entry it authorised. |
+| **Registration record (name, DOB, contact, event answers)** | `registrations` | **DECIDED: 12 months after the event, then the row is deleted** — signed off 2026-08-31, enforced by `purgeRegistrations()` | Long enough to answer "was I there?", settle a dispute and plan the next event from real numbers; short enough that a child who applied once and never came back is not on file when the second event runs. A whole-row delete, not a field purge: the row *is* the personal data. Exempt: anyone named on a report or a safety support ticket, whose records run six years. |
+| Guardian contact details and permission record | `registrations`, `guardian_approvals` | **12 months after the event, unless linked to a safeguarding concern** | Proof of consent is worth holding for as long as the entry it authorised — so it goes with the registration, on the same clock and with the same exemption. |
 | Check-in token | `registrations.json` → `checkInToken` | **Delete the day after the event** | It is a credential. Holding a live credential after it can be used is pure risk. |
 | **Safeguarding reports and their outcomes** | `reports.json`, `support-tickets.json` (safety category) | **`[6]` years from resolution** | The long one, deliberately. A concern raised about a child may matter years later, and destroying the record early is the classic safeguarding failure. Confirm against the standard your insurer and local authority expect. |
 | Non-safety support tickets | `support-tickets.json` | `[12]` months from resolution | Ordinary correspondence. |
@@ -37,14 +37,16 @@ parent how long you keep their child's data until you have decided.
 
 ## Deletion on request
 
-A player, or a parent on behalf of a younger child, can ask us to delete everything. Today
-that is a manual job: someone edits the JSON files. That is acceptable for zero real users
-and unacceptable at 64.
+A player, or a parent on behalf of a younger child, can ask us to delete everything. Since
+round 45 that is a button on `/admin` → Entries rather than hand-written SQL; see the
+section at the end of this document. What follows is what still has to be true around it.
 
 **Needed before launch:**
 
-- a documented manual procedure, with a named owner, that covers *every* store above —
-  it is easy to delete the registration and forget the LFG posts and the game requests
+- ~~a documented manual procedure that covers *every* store above~~ — done: one cascade,
+  `deleteAccount()`, is the only way anything deletes an account, so the retention job and
+  the button cannot drift apart and forget the board posts or the game requests. It still
+  needs **a named owner**: a button nobody is responsible for pressing is not a procedure
 - a `[one month]` response commitment, matching the privacy notice
 - a record that the deletion happened (date, who did it, what was covered) — kept even
   after the data is gone, because you may need to prove you complied
@@ -63,19 +65,22 @@ holds no personal data, so the proof outlives the data it is about.
 | Medical, dietary and accessibility deleted 30 days after the event | `purgeMedical()` — field-level, which is only possible because those live in their own columns rather than in a JSON blob |
 | Check-in tokens cleared the day after the event | `clearCheckInTokens()` |
 | Dormant profiles deleted after 24 months | `purgeDormantProfiles()`, plus the cascade across sessions, sign-in tokens, guardian approvals, board posts, game requests and blocks |
+| **Registrations deleted 12 months after the event** | `purgeRegistrations()` — whole rows, excluding anyone named on a report or a safety ticket |
+| Deletion on request, and clearing up after a rehearsal | `deleteAccount()` from `/admin` → Entries, recorded like any scheduled deletion |
 
 **Not enforced. Stated plainly because the gaps matter more than the list above.**
 
-1. **The 12-month registration rule.** This is now the biggest one. A registration holds
-   the applicant's name, date of birth, email and mobile, and nothing deletes it — so
-   deleting a dormant *profile* does not remove that person's details, only their account.
-   The duration is still `[12]` in brackets, which is why it has not been built: a purge
-   running to an unconfirmed number is worse than no purge. **Decide the number, then
-   build it.**
+1. **A profile that DID attend an event has no end date.** The 24-month dormancy rule
+   exempts anyone who attended, because when it was written there was no event-anchored
+   rule to hand them over to. There is one now — but it deletes the *registration*, not the
+   profile, so after a purge the platform still holds that person's first name, chosen
+   handle, email, date of birth, region and avatar, indefinitely. It is the smallest of the
+   gaps and it is now the only unbounded one. **Needs a number**; the obvious answer is to
+   stop treating attendance as a permanent exemption and let the same 24 months run from
+   the event, which needs no new figure at all.
 2. **Expiry means deletion** for LFG posts and settled game requests. The code sets
    `expires_at` and keeps the row.
-3. **Deletion on request** is still a manual job. See below.
-4. **Backup lifecycle**, once there are backups.
+3. **Backup lifecycle**, once there are backups.
 
 ## Review
 

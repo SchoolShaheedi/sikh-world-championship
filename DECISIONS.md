@@ -1872,3 +1872,74 @@ who is on the floor. The DPIA is one signature. The one genuinely open legal que
 how long an entry is kept after the event (risk 14), and that is a number, not a process.
 
 Nothing in this round required a lawyer. It required a delete button.
+
+# Round 46 — the venue, a number, and a backlog that stops asking about insurance
+
+## The venue is real
+
+**GNG FC — Riverside Football Ground, 51 Braunstone Lane East, Braunstone Town, Leicester
+LE3 2FD.** In `src/data/events/sikh-fc-27.ts`, so the whole site picked it up at once, and
+`detailsConfirmed` flips to `true` — which is what takes down "date and venue are being
+finalised" on the event page and above the sign-up form. The event page's *Where* card now
+carries the full postal address rather than a postcode, because that card is where somebody
+works out how they are getting there.
+
+Day timings are unchanged at 09:30–16:30 and the running order underneath them is still
+open. It is no longer holding anything up: the reminder email was blocked on the address,
+not on the schedule.
+
+One bug was caught on the way in, one commit before it would have mattered. The guardian
+notification and the events list both read `venue.addressLines[0]` to fill in "on Saturday
+3 October in ___". That was correct only while the venue was a placeholder holding a single
+line, `["Leicester"]`. With a real address in the array, the email to a parent would have
+read **"in 51 Braunstone Lane East"**. Both now call `venueLocality()`, which reads the
+*last* line, and the helpers have tests. A parent gets a town; only the website gets a
+street.
+
+## Twelve months
+
+The last duration in `04_Legal/RETENTION-POLICY.md` that was still in brackets, and the
+largest storage-limitation gap in the project (DPIA risk 14). Until today **nothing deleted
+a registration**: the medical fields went at 30 days and the check-in token the day after,
+but the applicant's name, date of birth, email and mobile — most of them children's — were
+held with no end date.
+
+`purgeRegistrations()` deletes the whole row 12 months after the event date, on the nightly
+cron, recorded in `retention_runs` (migration 0008). A whole row, not a field purge: the row
+*is* the personal data, and the numbers worth keeping for planning the next event are
+aggregates, not 64 children's contact details.
+
+The exemption is the one every other rule in the file already applies: **a registration
+whose applicant is named on a report, or on a safety support ticket, is kept.** Those
+records run six years, and a safeguarding concern about somebody whose details have been
+erased cannot be investigated. An ordinary support ticket — "I couldn't sign in" — does not
+exempt anything, and there is a test that says so, because treating every ticket as a
+safeguarding record would quietly switch the rule off for anyone who ever emailed us.
+
+Two consequences worth writing down rather than discovering:
+
+- **A trophy cabinet must not read from `registrations`.** Results need their own table
+  holding the handle and the placing and nothing else, or the cabinet empties itself in
+  October 2027. In the backlog.
+- **A profile that attended an event still has no end date.** The 24-month dormancy rule
+  exempts attendees, because when it was written there was no event-anchored rule to hand
+  them to. There is one now, but it deletes the registration and not the profile behind it.
+  That is DPIA risk 17, and the fix needs no new figure — stop treating attendance as a
+  permanent exemption and let the same 24 months run from the event. Flagged, not built: a
+  retention duration is decided before the code that enforces it is written, and that rule
+  has not stopped being right just because the change is small.
+
+## The backlog stops asking about insurance
+
+`00_Docs/NEXT-STEPS.md` is now the development backlog and nothing else. Everything that
+needs a meeting, a policy, a signature, a purchase or a person on the floor moved to
+`00_Docs/MEETING-QUESTIONS.md` — the safeguarding lead and deputy, the DBS list, insurance,
+signing the DPIA, the sign-out procedure, and who reads the 64 public names before the day.
+
+This was asked for, and it is right on its own terms. A build backlog with DBS checks in it
+reads as though the build is blocked on them, and it is not: everything the code owed for
+those decisions is finished. What was one list of twenty things, most of them somebody
+else's, is now a short list that can be worked through and a longer one that goes to a
+meeting. The one item that genuinely sits on both is `SWC_REGISTRATION_OPEN`, and it is
+recorded as a safeguarding decision rather than a technical one — which is why the test key
+from round 45 exists at all.

@@ -43,7 +43,7 @@ step, a trophy cabinet, sponsor offers) that a person who was not drawn is still
 to. The consequence for this assessment is that we hold an account for children who never
 attended an event, which makes `RETENTION-POLICY.md` load-bearing rather than
 precautionary. The duration was decided in round 44 — **24 months of no activity** — and is
-enforced in code. See risks 13 and 14.
+enforced in code. See risks 13, 14 and 17.
 
 **Special category data:** health — medical conditions, allergies, dietary and
 accessibility needs.
@@ -102,15 +102,16 @@ of these describe the system as it stands today, not as we would like it to be.
 | 11 | Volunteer with no DBS check has unsupervised access to children | Low | High | Volunteers are DBS-checked and the records are held by the parent charity. `[NEEDS: confirm the checked list covers everyone who will be on the floor on 3 October 2026, including anyone added late.]` | `[Low once the list is confirmed]` |
 | 12 | A child sees something distressing in a report they filed | Low | Medium | Reports are visible only to moderators, never to the reported person; block is deliberately silent to avoid retaliation. | Low |
 | 13 | **An account is held for a child who never attended an event** | High | Low–Medium | **Mitigated (round 44).** Introduced deliberately in round 42 (see section 2). A profile holds first name, public handle, email, age band, date of birth, region and avatar — no health data, which lives on the registration and is purged separately. **Retention duration now decided: deleted after 24 months of no activity**, enforced by `purgeDormantProfiles()` on the nightly cron and surfaced on `/admin` so a job that stops running is visible rather than silent. Moderators, anyone who attended, and anyone named on a report or a support ticket are exempt. **Honestly stated: deleting the profile does NOT delete the registration behind it**, which holds the applicant's name, date of birth and email. See risk 14. | Low |
-| 14 | **A registration is kept indefinitely** — the 12-month rule is written down and not built | High | Medium | **NOT mitigated.** `RETENTION-POLICY.md` says a registration is kept 12 months after the event, but nothing deletes it: only the medical fields (30 days) and the check-in token (1 day) are purged. So the name, date of birth, email and mobile of every applicant, most of them children, are held with no end date. This is now the largest storage-limitation gap in the project, and it is blocked on a decision rather than on code — the duration is still `[12]` in brackets, and a purge running to an unconfirmed number is worse than none. `[NEEDS: confirm the duration, then build it. One evening's work once the number is agreed.]` | `[High until the duration is set and enforced]` |
+| 14 | **A registration is kept indefinitely** | High | Medium | **Mitigated (round 46).** The duration was the blocker, not the code: `RETENTION-POLICY.md` said 12 months and the brackets never came off, so nothing deleted a registration and the name, date of birth, email and mobile of every applicant — most of them children — were held with no end date. **Confirmed at 12 months from the event date on 2026-08-31** and enforced by `purgeRegistrations()` on the nightly cron: a whole-row delete, recorded in `retention_runs`, scoped to one event at a time and anchored to the event date rather than to "now". Registrations whose applicant is named on a report or a safety support ticket are kept — six years, the same exemption every other rule here applies. | Low |
 | 15 | **The registration form is opened to the public in order to test it** | High | Medium | **Mitigated (round 45).** Testing anything after the submit button — the database write, the guardian email, the magic link, the draw, the check-in token — used to require `SWC_REGISTRATION_OPEN=true` on the live site, which would let a real parent enter a real child during a rehearsal. A per-browser test key (`SWC_TEST_KEY`, `/testing?key=…`, 8-hour cookie holding the key itself, constant-time comparison, 24 characters minimum, 404 for a wrong or unset key) now opens the real form for one browser while the public form stays closed. The page says **Testing mode — this saves a real record** in place of the preview banner. Test entries are real rows and must be deleted the same day; `/admin` → Entries does that. | Low |
 | 16 | **An erasure request cannot be honoured without hand-written SQL** | Medium | Medium | **Mitigated (round 45).** UK GDPR Art. 17 applies whether or not the code exists. `/admin` → Entries deletes a profile, its entry and everything keyed to either, through the same cascade the retention job uses (`deleteAccount()`); it is shut by default and requires the reference to be typed. It refuses, with a reason, for a moderator or anyone named on a report or support ticket — a legitimate Art. 17(3) refusal, since a safeguarding record about a deleted person cannot be acted on. Every deletion is recorded in `retention_runs` with who did it and why. | Low |
+| 17 | **A profile that attended an event is kept with no end date** | Medium | Medium | **Not mitigated — needs a number, not code.** The 24-month dormancy rule (risk 13) exempts anyone who attended, because when it was written there was no event-anchored rule to hand them over to. Risk 14 created one, but it deletes the *registration*, not the profile — so twelve months after the event the platform still holds that person's first name, chosen handle, email, date of birth, region and avatar, indefinitely. It is the least sensitive of the stores (no health data, no guardian contact, no mobile) and it is now the only unbounded one. `[NEEDS: a duration. The cheapest answer uses no new figure — stop treating attendance as a permanent exemption and let the same 24 months of inactivity run from the event.]` | `[Medium until the duration is set]` |
 
 ## 6. Conclusion — can we proceed?
 
-Updated round 42 (2026-08-31). The previous conclusion listed four blockers; three of them
-have since been built and the fourth has changed shape. What is left is almost entirely
-about **people and paperwork, not code**.
+Updated round 46 (2026-08-31). Every storage-limitation risk in the register is now either
+enforced in code or reduced to a single agreed number. What is left is almost entirely
+about **people and paperwork, not code** — and the venue, which is now confirmed.
 
 **Built since this was last assessed:**
 
@@ -121,6 +122,8 @@ about **people and paperwork, not code**.
 | #8 nothing is ever deleted | Field-level medical purge on a daily cron Worker |
 | #5 no real authentication | Passwordless sign-in, D1 sessions, moderator as a DB grant |
 | #13 no duration for a profile with no event | 24 months of no activity, enforced nightly, visible on /admin |
+| #14 nothing deletes a registration | 12 months from the event date, enforced nightly (round 46) |
+| #16 erasure needs hand-written SQL | A delete button on /admin, one shared cascade, every deletion recorded |
 
 **Still outstanding before real registrations open:**
 
@@ -131,11 +134,11 @@ about **people and paperwork, not code**.
    including anyone added in the last week.
 3. **#9 residual — set the DMARC record.** One TXT record. Without it a guardian notice is
    far more likely to be filed as spam.
-4. **#14 — confirm how long a registration is kept, then build the purge.** Settled in
-   round 44: #13 (the dormant profile) is decided at 24 months and enforced, and doing that
-   made the bigger gap obvious. Nothing deletes the registration itself, so an applicant's
-   name, date of birth, email and mobile are held with no end date. Blocked on the number,
-   not on code.
+4. **#17 — how long a profile is kept after the person attends.** New, and the last
+   unbounded store. #14 was closed in round 46 at 12 months from the event date, which
+   deletes the registration but not the profile behind it. The cheapest fix needs no new
+   figure: let the existing 24 months of inactivity run from the event instead of exempting
+   attendance forever. Blocked on agreeing that, not on code.
 5. **#2 residual — the sign-out procedure at the desk.** The app records who may leave
    unaccompanied; nothing enforces it at the door.
 

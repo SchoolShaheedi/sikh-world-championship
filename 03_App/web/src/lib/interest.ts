@@ -28,6 +28,7 @@ import { apply, type ApplyResult } from "./store";
 import { sendEmail } from "./email";
 import { interestReceived, guardianInterestNotice } from "./email-templates";
 import type { ChampionshipEvent, Division } from "./types";
+import { venueLocality } from "./format";
 
 export interface InterestResult extends ApplyResult {
   playerId: string;
@@ -114,7 +115,7 @@ export async function registerInterest(
         childDisplayName: player.displayName,
         eventTitle: event.title,
         eventDate: event.date,
-        venue: event.venue?.addressLines[0] ?? null,
+        venue: venueLocality(event),
         supervision:
           tier === "none"
             ? "They are old enough to attend without a parent or guardian."

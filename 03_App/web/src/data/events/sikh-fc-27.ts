@@ -23,16 +23,24 @@ export const sikhFc27: ChampionshipEvent = {
     "and a live bracket on the big screen from first whistle to final.",
 
   date: "2026-10-03",
+  // Start and finish. The detailed running order — group stage slots, when each station
+  // turns over, when langar is served — is not this field: it belongs on the reminder
+  // email and the day sheet, and it is not confirmed yet.
   times: "09:30 – 16:30",
   venue: {
-    name: "Venue to be confirmed",
-    addressLines: ["Leicester"],
-    postcode: "TBC",
+    name: "GNG FC — Riverside Football Ground",
+    // The LAST line is the town or city, and code relies on that: `venueLocality()` in
+    // lib/format.ts reads it for the guardian email, which says "on <date> in <place>".
+    // Putting the street first and the city last is what keeps that sentence right.
+    addressLines: ["51 Braunstone Lane East", "Braunstone Town", "Leicester"],
+    postcode: "LE3 2FD",
+    mapsUrl:
+      "https://www.google.com/maps/search/?api=1&query=GNG+FC+Riverside+Football+Ground+LE3+2FD",
   },
-  // Date and city are confirmed; the exact venue is not. Kept false until the address is
-  // real, because this flag is what the sign-up page uses to stop promising details we
-  // cannot yet give.
-  detailsConfirmed: false,
+  // Confirmed in round 46: date and venue are both real. This flag is what the event page
+  // and the sign-up page use to decide whether they may state the details — while it was
+  // false they said "being finalised" instead of naming a place we had not booked.
+  detailsConfirmed: true,
 
   // A week before the event, leaving time to notify everyone and backfill drop-outs.
   // Configurable: move this date and the form, the countdown and the draw all follow.

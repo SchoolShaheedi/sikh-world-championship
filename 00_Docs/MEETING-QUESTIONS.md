@@ -1,7 +1,15 @@
 # Open questions for the planning meeting
 
-Decisions the build is waiting on, or that were deferred with reasoning worth revisiting.
-Ordered by how much they cost to leave unanswered.
+**Everything that is not code lives here.** Policies, people, purchases, signatures and
+the things only a meeting can settle. `00_Docs/NEXT-STEPS.md` is the development backlog
+and holds none of it — split in round 46, because an open question about insurance should
+not sit in a list of things to build and read like a blocker on building them.
+
+Nothing here blocks the build. The one thing it does hold is the switch that opens
+registration to the public, and that is a safeguarding decision rather than a technical
+one.
+
+Ordered by how much each costs to leave unanswered.
 
 **Event: Sikh FC 27 Championship · Leicester · Saturday 3 October 2026 · 64 places · ages 12–21**
 Applications close **26 September**. That is the date everything else runs backwards from.
@@ -10,18 +18,29 @@ Applications close **26 September**. That is the date everything else runs backw
 
 ## 1. Blocking — the event cannot run without these
 
-- **Venue address.** Only "Leicester" is confirmed. The site says "venue to be confirmed",
-  the applications page cannot tell people where to go, and the selection email promises
-  the address in a follow-up. Also decides the capacity question below.
+- **Capacity for accompanying adults — now a question for GNG FC.** Every 12–15 entrant
+  brings a parent who stays all day. If half of 64 players are in that band, Riverside has
+  to seat well over a hundred people who are not playing, and langar has to stretch to
+  them. Ask the venue directly, because the answer decides whether the divisions question
+  below is still optional.
 
-- **Capacity for accompanying adults.** Every 12–15 entrant now brings a parent who stays
-  all day. If half of 64 players are in that band the venue needs to seat well over a
-  hundred, and langar has to stretch. Does the venue take that?
+- **Day timings.** 09:30–16:30 is on the site. The running order underneath it — group
+  stage slots, how many stations, when each turns over, when langar is served, who
+  referees — is not set, and the reminder email is waiting on it. The address is not:
+  that is built and can go out without the timings.
 
 - **Safeguarding lead and deputy.** `04_Legal/SAFEGUARDING-POLICY.md` has a blank table
   where the named people go. The team said names are not needed publicly — that is fine
   for the website, but the policy, the insurer and the local authority will each expect a
   named person. A deputy is not optional: sometimes the concern is about the lead.
+
+- **Sign the DPIA.** `04_Legal/DPIA.md` has never been signed, and it is the document that
+  says whether real registrations may be taken. Every storage-limitation risk in it is now
+  either enforced in code or reduced to one agreed number; what it is waiting on is the
+  named safeguarding lead above, the DBS list, and a signature.
+
+- **The DBS-checked list for 3 October**, covering everyone who will be on the floor,
+  including anyone added in the last week.
 
 - **Insurance.** Public liability for the day. Worth asking the insurer directly what they
   require of you on supervision ratios, DBS and emergency contacts — their answer may bind
@@ -71,13 +90,14 @@ Applications close **26 September**. That is the date everything else runs backw
 
 ## 4. Smaller, but decide before the day
 
-- **How long is a registration kept after the event?** The policy says `[12]` months and
-  the brackets have never come off, so **nothing deletes it**. A registration holds the
-  applicant's name, date of birth, email and mobile — most of them children's. Deciding the
-  24-month profile rule made this the biggest remaining gap: deleting a dormant *profile*
-  removes the account, not the details behind it. Say a number and it gets built; the code
-  is an evening's work once the figure is agreed. **My suggestion: 12 months after the
-  event, and 6 years for anything attached to a safeguarding concern.**
+- **How long is a profile kept after the person actually attends?** New, and the last
+  store with no end date on it. Deciding 12 months for the registration closed the big gap
+  — the name, date of birth, email and mobile are deleted a year after the event — but the
+  *profile* behind it (first name, chosen handle, email, date of birth, region, avatar) is
+  exempt from deletion forever if the person attended an event, because that exemption was
+  written before there was an event-anchored rule to hand them to. **My suggestion needs no
+  new number: drop the permanent exemption and let the existing 24 months of inactivity run
+  from the event instead.** DPIA risk 17; an hour's work once agreed.
 
 - **Sponsor offers for profile holders.** A profile is now advertised as carrying sponsor
   discounts — money off merchandise, pre-orders, offers from Sikh businesses. It is shown
@@ -90,13 +110,26 @@ Applications close **26 September**. That is the date everything else runs backw
 - **Sign-out at the end.** The app records whether a 16–17 may leave unaccompanied. Nothing
   enforces it at the door. Who is on that, and with what list?
 
+- **Reading the 64 public names before the day.** `/admin` lists every name that will
+  appear on the projector, with an inline correction. The checks at sign-up catch a
+  player's own PSN ID and their surname; an insult, or somebody else's name, needs a human
+  being. 64 rows, once, and it is a job on the rota rather than a piece of code. **Whose
+  job?**
+
 - **Prizes and trophies.** Engraving takes weeks and the event is close. One champion, or
   also runner-up, semi-finalists and a medal for everyone who plays?
 
-- **What the day actually looks like.** Start and finish times are set at 09:30–16:30.
-  Group stage timings, number of stations, and who referees.
-
 ## 5. For the record — already decided, no action needed
+
+- **Venue: GNG FC — Riverside Football Ground, 51 Braunstone Lane East, Braunstone Town,
+  Leicester LE3 2FD.** Confirmed 2026-08-31 and live on the site: the event page names it
+  with the full address, the "being finalised" notices are gone, and the guardian email
+  says "in Leicester" rather than a street address, deliberately.
+- **A registration is deleted 12 months after the event.** Decided 2026-08-31, built the
+  same day and running nightly. Anyone named on a report or a safety support ticket is
+  exempt — those records run six years. This was the last duration in the retention policy
+  still in brackets, and the largest thing standing between the project and an honest
+  privacy notice.
 
 - No under-12s. 12–15 accompanied all day. 16–17 with permission. 18+ independent.
 - Places by draw: referred first, then everyone else, both random within themselves.

@@ -5,6 +5,7 @@ import { upcomingEvents } from "@/data/events";
 import { registrationDemo } from "@/lib/features";
 import { registrationLive } from "@/lib/testing-access";
 import { PROFILE_BENEFITS } from "@/data/profile-benefits";
+import { venueLocality } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Create your profile",
@@ -93,7 +94,7 @@ export default async function JoinPage() {
             >
               <h3 className="font-display text-xl">{event.title}</h3>
               <p className="mt-1 text-sm text-muted">
-                {event.venue?.addressLines[0] ? `${event.venue.addressLines[0]} · ` : ""}
+                {venueLocality(event) ? `${venueLocality(event)} · ` : ""}
                 {event.date
                   ? new Date(event.date).toLocaleDateString("en-GB", {
                       weekday: "long",

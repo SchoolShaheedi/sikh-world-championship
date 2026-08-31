@@ -47,6 +47,26 @@ export const CHECK_IN_TOKEN_RETENTION_DAYS = 1;
 export const DORMANT_PROFILE_RETENTION_MONTHS = 24;
 
 /**
+ * Months after the event before the registration itself is deleted.
+ *
+ * DECIDED 2026-08-31 (round 46), and the last duration in RETENTION-POLICY.md that was
+ * still in brackets. Until it was set, NOTHING deleted a registration: the medical fields
+ * went at 30 days and the check-in token the day after, but the applicant's name, date of
+ * birth, email and mobile — most of them children's — were held with no end date. That was
+ * DPIA risk 14, and the largest storage-limitation gap in the project.
+ *
+ * Twelve months is long enough to answer "was I there?", settle a dispute and plan the
+ * next event from real numbers, and short enough that a child who applied once and never
+ * came back is not on file when the second event runs.
+ *
+ * ONE EXEMPTION, and it is the same one everywhere else in this file: a registration whose
+ * applicant is named on a report, or on a safety support ticket, is kept — those records
+ * run six years, and a safeguarding record whose subject's details have been deleted
+ * cannot be acted on.
+ */
+export const REGISTRATION_RETENTION_MONTHS = 12;
+
+/**
  * Re-exported so existing callers (and the admin page) keep one import site. The constant
  * itself lives in `retention-scope.ts` — see the note there.
  */
@@ -54,7 +74,11 @@ export { PLATFORM_SCOPE } from "./retention-scope";
 
 export interface RetentionAction {
   eventSlug: string;
-  action: "purge-medical" | "clear-check-in-tokens" | "purge-dormant-profiles";
+  action:
+    | "purge-medical"
+    | "clear-check-in-tokens"
+    | "purge-dormant-profiles"
+    | "purge-registrations";
   rowsAffected: number;
   note: string;
 }
@@ -150,6 +174,49 @@ export async function purgeDormantProfiles(now: Date = new Date()): Promise<numb
   return results.length;
 }
 
+/**
+ * Delete the registrations for an event whose retention period has passed.
+ *
+ * This is a whole-row delete, not a field purge like `purgeMedical`. The row IS the
+ * personal data: name, date of birth, email, mobile, the guardian's name and contact, and
+ * the answers. There is nothing left worth keeping once the period is up — the numbers
+ * that matter for planning the next event (how many applied, how many were drawn, how many
+ * turned up) belong in aggregate form, not in 64 rows holding children's contact details.
+ *
+ * KEPT BACK, and this is the whole subtlety of the query: a registration whose applicant is
+ * named on a report, or on a safety support ticket, is not deleted. Those records run six
+ * years and a safeguarding concern about somebody whose details have been erased cannot be
+ * investigated. It is the same exemption `purgeDormantProfiles` and the admin delete button
+ * apply, expressed against the registration instead of the account.
+ *
+ * A registration with no `player_id` — the retention job nulls the link when it deletes a
+ * dormant profile — is deleted normally. It cannot be safeguarding-linked, because a
+ * profile named on a report is never purged in the first place.
+ */
+export async function purgeRegistrations(eventSlug: string): Promise<number> {
+  const db = await getDb();
+  const { results } = await db
+    .prepare(
+      `SELECT r.id FROM registrations r
+        WHERE r.event_slug = ?
+          AND NOT EXISTS (SELECT 1 FROM reports rep
+                           WHERE rep.reporter_id = r.player_id
+                              OR rep.target_player_id = r.player_id)
+          AND NOT EXISTS (SELECT 1 FROM support_tickets t
+                           WHERE t.player_id = r.player_id AND t.category = 'safety')`,
+    )
+    .bind(eventSlug)
+    .all<{ id: string }>();
+
+  // One at a time, and counted from the SELECT above: `run()` does not report a row count
+  // portably across D1 and node:sqlite (see db.ts), and a deletion job that cannot say how
+  // many rows it deleted is not an audit trail.
+  for (const { id } of results) {
+    await db.prepare("DELETE FROM registrations WHERE id = ?").bind(id).run();
+  }
+  return results.length;
+}
+
 export interface DormancySnapshot {
   /** Every profile on the platform, including moderators and people who attended. */
   profiles: number;
@@ -236,6 +303,8 @@ export async function applyRetention(now: Date = new Date()): Promise<RetentionR
   const ranAt = now.toISOString();
   const actions: RetentionAction[] = [];
   const skipped: { eventSlug: string; reason: string }[] = [];
+  // Computed once, outside the loop: every event is measured against the same instant.
+  const registrationCutoff = monthsBefore(now, REGISTRATION_RETENTION_MONTHS);
 
   for (const event of EVENTS) {
     if (!event.date) {
@@ -258,6 +327,33 @@ export async function applyRetention(now: Date = new Date()): Promise<RetentionR
           action: "purge-medical",
           rowsAffected: rows,
           note: `${Math.floor(age)} days after the event (policy: ${MEDICAL_RETENTION_DAYS}).`,
+        };
+        actions.push(a);
+        await record(a, ranAt);
+      }
+    }
+
+    /**
+     * The registration itself, 12 months after the event.
+     *
+     * Measured in calendar months against the event date, like the dormancy rule and for
+     * the same reason: the policy is written in months, and a parent told "a year" should
+     * get an answer that matches a calendar rather than 365 days of arithmetic.
+     *
+     * Recorded only when it actually deleted something. The token clear already proves the
+     * job ran every night; a zero row per event per night for years would bury the entries
+     * that matter under the ones that do not.
+     */
+    if (new Date(event.date).getTime() <= new Date(registrationCutoff).getTime()) {
+      const rows = await purgeRegistrations(event.slug);
+      if (rows > 0) {
+        const a: RetentionAction = {
+          eventSlug: event.slug,
+          action: "purge-registrations",
+          rowsAffected: rows,
+          note:
+            `${REGISTRATION_RETENTION_MONTHS} months after the event. Registrations ` +
+            `linked to a report or a safety ticket were kept.`,
         };
         actions.push(a);
         await record(a, ranAt);

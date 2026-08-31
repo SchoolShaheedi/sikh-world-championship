@@ -69,7 +69,10 @@ medical notes. That single fact drives most of the rules below.
 9. **A retention duration is decided before the code that enforces it is written.** Every
    rule in `src/lib/retention.ts` matches a figure in `04_Legal/RETENTION-POLICY.md` with
    the brackets taken off. A purge running to a guessed number is worse than no purge —
-   which is why the registration rule is still unbuilt (DPIA risk 14).
+   which is why the registration rule waited for a number rather than being written to a
+   plausible one. It has one now: **12 months from the event date** (round 46, DPIA risk
+   14). The one duration still missing is how long a profile lives after its owner attends
+   an event — risk 17, and nothing may be written to enforce it until it is agreed.
 10. **One place knows every table keyed to a player.** `ACCOUNT` deletion goes through
     `deleteAccount()` in `src/lib/account-delete.ts` — the retention job and the admin
     delete button both use it, and they differ only in `deleteRegistrations`. Adding a
@@ -109,6 +112,10 @@ before touching one.
 - Medical, dietary and accessibility live in their **own columns**, not in the `answers`
   JSON, so `purgeMedical()` can delete them while keeping the registration — that is what
   makes `04_Legal/RETENTION-POLICY.md` enforceable. Do not move them into `answers`.
+- Three clocks run on one registration row and they are deliberately different lengths:
+  the check-in token goes the day after the event, the medical fields at 30 days, and the
+  **row itself at 12 months** (`purgeRegistrations()`). Anything you add to this table
+  inherits the 12-month clock unless you give it a column and a rule of its own.
 - Only event-specific answers (`psnId`, `skill`) belong in the `answers` column.
 - Widening a `CHECK` constraint means rebuilding the table — SQLite cannot alter one in
   place. See `migrations/0006_handles_and_dormancy.sql`, which carries the existing rows
@@ -145,7 +152,7 @@ saves nothing, in tester mode it saves a real child's details to the live databa
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 257 tests
+npm test                         # 277 tests
 npx tsc --noEmit
 npm run lint
 npm run build
@@ -154,6 +161,11 @@ npm run cf:preview               # run the built Worker in workerd — catches w
 npm run cf:deploy
 node scripts/grant-moderator.mjs you@example.com "Name" --remote
 npx wrangler secret put SWC_TEST_KEY   # then open /testing?key=… to test for real
+
+# From a shell direnv has not hooked (an agent's, a script's), the API token is absent and
+# wrangler fails with "account is not valid or is not authorized". Not a permissions
+# problem — prefix the command instead of exporting anything:
+direnv exec ../.. npx wrangler d1 migrations apply swc-production --remote
 ```
 
 Tests run against an in-memory SQLite database with the real migrations applied

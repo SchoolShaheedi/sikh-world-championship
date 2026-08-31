@@ -1,91 +1,76 @@
-# Next steps
+# Next steps — the build
 
-Rewritten in round 42. The previous version described a product from round ~20 — JSON
-stores, a session stub, an unlaunched chat-adjacent board, `sikhworldchampionship.com` —
-almost none of which is still true. A backlog nobody trusts is worse than no backlog.
+**This file is the development backlog and nothing else.** Rewritten in round 46 to hold
+only work that is done in this repository, by the person who writes the code.
+
+Anything that needs a meeting, a policy, a signature, a purchase or a person on the floor
+lives in `00_Docs/MEETING-QUESTIONS.md`. That was the point of splitting them: a build
+backlog with insurance quotes and DBS checks in it is a backlog that stops the build.
 
 Ordered by what it costs to leave undone.
 
-## Rehearsing the real thing (round 45 — available now)
+## Now
 
-`/testing?key=…` opens real registration for one browser while the public form stays
-closed, so the whole path can be tested before any of the blockers below are cleared. The
-link is in the Keychain as `swc-test-key`. See `00_Docs/TESTING-REGISTRATION.md`.
-
-- [ ] **Do the rehearsal.** One entry end to end: form → guardian email → magic link →
-      `/admin` → draw → offer email → delete the entry. Roughly half an hour, and it will
-      find things. Nothing below is a blocker on doing it.
+- [ ] **Do the rehearsal.** `/testing?key=…` opens real registration for one browser while
+      the public form stays closed. One entry end to end: form → guardian email → magic
+      link → `/admin` → draw → offer email → delete the entry. Roughly half an hour, and it
+      will find things. The link is in the Keychain as `swc-test-key`; runbook in
+      `00_Docs/TESTING-REGISTRATION.md`.
 - [ ] **Rotate the Cloudflare and Resend keys.** Both have been exposed in transcripts on
-      disk twice. The mechanism that caused it is fixed (`00_Docs/SECRETS.md`); the keys
-      themselves are still live.
-
-## Blockers before registration can be switched on
-
-`SWC_REGISTRATION_OPEN` is off in production. Each of these is a reason why.
-
-- [ ] **Confirm the charity's named safeguarding lead and deputy cover SWC events** —
-      including the online platform, and that both know they are on call for 3 October
-      2026. The names themselves live in the charity's own policy, not in this repo
-      (round 43); `04_Legal/SAFEGUARDING-POLICY.md` says so and lists what is still owed.
-- [ ] **Confirm the DBS-checked list covers everyone on the floor** on the day, including
-      anyone added late.
-- [ ] **Decide how long a registration is kept after the event, then build the purge.**
-      DPIA risk 14, added in round 44 and now the biggest storage-limitation gap here. The
-      policy says `[12]` months and the brackets never came off, so **nothing deletes a
-      registration** — an applicant's name, date of birth, email and mobile are held with no
-      end date. Blocked on the number, not the code: a purge running to an unconfirmed
-      duration is worse than none.
-- [ ] **Sign the DPIA** (`04_Legal/DPIA.md`). It has never been signed. Risk 13 (a profile
-      with no event behind it) was closed in round 44 at 24 months of no activity, enforced
-      and visible on `/admin`. Risk 14 above is what remains.
+      disk. The mechanism that caused it is fixed (`00_Docs/SECRETS.md`); the keys
+      themselves are still live. `./scripts/secrets-to-keychain.sh`, then
+      `python3 scripts/scrub-transcripts.py --write` with this session closed.
 - [ ] **Set the DMARC record** — `_dmarc` TXT, `v=DMARC1; p=none;
       rua=mailto:media@shaheedibunga.com; fo=1`. Without it the guardian notification is
       much more likely to be filed as spam, and a safeguarding email in a junk folder is
-      worse than one never promised. Needs Zone → DNS → Edit on the API token.
-- [ ] **Send yourself the full flow end to end on production** — register interest with a
-      real address, confirm both emails arrive and read correctly on a phone.
+      worse than one never promised. Needs Zone → DNS → Edit on the API token, which the
+      current one does not have.
 
-## Blocked on a decision, not on code
-
-See `00_Docs/MEETING-QUESTIONS.md` — venue address, adult capacity, insurance, the
-divisions split, the guardian age boundary at 16, which spelling of the name is canonical,
-legal structure, sponsors, and how long a registration is kept after the event.
-
-Settled in round 44: **the bracket shows a tournament handle the player chose**, not the
-real name and not the PSN ID, and **a profile that never attended is deleted after 24
-months of no activity**.
-
-## Build — before the event on 3 October 2026
+## Before the event — 3 October 2026
 
 - [ ] **Wire the bracket to real registrations.** It renders demo entrants outside
-      production and an honest placeholder inside it (round 42). **Unblocked in round 44** —
-      the name to show is `publicName()`, the player's chosen handle. Nothing else stands in
-      the way.
-- [ ] **Read through the public names before the day.** `/admin` lists every name that will
-      appear, with an inline correction. The refusals at sign-up catch only a player's own
-      PSN ID and their surname; an insult or somebody else's name needs a person. 64 rows,
-      once, and it is a job on the rota rather than a piece of code.
-- [ ] **Check-in on the day** — the token is issued on selection and `checkIn()` exists;
+      production and an honest placeholder inside it. The name to show is `publicName()` —
+      the player's chosen handle, never the real name and never the PSN ID.
+- [ ] **Record results in their own table, not by reading `registrations`.** New in round
+      46 and easy to miss: registrations are deleted 12 months after the event, so a trophy
+      cabinet that derives from them empties itself in October 2027. Results should hold the
+      handle and the placing, and nothing else — which is also the only version of a results
+      table that is safe to keep indefinitely.
+- [ ] **Check-in on the day.** The token is issued on selection and `checkIn()` exists;
       there is no scanner UI.
 - [ ] **Score entry**, so the bracket advances during the event.
-- [ ] **Reminder email** with venue and what to bring, once the venue is confirmed.
+- [ ] **Reminder email** with the venue address and what to bring. **Unblocked in round
+      46** — the venue is confirmed, so `event.venue` is real and `detailsConfirmed` is
+      true. Day timings can be filled in when they are settled; the address no longer has
+      to wait for them.
+- [ ] **A real volunteer sign-up form.** `src/app/volunteer/page.tsx` still carries a TODO —
+      DBS status, availability and a reference.
 
-## Build — after the event
+## After the event
 
 - [ ] Trophy cabinet populated from real results (`/players` shows a placeholder).
-- [ ] Sponsor offers for profile holders — the benefit is described as "coming" on `/join`
-      and `/profile` (`src/data/profile-benefits.ts`); nothing is live until a sponsor has
-      actually agreed one.
+- [ ] Sponsor offers for profile holders — described as "coming" on `/join` and `/profile`
+      (`src/data/profile-benefits.ts`); nothing goes live until a sponsor has agreed one.
 - [ ] Move rate limiting into D1. `src/lib/rate-limit.ts` is in-memory, so it is
       per-instance and resets on deploy.
 - [ ] Delete `src/lib/play-seed.ts` if the board is ever launched with real players.
+
+## One flag, held by other people
+
+`SWC_REGISTRATION_OPEN` is off in production and opening it is a **safeguarding decision,
+not a technical one**. Everything the code owed is built: data is stored properly, the
+guardian notice sends, deletion runs nightly, an erasure request is a button, and a
+registration now has an end date. What is left is in `MEETING-QUESTIONS.md` — the named
+safeguarding lead and deputy, the DBS list for the day, insurance, and signing the DPIA.
+
+Nothing above is blocked on that flag. The rehearsal path exists precisely so it is not.
 
 ## Deliberately not being done
 
 - **Peer-to-peer messaging of any kind.** Removed, and staying removed.
 - **The Looking For Game board.** Built and switched off (`SWC_BOARD_OPEN`). Launching it
-  needs the guardian approval flow, a staffed moderation rota, and a decision that has not
-  been taken.
+  needs the guardian approval flow, a staffed moderation rota, and a decision nobody has
+  taken.
 - **Under-16 board access.**
 
 ## Adding a second event

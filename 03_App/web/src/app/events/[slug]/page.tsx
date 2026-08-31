@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EVENTS, getEvent } from "@/data/events";
-import { formatEventDate, statusLabel } from "@/lib/format";
+import { formatEventDate, statusLabel, venueAddressLine } from "@/lib/format";
 
 export function generateStaticParams() {
   return EVENTS.map((e) => ({ slug: e.slug }));
@@ -74,7 +74,11 @@ export default async function EventPage({
           [
             "Where",
             event.venue?.name ?? "Venue to be announced",
-            event.venue ? event.venue.postcode : "United Kingdom",
+            // The full address, not just the postcode, once the venue is confirmed —
+            // this card is where somebody works out how they are getting there.
+            (event.detailsConfirmed ? venueAddressLine(event) : null) ??
+              event.venue?.postcode ??
+              "United Kingdom",
           ],
           ["Format", "Groups into knockouts", "Everyone plays at least 3 matches"],
           ["Platform", "PlayStation 5", "Consoles and screens provided"],

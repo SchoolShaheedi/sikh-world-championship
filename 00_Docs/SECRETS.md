@@ -40,6 +40,22 @@ printf '%s' "$VALUE" | npx wrangler secret put RESEND_API_KEY
 `wrangler.jsonc` is committed and this repository is public. Only non-secrets go in `vars`
 there — the account id, the mail-from address. Both are identifiers, not credentials.
 
+**4. Deploying from a shell direnv has not touched: `direnv exec`.**
+
+A non-interactive shell — an agent's, a script's, a CI step's — never runs the direnv hook,
+so `CLOUDFLARE_API_TOKEN` is simply absent and wrangler fails with *"the given account is
+not valid or is not authorized"*, which reads like a permissions problem and is not one.
+
+```bash
+direnv exec /path/to/repo npx wrangler d1 migrations apply swc-production --remote
+```
+
+`direnv exec` loads `.envrc`, runs the one command with the variables in its environment,
+and prints nothing. That is the whole point: it is the only way to get the token to
+wrangler without the value passing through a command line, a log or a transcript. Do not
+"solve" this by exporting the token by hand, and do not read the file to find out what it
+holds — that is precisely the habit that leaked it twice.
+
 ## Rotating after an exposure
 
 1. **Cloudflare** — https://dash.cloudflare.com/profile/api-tokens → roll the token.
