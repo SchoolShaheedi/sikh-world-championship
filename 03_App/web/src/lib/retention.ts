@@ -19,6 +19,8 @@ import crypto from "node:crypto";
 import { getDb } from "./db";
 import { purgeMedical, clearCheckInTokens } from "./store";
 import { EVENTS } from "@/data/events";
+import { deleteAccount } from "./account-delete";
+import { PLATFORM_SCOPE as SCOPE } from "./retention-scope";
 
 /**
  * Days after the event before special-category data is deleted.
@@ -45,10 +47,10 @@ export const CHECK_IN_TOKEN_RETENTION_DAYS = 1;
 export const DORMANT_PROFILE_RETENTION_MONTHS = 24;
 
 /**
- * `event_slug` is NOT NULL on `retention_runs`, and a dormant profile belongs to no event.
- * This sentinel keeps the audit trail readable rather than making the column nullable.
+ * Re-exported so existing callers (and the admin page) keep one import site. The constant
+ * itself lives in `retention-scope.ts` — see the note there.
  */
-export const PLATFORM_SCOPE = "(platform)";
+export { PLATFORM_SCOPE } from "./retention-scope";
 
 export interface RetentionAction {
   eventSlug: string;
@@ -115,38 +117,6 @@ const DORMANT_WHERE = `
                     WHERE r2.player_id = p.id), p.created_at)
        ) < ?`;
 
-/**
- * Every table that keys on a player id, and what to do with it when the player goes.
- *
- * Written out rather than left to `ON DELETE CASCADE` because only two of these tables
- * declare that constraint, SQLite does not enforce foreign keys unless asked, and the
- * consequence of getting it wrong here is an orphaned row containing a child's display
- * name that no deletion request will ever find again.
- */
-const CASCADE: { sql: string; params: (id: string) => unknown[] }[] = [
-  { sql: "DELETE FROM sessions WHERE player_id = ?", params: (id) => [id] },
-  { sql: "DELETE FROM auth_tokens WHERE player_id = ?", params: (id) => [id] },
-  { sql: "DELETE FROM guardian_approvals WHERE player_id = ?", params: (id) => [id] },
-  { sql: "DELETE FROM lfg_posts WHERE player_id = ?", params: (id) => [id] },
-  {
-    sql: "DELETE FROM game_requests WHERE from_player_id = ? OR to_player_id = ?",
-    params: (id) => [id, id],
-  },
-  {
-    sql: "DELETE FROM blocks WHERE blocker_id = ? OR blocked_id = ?",
-    params: (id) => [id, id],
-  },
-  /**
-   * The registration row is NOT deleted here. It has its own retention period, measured
-   * from the event, and it is the record of who applied — but the link to a deleted
-   * account has to go, or a later join resurrects an id that no longer exists.
-   *
-   * WORTH BEING HONEST ABOUT: the registration still holds the applicant's name, date of
-   * birth and email. Deleting the profile does not delete those, and the 12-month
-   * registration rule that would is not implemented yet. See RETENTION-POLICY.md.
-   */
-  { sql: "UPDATE registrations SET player_id = NULL WHERE player_id = ?", params: (id) => [id] },
-];
 
 /**
  * Delete profiles that never attended an event and have been untouched for the policy
@@ -165,10 +135,17 @@ export async function purgeDormantProfiles(now: Date = new Date()): Promise<numb
     .all<{ id: string }>();
 
   for (const { id } of results) {
-    for (const step of CASCADE) {
-      await db.prepare(step.sql).bind(...step.params(id)).run();
-    }
-    await db.prepare("DELETE FROM players WHERE id = ?").bind(id).run();
+    /**
+     * `deleteRegistrations: false` is the whole distinction between this job and the
+     * delete button in /admin. The registration has its own period, measured from the
+     * event, and it is the record of who applied — so the link goes and the row stays.
+     * Worth being honest that the row still holds the applicant's name, date of birth
+     * and email; the rule that would delete those is not built yet (DPIA risk 14).
+     */
+    await deleteAccount(id, {
+      deleteRegistrations: false,
+      reason: `Dormant profile: no attended event and no activity for ${DORMANT_PROFILE_RETENTION_MONTHS} months.`,
+    });
   }
   return results.length;
 }
@@ -311,7 +288,7 @@ export async function applyRetention(now: Date = new Date()): Promise<RetentionR
    */
   const dormant = await purgeDormantProfiles(now);
   const a: RetentionAction = {
-    eventSlug: PLATFORM_SCOPE,
+    eventSlug: SCOPE,
     action: "purge-dormant-profiles",
     rowsAffected: dormant,
     note:

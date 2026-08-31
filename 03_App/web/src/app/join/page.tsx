@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { currentPlayer } from "@/lib/session";
 import { upcomingEvents } from "@/data/events";
-import { registrationOpen, registrationDemo } from "@/lib/features";
+import { registrationDemo } from "@/lib/features";
+import { registrationLive } from "@/lib/testing-access";
 import { PROFILE_BENEFITS } from "@/data/profile-benefits";
 
 export const metadata: Metadata = {
@@ -28,7 +29,7 @@ export const dynamic = "force-dynamic";
 export default async function JoinPage() {
   const me = await currentPlayer();
   const events = upcomingEvents();
-  const open = registrationOpen() || registrationDemo();
+  const open = (await registrationLive()) || registrationDemo();
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-14">

@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { EVENTS, getEvent } from "@/data/events";
 import { SignupForm } from "@/components/SignupForm";
-import { registrationOpen, registrationDemo } from "@/lib/features";
+import { registrationDemo, registrationOpen } from "@/lib/features";
+import { registrationLive } from "@/lib/testing-access";
 import { currentPlayer } from "@/lib/session";
 
 /**
@@ -42,12 +43,22 @@ export default async function RegisterInterestPage({
 
   const me = await currentPlayer();
 
+  /**
+   * Three states now, not two. `live` is "can this browser actually submit" — true when
+   * entries are open to the public OR when this browser holds the test key. `demo` only
+   * applies when it cannot, because a preview banner over a form that really writes is
+   * the exact lie the banner exists to prevent.
+   */
+  const live = await registrationLive();
+  const demo = !live && registrationDemo();
+  const testing = live && !registrationOpen();
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="font-display text-4xl">Register interest</h1>
       <p className="mt-2 text-xl text-kesri">{event.title}</p>
       <p className="mt-4 text-muted">
-        {registrationOpen()
+        {live
           ? `Free to enter, ${event.capacity} places. Takes about two minutes.`
           : `Free to enter, ${event.capacity} places.`}
       </p>
@@ -55,7 +66,7 @@ export default async function RegisterInterestPage({
       {/* Registration is for the platform, not for one event. Said here rather than only
           on /join, because most people arrive on this page from a link and never see the
           explainer. */}
-      {(registrationOpen() || registrationDemo()) && (
+      {(live || demo) && (
         <p className="mt-4 text-muted">
           {me ? (
             <>
@@ -78,14 +89,35 @@ export default async function RegisterInterestPage({
 
       {/* "Sign up now to hold your place" is only true when there is a form to do it
           with. Shown alongside a closed notice it reads as a broken promise. */}
-      {registrationOpen() && !event.detailsConfirmed && (
+      {live && !event.detailsConfirmed && (
         <p className="mt-6 rounded-xl border border-kesri/40 bg-kesri/10 p-4 text-sm text-kesrisoft">
           Date and venue are being finalised. Sign up now to hold your place — we&apos;ll
           email you the details as soon as they&apos;re confirmed.
         </p>
       )}
 
-      {registrationDemo() && (
+      {/* Testing mode. Louder than the demo banner, because the failure it prevents is
+          worse: in demo mode a real entry is not saved, here a test entry IS. Someone has
+          to be able to tell at a glance which of the two they are looking at. */}
+      {testing && (
+        <div className="mt-6 rounded-2xl border-2 border-kesri bg-kesri/[0.14] p-5">
+          <p className="font-display text-lg text-kesri">
+            Testing mode — this saves a real record
+          </p>
+          <p className="mt-2 text-sm text-muted">
+            Entries are closed to the public. This browser is holding a test key, so the
+            form works for real: it writes to the live database and sends real emails.
+            Use made-up details, and delete the entry from{" "}
+            <Link href="/admin" className="text-kesri hover:underline">
+              Admin
+            </Link>{" "}
+            when you are done. Close it again at{" "}
+            <span className="font-mono text-xs">/testing?key=clear</span>.
+          </p>
+        </div>
+      )}
+
+      {demo && (
         <div className="mt-6 rounded-2xl border-2 border-dashed border-kesri/60 bg-kesri/[0.08] p-5">
           <p className="font-display text-lg text-kesri">Preview — nothing is saved</p>
           <p className="mt-2 text-sm text-muted">
@@ -97,11 +129,11 @@ export default async function RegisterInterestPage({
         </div>
       )}
 
-      {registrationOpen() || registrationDemo() ? (
+      {live || demo ? (
         <div className="mt-10">
           <SignupForm
             event={event}
-            demo={registrationDemo()}
+            demo={demo}
             prefill={
               me
                 ? {

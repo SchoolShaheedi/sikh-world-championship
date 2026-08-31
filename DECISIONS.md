@@ -1782,3 +1782,93 @@ storage-limitation gap in the project and it is blocked on a number, not on code
 running to an unconfirmed duration is worse than no purge. Added to the DPIA as risk 14 and
 to the meeting questions.
 
+
+---
+
+# Round 45 — Stopping the leak, and a way to rehearse an entry for real
+
+Two asks, one about a repeated failure and one about being blocked: *"how to avoid cf and
+resend keys getting leaked again.. I can't keep on doing this"*, and *"just get me the
+quickest path to the full registration version for testing.. provided I can delete specific
+test accounts from admin after ensuring everything works"*.
+
+## The keys: the file was the vulnerability, not git
+
+Both leaks had the same shape. The token and the API key were literal strings in
+`.envrc.local`; something read the file; the contents landed in a transcript on disk.
+`.envrc.local` was gitignored throughout and was never committed. **Rotating twice fixed
+nothing, because the mechanism was untouched** — which is exactly why it happened again.
+
+So the fix is not "be more careful". It is to make the file worthless:
+
+1. **The values moved to the macOS Keychain.** `.envrc.local` is now two `security`
+   lookups and no values, written by `scripts/secrets-to-keychain.sh` (hidden input,
+   nothing echoed). Reading the file yields nothing.
+2. **The printing commands are refused.** `.claude/hooks/deny-secret-reads.py`, a
+   PreToolUse hook, blocks reading `.envrc.local`, dumping the environment, calling
+   `security find-generic-password`, reading a transcript, or expanding a secret variable
+   into a command line. **Deny, not ask.** A prompt is a decision taken in a hurry by
+   whoever happens to be watching, and the whole failure mode was that nobody was watching
+   closely.
+3. **Production secrets stay in Cloudflare**, set by pipe so the value never appears in a
+   command line or a shell history.
+
+`00_Docs/SECRETS.md` is the record. Rotation is still owed — a mechanism that stops the
+next leak does nothing about the two keys already in transcripts on disk — and
+`scripts/scrub-transcripts.py` redacts the dead strings afterwards.
+
+## Registration testing: three states, not two
+
+The blockage was real and it was ours. Production had exactly two settings, and neither
+could rehearse an entry:
+
+- `SWC_REGISTRATION_DEMO` runs every check and skips the write, so it tests nothing that
+  happens *after* the submit button — not the D1 write, the guardian email, the magic link,
+  the draw or the check-in token.
+- `SWC_REGISTRATION_OPEN` tests all of it and simultaneously invites the public to enter
+  children into an event whose date, venue, insurance and DBS checks are unsettled.
+
+Third state: **a key in a cookie.** `/testing?key=…` opens real registration for one
+browser on the live deployment; everyone else still gets the closed form. The cookie holds
+the key itself rather than a flag, so it cannot be forged by typing `swc_tester=1`;
+comparison is constant-time; an unset or wrong key both 404, so there is nothing to iterate
+against; the key must be at least 24 characters, so a typo like `SWC_TEST_KEY=true` cannot
+become a working password. Every gate now asks `registrationLive()` — "can THIS browser
+submit" — because `registrationOpen()` answers a different question and a page asking the
+wrong one shows a closed notice above a working form.
+
+The tester banner is louder than the demo banner, deliberately. In demo mode a mistake
+saves nothing; in tester mode it saves a real child's details to the live database.
+
+## Deleting an entry: asked for as cleanup, kept as an obligation
+
+`/admin` gains **Entries**, with a delete button. It removes the profile, the entry and
+everything attached to both.
+
+Two things about it are deliberate. It is **shut by default and asks for the reference to be
+typed**, not for an OK click — this is the most destructive control in the app and it sits
+on the same page as the draw; typing `SWC-MBH-VEE` is an act, clicking OK is a reflex. And
+it **refuses** a moderator, or anyone named on a report or a support ticket, out loud rather
+than quietly: a safeguarding record about someone who has been deleted cannot be acted on,
+which is a legitimate refusal under Art. 17(3).
+
+It was asked for as a way to clear up after a rehearsal. It stays because **UK GDPR Art. 17
+applies whether or not the code exists** — before this, honouring an erasure request meant
+hand-writing SQL against production, at speed, while a parent was on the phone.
+
+Deletion is now **one** function, `deleteAccount()` in `src/lib/account-delete.ts`, shared
+with the retention job. The two callers differ in exactly one flag: retention keeps the
+registration and unlinks it, the admin button deletes it. That difference is tested in both
+directions, because the wrong one either leaves a child's name behind or starts destroying
+the record of who applied. Every deletion — manual included — writes to `retention_runs`
+(migration 0007 widens the CHECK), because "did you delete it?" is the one question a
+subject access request always asks.
+
+## On "too many legal questions"
+
+Fair, and worth answering plainly: most of what is still open is not legal paperwork, it is
+event logistics that the paperwork keeps asking for — the venue address, the day timings,
+who is on the floor. The DPIA is one signature. The one genuinely open legal question is
+how long an entry is kept after the event (risk 14), and that is a number, not a process.
+
+Nothing in this round required a lawyer. It required a delete button.

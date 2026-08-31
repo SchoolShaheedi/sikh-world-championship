@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getEvent } from "@/data/events";
 import { registerInterest } from "@/lib/interest";
 import { validateRegistration } from "@/lib/registration-schema";
-import { registrationOpen, registrationDemo } from "@/lib/features";
+import { registrationDemo } from "@/lib/features";
+import { registrationLive } from "@/lib/testing-access";
 
 /**
  * Register for an event.
@@ -20,7 +21,10 @@ export async function POST(
   // Checked before anything else, including before we look at the body. If entries are
   // closed there is no lawful basis to receive a child's medical details at all, so the
   // request is refused before that data is even parsed.
-  if (!registrationOpen() && !registrationDemo()) {
+  // `registrationLive()`, not `registrationOpen()`: a browser holding the test key gets
+  // the real write on a deployment that is closed to everyone else. See lib/testing-access.
+  const live = await registrationLive();
+  if (!live && !registrationDemo()) {
     return NextResponse.json(
       {
         error:
@@ -63,7 +67,7 @@ export async function POST(
   // Demo mode: everything above ran for real — schema, guardian tier, age gate, unknown
   // keys. Only the write is skipped. Returning a shaped response lets the team see the
   // confirmation screen, and `demo: true` makes the UI say plainly that nothing was saved.
-  if (registrationDemo()) {
+  if (!live && registrationDemo()) {
     return NextResponse.json({
       demo: true,
       status: "applied",

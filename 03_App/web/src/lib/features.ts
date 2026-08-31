@@ -50,6 +50,30 @@ export function registrationDemo(): boolean {
   return process.env.SWC_REGISTRATION_DEMO === "true";
 }
 
+/**
+ * The key that opens real registration for ONE browser, without opening it to the public.
+ *
+ * The problem this solves: the only way to test the whole path — write to D1, guardian
+ * email, magic link, the draw — is to submit a real registration through the deployed
+ * site. Switching `SWC_REGISTRATION_OPEN` on to do that opens the form to everyone who
+ * happens to visit, which for a form that asks a child for medical details is not a
+ * five-minute risk worth taking. With a key, the door is open only to whoever has it.
+ *
+ * Set as a Cloudflare secret, never a var in wrangler.jsonc — that file is committed and
+ * this repository is public:
+ *
+ *   npx wrangler secret put SWC_TEST_KEY
+ *
+ * Minimum 24 characters, enforced here rather than trusted. A short key is guessable, and
+ * a typo like `SWC_TEST_KEY=true` would otherwise be a working password. Unset means the
+ * feature does not exist — there is no default and no fallback.
+ */
+export function registrationTestKey(): string | null {
+  const key = process.env.SWC_TEST_KEY;
+  if (typeof key !== "string" || key.length < 24) return null;
+  return key;
+}
+
 /** Is the Looking For Game board live? */
 export function boardOpen(): boolean {
   return flag("SWC_BOARD_OPEN");

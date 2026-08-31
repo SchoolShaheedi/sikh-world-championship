@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db";
 import { isReferred } from "@/data/referral-orgs";
 import { DrawPanel } from "@/components/DrawPanel";
 import { PublicNamePanel } from "@/components/PublicNamePanel";
+import { EntryAdminPanel, type EntryRow } from "@/components/EntryAdminPanel";
 import { bracketNames } from "@/lib/players";
 import { dormancySnapshot, DORMANT_PROFILE_RETENTION_MONTHS } from "@/lib/retention";
 
@@ -42,6 +43,22 @@ export default async function AdminPage() {
       return {
         event,
         names: await bracketNames(event.slug),
+        /**
+         * Every entry, whatever its status, so a test entry can be deleted before the
+         * draw as well as after it. `playerId` may be null: the retention job unlinks a
+         * dormant profile and leaves the row, and an erasure request has to be able to
+         * reach one of those too.
+         */
+        entries: rows.map(
+          (r): EntryRow => ({
+            reference: r.reference,
+            fullName: String(r.answers.fullName ?? "—"),
+            email: String(r.answers.email ?? "—"),
+            status: r.status,
+            createdAt: r.createdAt,
+            playerId: r.playerId ?? null,
+          }),
+        ),
         counts: {
           applied: applied.length,
           selected: rows.filter((r) => r.status === "selected").length,
@@ -74,7 +91,7 @@ export default async function AdminPage() {
         each event.
       </p>
 
-      {events.map(({ event, counts, draws, names }) => (
+      {events.map(({ event, counts, draws, names, entries }) => (
         <section
           key={event.slug}
           className="mt-10 rounded-3xl border border-line bg-surface/60 p-6"
@@ -118,6 +135,8 @@ export default async function AdminPage() {
           />
 
           <PublicNamePanel names={names} />
+
+          <EntryAdminPanel entries={entries} />
 
           {draws.length > 0 && (
             <div className="mt-8">

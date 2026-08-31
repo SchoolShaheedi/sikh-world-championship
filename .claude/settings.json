@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.envrc.local)",
+      "Read(./.dev.vars)",
+      "Read(./03_App/web/.env.local)",
+      "Read(//Users/tsingh/.claude/projects/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Edit|Write|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/deny-secret-reads.py"
+          }
+        ]
+      }
+    ]
+  }
+}

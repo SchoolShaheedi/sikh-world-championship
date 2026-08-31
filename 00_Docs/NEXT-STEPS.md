@@ -6,6 +6,19 @@ almost none of which is still true. A backlog nobody trusts is worse than no bac
 
 Ordered by what it costs to leave undone.
 
+## Rehearsing the real thing (round 45 — available now)
+
+`/testing?key=…` opens real registration for one browser while the public form stays
+closed, so the whole path can be tested before any of the blockers below are cleared. The
+link is in the Keychain as `swc-test-key`. See `00_Docs/TESTING-REGISTRATION.md`.
+
+- [ ] **Do the rehearsal.** One entry end to end: form → guardian email → magic link →
+      `/admin` → draw → offer email → delete the entry. Roughly half an hour, and it will
+      find things. Nothing below is a blocker on doing it.
+- [ ] **Rotate the Cloudflare and Resend keys.** Both have been exposed in transcripts on
+      disk twice. The mechanism that caused it is fixed (`00_Docs/SECRETS.md`); the keys
+      themselves are still live.
+
 ## Blockers before registration can be switched on
 
 `SWC_REGISTRATION_OPEN` is off in production. Each of these is a reason why.

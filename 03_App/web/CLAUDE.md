@@ -70,9 +70,20 @@ medical notes. That single fact drives most of the rules below.
    rule in `src/lib/retention.ts` matches a figure in `04_Legal/RETENTION-POLICY.md` with
    the brackets taken off. A purge running to a guessed number is worse than no purge —
    which is why the registration rule is still unbuilt (DPIA risk 14).
-10. **User-supplied text is escaped before it reaches email HTML.** `esc()` in
+10. **One place knows every table keyed to a player.** `ACCOUNT` deletion goes through
+    `deleteAccount()` in `src/lib/account-delete.ts` — the retention job and the admin
+    delete button both use it, and they differ only in `deleteRegistrations`. Adding a
+    table that stores a player id means adding a line to that cascade. Every deletion,
+    manual ones included, is recorded in `retention_runs`: "did you delete it?" is the one
+    question a subject access request always asks.
+11. **User-supplied text is escaped before it reaches email HTML.** `esc()` in
     `src/lib/email-templates.ts`. A "name" containing an anchor tag would otherwise put an
     attacker's link inside a safeguarding email sent from our verified domain to a parent.
+12. **No secret is ever a literal in a file in this tree.** API keys live in the macOS
+    Keychain and are loaded by `.envrc.local`, which contains lookups and no values —
+    `scripts/secrets-to-keychain.sh` writes it. Two leaks came from that file being read
+    aloud into a transcript; git was never involved. `.claude/hooks/deny-secret-reads.py`
+    refuses the commands that would print one.
 
 ## The registration lifecycle
 
@@ -106,15 +117,35 @@ before touching one.
 ## Feature flags
 
 `src/lib/features.ts`. `SWC_REGISTRATION_OPEN` and `SWC_BOARD_OPEN` default **off in
-production, on in development**. Turning registration on is a **safeguarding decision**,
-not a technical one — read `04_Legal/DPIA.md` first. `SWC_REGISTRATION_DEMO` renders the
-real form and skips only the write, for showing people the flow.
+production, on in development**. Turning registration on **for the public** is a
+**safeguarding decision**, not a technical one — read `04_Legal/DPIA.md` first.
+`SWC_REGISTRATION_DEMO` renders the real form and skips only the write, for showing
+people the flow.
+
+**Three states, not two.** Ask `registrationLive()` from `src/lib/testing-access.ts`, never
+`registrationOpen()`, at any gate:
+
+| State | Who | What happens on submit |
+|---|---|---|
+| open | everyone | real write, real emails |
+| tester | a browser holding the `SWC_TEST_KEY` cookie | real write, real emails |
+| demo | everyone else, when `SWC_REGISTRATION_DEMO` | validates, writes nothing |
+
+The tester state exists because nothing after the form — the D1 write, the guardian email,
+the magic link, the draw, the check-in token — can be tested without a real submission,
+and opening the public form to get one is not a risk worth taking for a rehearsal. Set the
+key with `npx wrangler secret put SWC_TEST_KEY` (a secret, never a var in
+`wrangler.jsonc` — that file is committed and this repo is public), then open
+`/testing?key=…` once. `/testing?key=clear` closes it; the cookie expires after 8 hours.
+
+A page in the tester state says so, louder than the demo banner: in demo mode a mistake
+saves nothing, in tester mode it saves a real child's details to the live database.
 
 ## Commands
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 239 tests
+npm test                         # 257 tests
 npx tsc --noEmit
 npm run lint
 npm run build
@@ -122,6 +153,7 @@ npm run cf:preview               # run the built Worker in workerd — catches w
                                  # `next dev` cannot, e.g. anything touching node:fs
 npm run cf:deploy
 node scripts/grant-moderator.mjs you@example.com "Name" --remote
+npx wrangler secret put SWC_TEST_KEY   # then open /testing?key=… to test for real
 ```
 
 Tests run against an in-memory SQLite database with the real migrations applied

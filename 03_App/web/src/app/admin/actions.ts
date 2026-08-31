@@ -8,6 +8,11 @@ import { confirmSelection, notifyNotSelected } from "@/lib/selection";
 import { registrationsFor } from "@/lib/store";
 import { setHandle } from "@/lib/players";
 import { normaliseHandle, HANDLE_MIN, HANDLE_MAX } from "@/lib/handle";
+import {
+  deleteAccount,
+  deleteRegistrationByReference,
+  deletionBlockers,
+} from "@/lib/account-delete";
 
 /**
  * Every action re-checks moderator status.
@@ -117,4 +122,67 @@ export async function overrideHandle(formData: FormData) {
   await setHandle(playerId, handle);
   revalidatePath("/admin");
   return { ok: true as const, message: `Public name set to “${handle}”.` };
+}
+
+/**
+ * Delete one entry and the account behind it, permanently.
+ *
+ * WHAT THIS IS FOR
+ *  1. Clearing up after a rehearsal. Testing the real registration path means real rows;
+ *     leaving them in the live database is how a test entry ends up on a projector.
+ *  2. An erasure request. UK GDPR Art. 17 is not optional and it applies to a child who
+ *     asks, or a parent who asks on their behalf. Before this existed the only way to
+ *     honour one was a hand-written SQL statement against production.
+ *
+ * It deletes the REGISTRATION as well as the profile — unlike the nightly retention job,
+ * which unlinks the registration and leaves it, because that row has its own period
+ * measured from the event. Here the point is that nothing is left.
+ *
+ * Refusals live in `deletionBlockers()`: a moderator, or anyone named on a report or a
+ * support ticket. A safeguarding record about someone who has been deleted cannot be
+ * acted on, so the account has to outlive the request to remove it. That is a legitimate
+ * refusal under Art. 17(3), and it is stated to whoever pressed the button rather than
+ * failing quietly.
+ */
+export async function deleteAccountAndEntry(formData: FormData) {
+  const me = await gate();
+  const playerId = String(formData.get("playerId") ?? "");
+  const label = String(formData.get("label") ?? "unnamed");
+  if (!playerId) return { error: "No player." };
+
+  const blockers = await deletionBlockers(playerId);
+  if (blockers.length > 0) {
+    return { error: `Not deleted. ${blockers.join(" ")}` };
+  }
+
+  const r = await deleteAccount(playerId, {
+    deleteRegistrations: true,
+    // Who did it, not just that it happened. `retention_runs` is the only record that a
+    // deletion took place, and "somebody deleted an applicant" is not an answer.
+    reason: `Deleted from the admin panel by ${me.email}: ${label}`,
+  });
+
+  if (!r.playerDeleted) return { error: "That account no longer exists." };
+  revalidatePath("/admin");
+  return {
+    ok: true as const,
+    message:
+      `Deleted the profile and ${r.registrationsDeleted} ` +
+      `${r.registrationsDeleted === 1 ? "entry" : "entries"}.`,
+  };
+}
+
+/** Delete an entry that has no account behind it — a row the retention job has unlinked. */
+export async function deleteEntryOnly(formData: FormData) {
+  const me = await gate();
+  const reference = String(formData.get("reference") ?? "");
+  if (!reference) return { error: "No reference." };
+
+  const done = await deleteRegistrationByReference(
+    reference,
+    `Deleted from the admin panel by ${me.email}: entry ${reference}, no account attached`,
+  );
+  if (!done) return { error: "No entry with that reference." };
+  revalidatePath("/admin");
+  return { ok: true as const, message: `Deleted entry ${reference}.` };
 }

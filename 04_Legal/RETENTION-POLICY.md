@@ -84,3 +84,19 @@ Owner: `[NAME]`. Review annually, and after every event.
 ---
 
 *Draft version 0.1 — `[DATE]`.*
+
+## Deletion on request, and deletion after a test
+
+Two deletions happen outside the schedule above, both from `/admin` → Entries:
+
+- **An erasure request** (UK GDPR Art. 17). Removes the profile, the registration and
+  everything keyed to either.
+- **Clearing up after a rehearsal.** Testing the real registration path creates real rows;
+  they are deleted the same day.
+
+Both are refused, with the reason given, for a moderator or for anyone named on a report or
+a support ticket. A safeguarding record about someone who has been deleted cannot be acted
+on, and those records run six years — a legitimate refusal under Art. 17(3).
+
+Every deletion, manual or scheduled, is recorded in `retention_runs` with who did it and
+why. That table is the answer to "did you delete it?".
