@@ -75,7 +75,7 @@ comment at the top of `src/data/org.ts` for why there is no published email anyw
 
 ## 5. What we do on the platform
 
-Stated to match the code exactly, as of round 25:
+Stated to match the code exactly, as of round 44:
 
 - **There is no messaging, for anyone, at any age.** No private messaging exists. Finding a
   practice partner works from fixed menus only — there is no free-text field a player can
@@ -88,16 +88,30 @@ Stated to match the code exactly, as of round 25:
 - When an under-16 exchanges PlayStation IDs with another player, **both children's
   guardians are emailed** with who, which region, and what game.
 - PlayStation IDs are never public. They are released only to two players who have both
-  agreed.
-- Public profiles show a first name or display name, avatar, region and age band. Never a
-  surname, school, address or exact age.
+  agreed. **They are not on the bracket or the big screen either**: a PSN ID is a way of
+  contacting a child, not a label, and projecting one would undo the strongest protection
+  on this platform in a single step.
+- **The public bracket shows a tournament handle the player chose at registration** — not
+  their real name and not their PSN ID. The form refuses a handle that matches their own
+  PSN ID or contains their surname (`src/lib/handle.ts`), and a moderator reads the whole
+  list on `/admin` before the day, because those two automatic checks are the only ones a
+  machine can make. An insult, a phone number or somebody else's name needs a person.
+- Public profiles show a first name or the chosen handle, avatar, region and age band.
+  Never a surname, school, address or exact age.
 - Report and block are available on every post and profile. Blocks are silent to the
   blocked person, to avoid retaliation.
 - Reports are visible only to named moderators, never to the person reported.
 
-**Not yet true, and therefore not to be claimed publicly:** guardian notification emails
-do not send (`src/lib/notify.ts` only logs). **Under-16 board access must remain switched
-off until they do.**
+**Corrected in round 44.** This paragraph used to say guardian notification emails did not
+send. They do: since round 33 email goes through Resend and every attempt is recorded in
+`email_sends`, with failures surfaced at the top of `/moderation`, and since round 42 an
+under-18 registering triggers an email to their guardian at submission. **What is still
+outstanding is the DMARC record** — without it a guardian notice is far more likely to be
+filed as spam, and a notice in a junk folder is worse than one never promised.
+
+**Under-16 board access nevertheless stays switched off**, because that is a safeguarding
+decision to be taken deliberately with the DPIA in front of you, not a consequence of the
+emails now working.
 
 ## 6. Recognising and responding to a concern
 

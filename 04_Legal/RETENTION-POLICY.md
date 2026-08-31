@@ -6,9 +6,9 @@
 
 ## Why this document has to exist before launch
 
-Right now the app never deletes anything. Every registration, report, guardian approval
-and support ticket stays in a JSON file indefinitely. That is a live UKGDPR problem the
-moment the first real child registers: storage limitation is a principle, not a
+Written when the app never deleted anything and everything lived in JSON files on disk.
+Three of the durations below are now enforced in code — see "What the code does" at the
+bottom — and the rest are still documents. Storage limitation is a principle, not a
 nice-to-have, and "we kept a ten-year-old's medical notes for six years because nobody
 wrote a policy" is not a defensible answer.
 
@@ -17,8 +17,9 @@ parent how long you keep their child's data until you have decided.
 
 ## The table
 
-| Data | Where it lives now | Proposed retention | Reasoning |
+| Data | Where it lives now | Retention | Reasoning |
 |---|---|---|---|
+| **A profile that never attended an event** | `players` | **DECIDED: delete after 24 months of no activity** — signed off 2026-08-31, enforced in `src/lib/retention.ts` | Since round 42 a profile is created for everyone who registers interest, not only for the 64 drawn. That was right for the person — a profile carries benefits they are entitled to either way — but it means holding an account for a child with **no event date to measure from**, which is the one case every other row here depends on. Activity is the latest of account creation, last sign-in and last registration of interest. Exempt: moderators, anyone who attended, and anyone named on a report or support ticket (a safeguarding record whose subject has been deleted cannot be acted on). Surfaced on `/admin` so a job that stops running is visible. |
 | **Medical conditions and notes** | `registrations.json` → `answers.medical*` | **`[30]` days after the event, then deleted from the record** | Its only purpose is that one day. There is no reason to hold a child's asthma details a year later. This is the shortest and most important one — and it means deleting *fields* from a record, not the whole record, which the store cannot currently do. |
 | **Dietary and accessibility needs** | same | `[30]` days after the event | Same reasoning. Useful to re-ask each event rather than assume it is unchanged. |
 | Registration record (name, DOB, contact, event answers) | `registrations.json` | `[12]` months after the event | Long enough to answer "was I there?", handle a dispute, and plan the next event. Not indefinite. |
@@ -51,17 +52,30 @@ and unacceptable at 64.
   doing so would defeat its purpose. Say this plainly in the privacy notice rather than
   discovering it during a request.
 
-## What the code needs
+## What the code does, and what it still does not
 
-None of this is enforceable today. In rough priority:
+**Enforced.** `src/lib/retention.ts`, run nightly at 03:15 by a separate cron Worker
+(`swc-retention`), with every run recorded in `retention_runs` — a table that deliberately
+holds no personal data, so the proof outlives the data it is about.
 
-1. **Field-level deletion** for medical notes. The store deletes whole records or nothing,
-   so a 30-day medical purge is currently impossible. This is the gap that matters most.
-2. **A scheduled job** that applies the table above. A retention policy nobody runs is a
-   document, not a control.
-3. **Expiry means deletion** for LFG posts and settled game requests.
-4. **`deletedAt` audit rows**, so a deletion is provable after the fact.
-5. **Backup lifecycle** set to match, once there are backups.
+| Rule | Where |
+|---|---|
+| Medical, dietary and accessibility deleted 30 days after the event | `purgeMedical()` — field-level, which is only possible because those live in their own columns rather than in a JSON blob |
+| Check-in tokens cleared the day after the event | `clearCheckInTokens()` |
+| Dormant profiles deleted after 24 months | `purgeDormantProfiles()`, plus the cascade across sessions, sign-in tokens, guardian approvals, board posts, game requests and blocks |
+
+**Not enforced. Stated plainly because the gaps matter more than the list above.**
+
+1. **The 12-month registration rule.** This is now the biggest one. A registration holds
+   the applicant's name, date of birth, email and mobile, and nothing deletes it — so
+   deleting a dormant *profile* does not remove that person's details, only their account.
+   The duration is still `[12]` in brackets, which is why it has not been built: a purge
+   running to an unconfirmed number is worse than no purge. **Decide the number, then
+   build it.**
+2. **Expiry means deletion** for LFG posts and settled game requests. The code sets
+   `expires_at` and keeps the row.
+3. **Deletion on request** is still a manual job. See below.
+4. **Backup lifecycle**, once there are backups.
 
 ## Review
 

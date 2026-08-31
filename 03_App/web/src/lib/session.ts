@@ -27,6 +27,11 @@ export interface SessionPlayer {
   region: string;
   avatarId: string;
   gamertag: string;
+  /**
+   * The name shown publicly — bracket, big screen, player card. Null on an account made
+   * before round 44; read `publicName()` rather than this when rendering.
+   */
+  handle: string | null;
   /** Attended an SWC event and was checked in by a volunteer. */
   eventVerified: boolean;
   /**
@@ -58,6 +63,7 @@ export async function currentPlayer(): Promise<SessionPlayer | null> {
     region: player.region ?? "",
     avatarId: player.avatarId ?? "kesri-1",
     gamertag: player.gamertag ?? "",
+    handle: player.handle,
     eventVerified: player.eventVerified,
     // Read live rather than cached, so revoking permission takes effect immediately —
     // that is what makes "you can withdraw at any time" true.

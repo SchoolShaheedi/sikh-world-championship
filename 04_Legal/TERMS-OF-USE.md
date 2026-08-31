@@ -22,6 +22,15 @@ parent or guardian must be the one giving permission.
 You are responsible for what is submitted from your account. Tell us if you think someone
 else has access to it.
 
+**The name on the bracket.** You choose a short name for the bracket, the big screen and
+your player card when you register; leave it blank and we use your first name and last
+initial. It must not be your surname and it must not be your PlayStation ID — a PlayStation
+ID is a way for a stranger to contact you, and we do not publish one anywhere. We may
+change a name that is offensive, misleading or somebody else's.
+
+**If you never come to an event**, we delete your profile after 24 months with no activity.
+You can ask us to delete it sooner at any time.
+
 ## 4. Age
 
 Event 1 is open to ages 12 to 21. Under-18s need a parent or guardian's permission.

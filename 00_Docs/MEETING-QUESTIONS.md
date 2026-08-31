@@ -71,26 +71,13 @@ Applications close **26 September**. That is the date everything else runs backw
 
 ## 4. Smaller, but decide before the day
 
-- **What name goes on the public bracket.** The big screen in the hall, and the same page
-  for anyone at home, will show the players in each match. For a 12-year-old that is
-  publishing a child's name on a public website. Nothing is wired to real players until
-  this is decided.
-
-  **PSN ID was suggested and I would advise against it.** A PSN ID is *contactable*:
-  anyone in the hall, or anyone reading the page from home, can search it on PlayStation
-  and send a friend request or a message straight to a child. That is the one thing the
-  whole platform is built to prevent — it is why gamertags are released only to two
-  players who have both agreed, and never shown publicly. Publishing them on a projector
-  would undo that in one step. They also often contain a real name or a birth year
-  (`harman_singh_2013`).
-
-  **Recommended instead: a short tournament handle, chosen at registration**, separate from
-  both the real name and the PSN ID. It is a display label with no contact route attached,
-  it is not searchable on PlayStation, and the player picks something they are happy to see
-  on a screen. Default it to first name plus last initial for anyone who leaves it blank.
-  Only the 64 drawn players ever appear, so a moderator can eyeball the handles once before
-  the day. This adds one optional field to the form, so it needs your sign-off before it is
-  built.
+- **How long is a registration kept after the event?** The policy says `[12]` months and
+  the brackets have never come off, so **nothing deletes it**. A registration holds the
+  applicant's name, date of birth, email and mobile — most of them children's. Deciding the
+  24-month profile rule made this the biggest remaining gap: deleting a dormant *profile*
+  removes the account, not the details behind it. Say a number and it gets built; the code
+  is an evening's work once the figure is agreed. **My suggestion: 12 months after the
+  event, and 6 years for anything attached to a safeguarding concern.**
 
 - **Sponsor offers for profile holders.** A profile is now advertised as carrying sponsor
   discounts — money off merchandise, pre-orders, offers from Sikh businesses. It is shown
@@ -123,3 +110,14 @@ Applications close **26 September**. That is the date everything else runs backw
 - No email address published anywhere; everything goes through the support form.
 - The safeguarding lead and deputy are the charity's, named in the charity's own policy —
   not duplicated into this project's paperwork or the site.
+- **The bracket shows a tournament handle the player chose at registration**, defaulting to
+  first name plus last initial. Not the real name, and expressly **not the PSN ID** — a PSN
+  ID is a contact route, so projecting one would undo the platform's strongest protection.
+  Signed off and built in round 44. The form refuses a handle that is the entrant's own PSN
+  ID or contains their surname; everything a machine cannot judge is caught by a moderator
+  reading the 64 names on `/admin` before the day. **That read-through is a job somebody has
+  to actually do.**
+- **A profile that never attended an event is deleted after 24 months of no activity.**
+  Signed off and built in round 44, running nightly, with the numbers in a quiet corner of
+  `/admin` so a job that stops running is noticed. Moderators, anyone who attended and
+  anyone named on a report or a support ticket are exempt.

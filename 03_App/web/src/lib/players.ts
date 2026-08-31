@@ -18,10 +18,32 @@ export interface Player {
   region: string | null;
   avatarId: string | null;
   gamertag: string | null;
+  /**
+   * The name shown publicly — bracket, projector, player card. Never the surname, never
+   * the PSN ID. See lib/handle.ts for why it is a separate field.
+   *
+   * Nullable only because accounts created before round 44 predate it. `publicName()`
+   * below is what callers should read.
+   */
+  handle: string | null;
   eventVerified: boolean;
   isModerator: boolean;
   guardianEmail: string | null;
   createdAt: string;
+  /**
+   * Last time this account was used, or null if never since it was made.
+   *
+   * LOAD-BEARING FOR RETENTION, not analytics. The dormant-profile rule deletes an account
+   * after 24 months of no activity, and without this the only clock available would be
+   * `created_at` — which would delete the account of somebody who signs in every month.
+   *
+   * Written from the two paths that are unambiguously activity and are already writes:
+   * redeeming a magic link (`redeemSignInToken`) and registering interest (`upsertPlayer`
+   * below). Deliberately NOT written by `currentPlayer()`: that runs while rendering, on
+   * nearly every request, and turning a page view into a database write is the wrong trade
+   * for a field that only has to answer "used in the last two years?".
+   */
+  lastSeenAt: string | null;
 }
 
 type Row = Record<string, unknown>;
@@ -36,10 +58,12 @@ function toPlayer(r: Row): Player {
     region: (r.region as string | null) ?? null,
     avatarId: (r.avatar_id as string | null) ?? null,
     gamertag: (r.gamertag as string | null) ?? null,
+    handle: (r.handle as string | null) ?? null,
     eventVerified: fromBool(r.event_verified),
     isModerator: fromBool(r.is_moderator),
     guardianEmail: (r.guardian_email as string | null) ?? null,
     createdAt: r.created_at as string,
+    lastSeenAt: (r.last_seen_at as string | null) ?? null,
   };
 }
 
@@ -78,6 +102,8 @@ export interface NewPlayer {
   region?: string | null;
   avatarId?: string | null;
   gamertag?: string | null;
+  /** Public tournament handle. Defaulted from the full name when absent — see handle.ts. */
+  handle?: string | null;
   /** Under-16s only, and only ever from the registration record. */
   guardianEmail?: string | null;
 }
@@ -105,7 +131,10 @@ export async function upsertPlayer(input: NewPlayer): Promise<Player> {
         `UPDATE players
             SET display_name = ?, region = COALESCE(?, region),
                 avatar_id = COALESCE(?, avatar_id), gamertag = COALESCE(?, gamertag),
-                guardian_email = COALESCE(?, guardian_email)
+                handle = COALESCE(?, handle),
+                guardian_email = COALESCE(?, guardian_email),
+                -- Registering interest is activity. See touchPlayer().
+                last_seen_at = ?
           WHERE id = ?`,
       )
       .bind(
@@ -113,7 +142,9 @@ export async function upsertPlayer(input: NewPlayer): Promise<Player> {
         input.region ?? null,
         input.avatarId ?? null,
         input.gamertag ?? null,
+        input.handle ?? null,
         input.guardianEmail ?? null,
+        new Date().toISOString(),
         existing.id,
       )
       .run();
@@ -129,27 +160,40 @@ export async function upsertPlayer(input: NewPlayer): Promise<Player> {
     region: input.region ?? null,
     avatarId: input.avatarId ?? null,
     gamertag: input.gamertag ?? null,
+    handle: input.handle ?? null,
     eventVerified: false,
     isModerator: false,
     guardianEmail: input.guardianEmail ?? null,
     createdAt: new Date().toISOString(),
+    lastSeenAt: null,
   };
 
   await db
     .prepare(
       `INSERT INTO players
          (id, email, display_name, age_band, date_of_birth, region, avatar_id, gamertag,
-          event_verified, is_moderator, guardian_email, created_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+          handle, event_verified, is_moderator, guardian_email, created_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     )
     .bind(
       player.id, player.email, player.displayName, player.ageBand, player.dateOfBirth,
-      player.region, player.avatarId, player.gamertag, bool(false), bool(false),
-      player.guardianEmail, player.createdAt,
+      player.region, player.avatarId, player.gamertag, player.handle,
+      bool(false), bool(false), player.guardianEmail, player.createdAt,
     )
     .run();
 
   return player;
+}
+
+/**
+ * The name to show anywhere the public can see it.
+ *
+ * Prefer the handle; fall back to the display name, which is already first-name-only.
+ * Every public surface must go through this rather than reading `handle` directly, so an
+ * account created before round 44 (handle NULL) still renders something.
+ */
+export function publicName(player: Pick<Player, "handle" | "displayName">): string {
+  return player.handle?.trim() || player.displayName;
 }
 
 /** Set when a volunteer checks someone in on the day. Shown as a badge on the board. */
@@ -187,4 +231,65 @@ export async function setModerator(email: string, isModerator: boolean): Promise
     .bind(bool(isModerator), player.id)
     .run();
   return true;
+}
+
+
+export interface BracketName {
+  playerId: string;
+  /** What the projector will say. */
+  handle: string;
+  /** First name only, as held on the profile — for a moderator to check it against. */
+  displayName: string;
+  status: string;
+}
+
+/**
+ * The names that will appear publicly for one event, for a moderator to read before the
+ * day.
+ *
+ * This list is the whole reason the handle is safe to project. The field is free text a
+ * twelve-year-old typed, and the automatic checks in lib/handle.ts only catch the two
+ * cases they can see — a PSN ID match and a surname. Everything else (an insult, a phone
+ * number, somebody else's name) needs a person to look, once, at 64 rows.
+ *
+ * Selected and checked-in only: an applicant awaiting the draw is not going on a screen,
+ * and reading names that may never be used is how a review of 64 becomes a review of 400
+ * that nobody does.
+ */
+export async function bracketNames(eventSlug: string): Promise<BracketName[]> {
+  const db = await getDb();
+  const { results } = await db
+    .prepare(
+      `SELECT p.id, p.handle, p.display_name, r.status
+         FROM registrations r
+         JOIN players p ON p.id = r.player_id
+        WHERE r.event_slug = ? AND r.status IN ('selected','checked-in')
+        ORDER BY p.handle COLLATE NOCASE`,
+    )
+    .bind(eventSlug)
+    .all<{ id: string; handle: string | null; display_name: string; status: string }>();
+
+  return results.map((r) => ({
+    playerId: r.id,
+    handle: publicName({ handle: r.handle, displayName: r.display_name }),
+    displayName: r.display_name,
+    status: r.status,
+  }));
+}
+
+/**
+ * Change a player's public name.
+ *
+ * A moderator-only correction, for when the review above finds something that should not
+ * go on a screen. Deliberately does NOT apply the surname and PSN-ID refusals: those exist
+ * to steer a child filling in a form, and a moderator fixing a problem must not be blocked
+ * by a rule aimed at somebody else. Length and charset still hold, because the string is
+ * printed on a card.
+ */
+export async function setHandle(playerId: string, handle: string): Promise<void> {
+  const db = await getDb();
+  await db
+    .prepare("UPDATE players SET handle = ? WHERE id = ?")
+    .bind(handle, playerId)
+    .run();
 }

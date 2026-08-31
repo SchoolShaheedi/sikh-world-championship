@@ -29,6 +29,7 @@ import {
   MEDICAL_CONDITIONS,
   type GuardianTier,
 } from "./guardian-rules";
+import { checkHandle, HANDLE_MAX } from "./handle";
 
 /** Age on the day of the event, or today if the date isn't confirmed yet. */
 export function ageOnEventDay(dob: string, eventDate: string | null): number | null {
@@ -272,6 +273,14 @@ function schemaFor(event: ChampionshipEvent, division: Division, age: number) {
     avatarId: optional(z.enum(AVATARS.map((a) => a.id) as [string, ...string[]])),
 
     /**
+     * The name that goes on the bracket and the projector. Optional here and defaulted
+     * from the full name when blank — see lib/handle.ts. Its two content rules (not the
+     * PSN ID, not the surname) need the rest of the form, so they run in the superRefine
+     * at the bottom of `schemaFor` rather than here.
+     */
+    handle: optional(text(HANDLE_MAX)),
+
+    /**
      * Medical tick-list plus free text for the detail. The list makes "None" an explicit
      * answer; the free-text box carries what a volunteer actually needs to act on.
      * These are the most sensitive fields in the app and are why the store needs
@@ -311,7 +320,32 @@ function schemaFor(event: ChampionshipEvent, division: Division, age: number) {
   }
 
   // .extend rather than the deprecated .merge — same result in zod 4.
-  return core.extend(guardian.shape).extend(custom).strict();
+  return core
+    .extend(guardian.shape)
+    .extend(custom)
+    .strict()
+    /**
+     * The handle is checked LAST, against the whole submission.
+     *
+     * It has to be: the two rules that matter are "not your PSN ID" and "not your
+     * surname", and neither is knowable from the handle alone. The browser form applies
+     * the same function live, but this is the check that holds — the form's version is a
+     * courtesy to the person typing.
+     */
+    .superRefine((data, ctx) => {
+      const raw = (data as Record<string, unknown>).handle;
+      if (typeof raw !== "string" || raw.trim() === "") return;
+      const problem = checkHandle(raw, {
+        fullName: String((data as Record<string, unknown>).fullName ?? ""),
+        psnId:
+          typeof (data as Record<string, unknown>).psnId === "string"
+            ? ((data as Record<string, unknown>).psnId as string)
+            : undefined,
+      });
+      if (problem) {
+        ctx.addIssue({ code: "custom", path: ["handle"], message: problem.message });
+      }
+    });
 }
 
 /**

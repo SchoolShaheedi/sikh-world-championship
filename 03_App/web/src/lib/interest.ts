@@ -21,6 +21,7 @@
  * attended. 04_Legal/RETENTION-POLICY.md is what stops that becoming indefinite.
  */
 import { upsertPlayer, bandFor } from "./players";
+import { resolveHandle } from "./handle";
 import { ageOnEventDay } from "./registration-schema";
 import { guardianTier, TIER_EXPLANATION } from "./guardian-rules";
 import { apply, type ApplyResult } from "./store";
@@ -55,6 +56,15 @@ export async function registerInterest(
     region: typeof answers.region === "string" ? answers.region : null,
     avatarId: typeof answers.avatarId === "string" ? answers.avatarId : null,
     gamertag: typeof answers.psnId === "string" ? answers.psnId : null,
+    /**
+     * The public name. Resolved here rather than in the form so a submission made outside
+     * the browser still gets one — the bracket must never fall back to a full name.
+     */
+    handle: resolveHandle(
+      answers.handle,
+      fullName,
+      typeof answers.psnId === "string" ? answers.psnId : undefined,
+    ),
     // From this record and nowhere else — never a field a child can fill in about
     // themselves later.
     guardianEmail:

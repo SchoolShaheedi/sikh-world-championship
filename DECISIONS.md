@@ -1649,3 +1649,136 @@ you can read, not a script whose behaviour you have to trust.
 round 20 — JSON stores, a session stub returning a fixed moderator, `notify.ts` that only
 logs, ages 8+, a domain that was never bought. All of it long since untrue. A backlog
 nobody trusts is worse than no backlog.
+
+# Round 43 (2026-08-31) — The volunteer dead end, and four legal docs that had drifted
+
+## "Volunteer with us" led nowhere
+
+It was the only call to action on `/volunteer` and it pointed at a support form with no
+volunteering option, so anyone who came to help had to file it under "Something else".
+Added the category and deep-linked it: `/support?about=volunteer` arrives with it selected.
+Validated against the real category list on both sides, so a hand-typed query string falls
+back to the safeguarding category rather than leaving nothing chosen.
+
+Still a stopgap. A real volunteer form needs DBS status, availability and a reference, none
+of which belong in a general support message.
+
+## Lead and deputy names are the charity's, and are not duplicated here
+
+The owner's correction, and the better argument: a second copy of a name in a second policy
+is a copy that goes out of date, and the one people reach for in an incident is whichever
+they happen to have. `SAFEGUARDING-POLICY.md` now points at the charity's policy and lists
+what this project owes instead — confirmation that those people cover SWC events and the
+platform.
+
+## "DPIA re-signed" was wrong, and checking it found worse
+
+The DPIA has **never been signed**. It is a draft with `[NAME]` in the sign-off table, so
+there is no ceremony to repeat. A DPIA *is* mandatory here — UK GDPR Art. 35, children's
+data including health data at scale — but for the whole project, not for the round 42
+change.
+
+Checking it found that four legal documents contradicted the code. These are the documents
+handed to a parent or a regulator:
+
+| Document | Said | True since |
+|---|---|---|
+| SAFEGUARDING-POLICY | ages 8–11 on site, 12–15 drop-off | round 39 |
+| TERMS-OF-USE | places "allocated in order", waitlist | round 38 — a random draw |
+| DPIA | Sikh FIFA 26, ages 8+, board in scope | FC 27, 12–21, board off |
+| PRIVACY-NOTICE | the old supervision tiers | round 39 |
+
+The DPIA risk table was also overstating risk in the other direction — it still described
+unencrypted JSON files, no authentication, nothing ever deleted, and a `notify.ts` that
+only logged. All four had been built.
+
+# Round 44 (2026-08-31) — What goes on the projector, and when a profile is deleted
+
+Two owner decisions, both acted on in full.
+
+## The bracket shows a tournament handle, not a name and not a PSN ID
+
+`src/lib/handle.ts`. A third string, chosen at registration, defaulting to first name plus
+last initial.
+
+The suggestion had been to use the PSN ID. The argument against, which the owner accepted:
+**a PSN ID is an address, not a label.** Anyone in the hall, or anyone reading the bracket
+from home, can search it on PlayStation and send a friend request to a twelve-year-old. It
+is also the single field this platform protects hardest — released only to two players who
+have both agreed to a game — so projecting it undoes the strongest protection here in one
+step. And they routinely contain a real name or a birth year (`harman_singh_2013`).
+
+The real full name was the other candidate and fails the policy promise that no public
+surface shows a surname.
+
+**Two refusals are enforced, because a rule nobody enforces drifts:**
+
+- a handle equal to the entrant's own PSN ID
+- a handle containing their surname, matched on word boundaries so "Singh" is caught in
+  "Singh_FC" and "Singer" is not caught for someone named Sing
+
+Both run in the browser and again in `validateRegistration`, from the same function, so the
+two cannot disagree. `resolveHandle()` is the last line: if a submission made outside the
+form still carries a bad handle, it falls back to the default rather than letting a PSN ID
+reach a screen.
+
+**What the checks cannot do, and the control that covers it.** An insult, a phone number,
+somebody else's name, an Instagram handle — none of those are machine-detectable. So
+`/admin` lists every public name for an event's selected players with an inline correction,
+and the safeguarding policy now says a moderator reads that list before the day. Sixty-four
+rows, once. A control with no screen is a control nobody performs.
+
+Deliberately **not** unique. Two players called Amrit S. is a scoreboard question, not a
+safeguarding one, and enforcing uniqueness pushes people towards distinguishing themselves
+with a birth year.
+
+## A profile that never attended an event is deleted after 24 months of no activity
+
+Approved, with the condition that it be visible in the admin panel. `purgeDormantProfiles()`
+in `src/lib/retention.ts`, on the same nightly cron as the medical purge, recorded in
+`retention_runs` under the scope `(platform)` — the one retention rule with no event behind
+it, which is precisely why it needed deciding.
+
+**Activity is the latest of** account creation, last sign-in, and last registration of
+interest. All three, because any one alone gets it wrong: `created_at` alone deletes
+somebody who signs in monthly, and `last_seen_at` alone deletes somebody who registered
+last week without signing in again. `last_seen_at` was a column nothing ever wrote; it is
+now written on magic-link redemption and on registration, both already writes. Deliberately
+not written by `currentPlayer()` — that runs while rendering, on nearly every request, and a
+page view should not be a database write.
+
+**Four exemptions:** moderators (deleting one silently removes access to the safeguarding
+queue), anyone who attended, anyone named on a report as reporter *or* subject, and anyone
+named on a support ticket. The last two because safeguarding records are kept six years and
+a record whose subject has been deleted cannot be acted on — destroying it early is the
+classic safeguarding failure.
+
+The cascade across sessions, sign-in tokens, guardian approvals, board posts, game requests
+and blocks is written out explicitly rather than left to `ON DELETE CASCADE`: only two of
+those tables declare it, SQLite does not enforce foreign keys unless asked, and the
+consequence of getting it wrong is an orphaned row holding a child's display name that no
+future deletion request would ever find.
+
+**The registration is unlinked, not deleted.** It has its own period, measured from the
+event, and it is the record of who applied.
+
+## The quiet corner, and what it admits
+
+`/admin` gains a retention section at the bottom: profiles, in scope, due in the next 90
+days, deleted to date, last run, and the last eight runs. `dueWithin90Days` is the useful
+one — it is the only figure that is ever non-zero on a healthy system, so it is what lets
+somebody notice the rule is about to delete accounts before it does. A non-zero "due now"
+prints a warning, because it means the nightly job has stopped.
+
+It also states plainly that deleting a profile does not delete the registration behind it.
+
+## Which surfaced the bigger gap: DPIA risk 14
+
+Deciding the profile duration made it obvious that **nothing deletes a registration at
+all.** The policy says 12 months after the event; the brackets have never come off, so it
+was never built. That means the name, date of birth, email and mobile of every applicant —
+most of them children — are held with no end date. It is now the largest
+storage-limitation gap in the project and it is blocked on a number, not on code: a purge
+running to an unconfirmed duration is worse than no purge. Added to the DPIA as risk 14 and
+to the meeting questions.
+

@@ -5,6 +5,9 @@ import { registrationsFor } from "@/lib/store";
 import { getDb } from "@/lib/db";
 import { isReferred } from "@/data/referral-orgs";
 import { DrawPanel } from "@/components/DrawPanel";
+import { PublicNamePanel } from "@/components/PublicNamePanel";
+import { bracketNames } from "@/lib/players";
+import { dormancySnapshot, DORMANT_PROFILE_RETENTION_MONTHS } from "@/lib/retention";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -38,6 +41,7 @@ export default async function AdminPage() {
 
       return {
         event,
+        names: await bracketNames(event.slug),
         counts: {
           applied: applied.length,
           selected: rows.filter((r) => r.status === "selected").length,
@@ -51,6 +55,17 @@ export default async function AdminPage() {
     }),
   );
 
+  /**
+   * Retention numbers, read once for the whole page. Not per event — the dormant-profile
+   * rule is the one retention rule with no event behind it, which is exactly why it needed
+   * a decision of its own.
+   */
+  const dormancy = await dormancySnapshot();
+
+  const { results: runs } = await db
+    .prepare("SELECT * FROM retention_runs ORDER BY ran_at DESC LIMIT 8")
+    .all<{ ran_at: string; event_slug: string; action: string; rows_affected: number; note: string | null }>();
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
       <h1 className="font-display text-4xl">Admin</h1>
@@ -59,7 +74,7 @@ export default async function AdminPage() {
         each event.
       </p>
 
-      {events.map(({ event, counts, draws }) => (
+      {events.map(({ event, counts, draws, names }) => (
         <section
           key={event.slug}
           className="mt-10 rounded-3xl border border-line bg-surface/60 p-6"
@@ -102,6 +117,8 @@ export default async function AdminPage() {
             latestDrawId={draws[0]?.id ?? null}
           />
 
+          <PublicNamePanel names={names} />
+
           {draws.length > 0 && (
             <div className="mt-8">
               <h3 className="font-display text-lg text-kesri">Draw history</h3>
@@ -131,6 +148,73 @@ export default async function AdminPage() {
           )}
         </section>
       ))}
+
+      {/* Retention.
+          Deliberately the quiet corner at the bottom: nobody comes to this page for it,
+          and it should not compete with the draw. But it has to be SOMEWHERE a person
+          looks, because a deletion job that reports to nothing is indistinguishable from
+          one that has silently stopped running — and the thing it deletes is a child's
+          account. */}
+      <section className="mt-16 border-t border-line pt-8 text-sm">
+        <h2 className="font-display text-lg text-muted">Retention</h2>
+        <p className="mt-2 max-w-2xl text-muted">
+          A profile that never attended an event is deleted after{" "}
+          {DORMANT_PROFILE_RETENTION_MONTHS} months of no activity — no sign-in and no new
+          registration. Moderators, anyone who attended, and anyone named on a report or a
+          support ticket are exempt. Runs nightly at 03:15.
+        </p>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-4">
+          {[
+            ["Profiles", dormancy.profiles],
+            ["In scope of the rule", dormancy.inScope],
+            ["Due in the next 90 days", dormancy.dueWithin90Days],
+            ["Deleted to date", dormancy.deletedAllTime],
+          ].map(([label, n]) => (
+            <div key={label} className="rounded-xl border border-line bg-ink/20 p-3">
+              <p className="text-[10px] tracking-[0.16em] text-muted uppercase">{label}</p>
+              <p className="font-display mt-1 text-xl text-muted">{n}</p>
+            </div>
+          ))}
+        </div>
+
+        {dormancy.dueNow > 0 && (
+          /* Non-zero here means the nightly job has not run since these accounts passed
+             the line. Worth saying out loud rather than leaving in a column. */
+          <p className="mt-4 rounded-xl border border-kesri/40 bg-kesri/[0.06] p-3 text-body">
+            {dormancy.dueNow} profile{dormancy.dueNow === 1 ? "" : "s"} past the{" "}
+            {DORMANT_PROFILE_RETENTION_MONTHS}-month line and not yet deleted. The nightly
+            job should clear these — if this number persists, it has stopped running.
+          </p>
+        )}
+
+        <p className="mt-4 text-muted">
+          Last dormant-profile run:{" "}
+          {dormancy.lastRunAt
+            ? new Date(dormancy.lastRunAt).toLocaleString("en-GB")
+            : "never"}
+        </p>
+
+        {runs.length > 0 && (
+          <ul className="mt-4 space-y-1.5 text-xs text-muted">
+            {runs.map((r, i) => (
+              <li key={`${r.ran_at}-${i}`} className="flex flex-wrap gap-x-3">
+                <span>{new Date(r.ran_at).toLocaleString("en-GB")}</span>
+                <span className="text-body">{r.action}</span>
+                <span>{r.event_slug}</span>
+                <span>{r.rows_affected} rows</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Stated plainly because it would otherwise read as more than it is. */}
+        <p className="mt-4 max-w-2xl text-xs text-muted">
+          Deleting a profile does not delete the registration behind it — that holds the
+          applicant&apos;s name, date of birth and email, and has its own retention period
+          measured from the event. That rule is written down but not yet enforced in code.
+        </p>
+      </section>
     </div>
   );
 }

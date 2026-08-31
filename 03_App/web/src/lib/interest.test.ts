@@ -65,6 +65,29 @@ describe("registering interest", () => {
     expect(player!.eventVerified).toBe(false);
   });
 
+  it("gives the profile a public name, defaulted when the box was left blank", async () => {
+    await registerInterest(event, division, answers());
+
+    const player = await playerByEmail("tegh@example.com");
+    // First name plus last initial. NOT "tegh_mcr" — a PSN ID on a projector is a contact
+    // route, and NOT "Tegh Singh" — the surname is never public.
+    expect(player!.handle).toBe("Tegh S.");
+  });
+
+  it("never stores the PSN ID as the public name, even if it arrives as one", async () => {
+    // The validator rejects this before it reaches here, so this asserts the last line:
+    // resolveHandle falls back rather than letting the ID through to the bracket.
+    await registerInterest(event, division, answers({ handle: "tegh_mcr" }));
+
+    const player = await playerByEmail("tegh@example.com");
+    expect(player!.handle).toBe("Tegh S.");
+  });
+
+  it("keeps a handle the player chose", async () => {
+    await registerInterest(event, division, answers({ handle: "TeghTheGreat" }));
+    expect((await playerByEmail("tegh@example.com"))!.handle).toBe("TeghTheGreat");
+  });
+
   it("links the application to that profile", async () => {
     const result = await registerInterest(event, division, answers());
     const [reg] = await registrationsFor(event.slug);

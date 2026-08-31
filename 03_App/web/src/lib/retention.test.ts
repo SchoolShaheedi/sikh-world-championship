@@ -53,7 +53,12 @@ describe("undated events", () => {
 
     const report = await applyRetention();
 
-    expect(report.actions).toHaveLength(0);
+    /**
+     * Filtered to the event, not empty. Since round 44 every run also records the
+     * dormant-profile purge, which belongs to the platform rather than to any event —
+     * see PLATFORM_SCOPE. Nothing was deleted for `e1`, which is what this test is about.
+     */
+    expect(report.actions.filter((a) => a.eventSlug === "e1")).toHaveLength(0);
     expect(report.skipped[0].eventSlug).toBe("e1");
     expect(report.skipped[0].reason).toMatch(/no event date/i);
 

@@ -6,6 +6,7 @@ import { Avatar } from "@/components/Avatar";
 import { signOut } from "./actions";
 import { boardOpen } from "@/lib/features";
 import { PROFILE_BENEFITS } from "@/data/profile-benefits";
+import { publicName } from "@/lib/players";
 
 export const metadata: Metadata = { title: "Your profile" };
 export const dynamic = "force-dynamic";
@@ -36,6 +37,10 @@ export default async function ProfilePage() {
       <section className="mt-10 rounded-2xl border border-line bg-surface/60 p-6">
         <h2 className="font-display text-lg text-kesri">What other players can see</h2>
         <ul className="mt-4 space-y-2 text-sm text-muted">
+          <li>
+            — Your name on the bracket:{" "}
+            <span className="text-body">{publicName(me)}</span>
+          </li>
           <li>— Your first name: <span className="text-body">{me.displayName}</span></li>
           <li>— Your avatar: <span className="text-body">{getAvatar(me.avatarId).label}</span></li>
           <li>— Your region: <span className="text-body">{me.region || "not set"}</span></li>
@@ -43,7 +48,9 @@ export default async function ProfilePage() {
         </ul>
         <p className="mt-4 text-sm text-muted">
           Never your surname, your school, your address, your exact age or your email. Your
-          PlayStation ID is only shared with someone once you have both agreed to a game.
+          PlayStation ID is only shared with someone once you have both agreed to a game —
+          it is never on the bracket or the big screen, because anyone could then look you
+          up on PlayStation.
         </p>
       </section>
 

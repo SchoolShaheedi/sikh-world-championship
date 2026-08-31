@@ -16,11 +16,15 @@ Ordered by what it costs to leave undone.
       (round 43); `04_Legal/SAFEGUARDING-POLICY.md` says so and lists what is still owed.
 - [ ] **Confirm the DBS-checked list covers everyone on the floor** on the day, including
       anyone added late.
-- [ ] **Sign the DPIA** (`04_Legal/DPIA.md`). It has never been signed. Its risk table was
-      badly out of date in both directions and was rewritten in round 43 — three of the
-      four old blockers are built. One genuinely new question needs an answer first: how
-      long we keep a profile that never attended an event (proposed: 24 months of no
-      activity).
+- [ ] **Decide how long a registration is kept after the event, then build the purge.**
+      DPIA risk 14, added in round 44 and now the biggest storage-limitation gap here. The
+      policy says `[12]` months and the brackets never came off, so **nothing deletes a
+      registration** — an applicant's name, date of birth, email and mobile are held with no
+      end date. Blocked on the number, not the code: a purge running to an unconfirmed
+      duration is worse than none.
+- [ ] **Sign the DPIA** (`04_Legal/DPIA.md`). It has never been signed. Risk 13 (a profile
+      with no event behind it) was closed in round 44 at 24 months of no activity, enforced
+      and visible on `/admin`. Risk 14 above is what remains.
 - [ ] **Set the DMARC record** — `_dmarc` TXT, `v=DMARC1; p=none;
       rua=mailto:media@shaheedibunga.com; fo=1`. Without it the guardian notification is
       much more likely to be filed as spam, and a safeguarding email in a junk folder is
@@ -32,13 +36,22 @@ Ordered by what it costs to leave undone.
 
 See `00_Docs/MEETING-QUESTIONS.md` — venue address, adult capacity, insurance, the
 divisions split, the guardian age boundary at 16, which spelling of the name is canonical,
-legal structure, sponsors, and what name to show on a public bracket for a 12-year-old.
+legal structure, sponsors, and how long a registration is kept after the event.
+
+Settled in round 44: **the bracket shows a tournament handle the player chose**, not the
+real name and not the PSN ID, and **a profile that never attended is deleted after 24
+months of no activity**.
 
 ## Build — before the event on 3 October 2026
 
 - [ ] **Wire the bracket to real registrations.** It renders demo entrants outside
-      production and an honest placeholder inside it (round 42). Needs the name-display
-      decision above first.
+      production and an honest placeholder inside it (round 42). **Unblocked in round 44** —
+      the name to show is `publicName()`, the player's chosen handle. Nothing else stands in
+      the way.
+- [ ] **Read through the public names before the day.** `/admin` lists every name that will
+      appear, with an inline correction. The refusals at sign-up catch only a player's own
+      PSN ID and their surname; an insult or somebody else's name needs a person. 64 rows,
+      once, and it is a job on the rota rather than a piece of code.
 - [ ] **Check-in on the day** — the token is issued on selection and `checkIn()` exists;
       there is no scanner UI.
 - [ ] **Score entry**, so the bracket advances during the event.

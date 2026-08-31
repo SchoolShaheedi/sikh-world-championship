@@ -388,3 +388,56 @@ describe("the age boundary between tiers", () => {
     expect(validateRegistration(event, division, adult({ dob: "2008-01-01" })).ok).toBe(true);
   });
 });
+
+
+/**
+ * The public name, at the server boundary.
+ *
+ * lib/handle.test.ts covers the rules themselves. These assert that the rules are actually
+ * REACHED by `validateRegistration` — the checks depend on two other fields in the same
+ * submission (the PSN ID and the surname), so they live in a superRefine that runs after
+ * everything else, and a wiring mistake there would leave the form silently unprotected.
+ */
+describe("the public tournament handle", () => {
+  it("accepts a nickname", () => {
+    const r = validateRegistration(event, division, adult({ handle: "RealDeal" }));
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.answers.handle).toBe("RealDeal");
+  });
+
+  it("is optional — blank is fine, and defaulted later", () => {
+    const r = validateRegistration(event, division, adult({ handle: "" }));
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.answers.handle).toBeUndefined();
+  });
+
+  it("REJECTS the entrant's own PSN ID, because that is a contact route on a screen", () => {
+    const r = validateRegistration(
+      event,
+      division,
+      adult({ psnId: "realuser", handle: "realuser" }),
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.fieldErrors?.handle).toMatch(/PlayStation/);
+  });
+
+  it("REJECTS the surname", () => {
+    const r = validateRegistration(
+      event,
+      division,
+      adult({ fullName: "Amrit Sandhu", handle: "Sandhu_FC" }),
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.fieldErrors?.handle).toMatch(/surname/i);
+  });
+
+  it("applies to a child's submission too, not only an adult's", () => {
+    const r = validateRegistration(
+      event,
+      division,
+      onSite({ psnId: "kiddo2013", handle: "kiddo2013" }),
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.fieldErrors?.handle).toMatch(/PlayStation/);
+  });
+});

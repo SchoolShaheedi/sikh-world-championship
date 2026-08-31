@@ -13,6 +13,7 @@
 import crypto from "node:crypto";
 import { getDb } from "./db";
 import { upsertPlayer, bandFor } from "./players";
+import { resolveHandle } from "./handle";
 import { ageOnEventDay } from "./registration-schema";
 import { sendEmail } from "./email";
 import { applicationOutcome } from "./email-templates";
@@ -45,6 +46,11 @@ export async function confirmSelection(
     region: typeof a.region === "string" ? a.region : null,
     avatarId: typeof a.avatarId === "string" ? a.avatarId : null,
     gamertag: typeof a.psnId === "string" ? a.psnId : null,
+    handle: resolveHandle(
+      a.handle,
+      String(a.fullName ?? ""),
+      typeof a.psnId === "string" ? a.psnId : undefined,
+    ),
     // From this record and nowhere else — never a field a child can fill in.
     guardianEmail:
       age < 18 && typeof a.guardianEmail === "string" ? a.guardianEmail : null,

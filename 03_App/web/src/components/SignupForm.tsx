@@ -5,6 +5,7 @@ import type { ChampionshipEvent, FormField } from "@/lib/types";
 import { AVATARS } from "@/data/avatars";
 import { Avatar } from "./Avatar";
 import { REFERRAL_OPTIONS } from "@/data/referral-orgs";
+import { checkHandle, defaultHandle, HANDLE_MAX } from "@/lib/handle";
 import {
   guardianTier,
   TIER_EXPLANATION,
@@ -27,6 +28,7 @@ const FIELD_LABELS: Record<string, string> = {
   dietary: "Dietary needs",
   accessibility: "Accessibility needs",
   avatarId: "Avatar",
+  handle: "Name on the bracket",
   guardianName: "Parent / guardian name",
   guardianRelation: "Relationship to player",
   guardianEmail: "Parent / guardian email",
@@ -162,6 +164,22 @@ export function SignupForm({
       event.divisions.find((d) => age >= d.minAge && age <= d.maxAge) ?? null
     );
   }, [age, event.divisions]);
+
+  /**
+   * The public name, and what is wrong with it if anything.
+   *
+   * Checked live with the SAME function the server uses, so the two cannot disagree —
+   * the point of the field is that it is neither the surname nor the PSN ID, and finding
+   * that out after pressing submit is a bad way to learn it.
+   */
+  const handleFallback = defaultHandle((values.fullName as string) ?? "");
+  const handleProblem =
+    typeof values.handle === "string" && values.handle.trim() !== ""
+      ? checkHandle(values.handle, {
+          fullName: (values.fullName as string) ?? "",
+          psnId: typeof values.psnId === "string" ? values.psnId : undefined,
+        })
+      : null;
 
   const tooYoung =
     age !== null && age < Math.min(...event.divisions.map((d) => d.minAge));
@@ -359,6 +377,32 @@ export function SignupForm({
           Pick an avatar for your card. A photo is optional — you can add one later from
           your profile if you want to, and plenty of players never do.
         </p>
+
+        {/* The public name.
+            Placed here rather than with "About you" on purpose: this fieldset is
+            everything other people see, and the question "what goes on the big screen?"
+            only makes sense next to the avatar. */}
+        <label className="mt-6 block">
+          <Label hint="Shown on the bracket, the big screen and your player card. Not your surname, and please not your PSN ID — anyone could then look you up on PlayStation.">
+            Name on the bracket
+          </Label>
+          <input
+            className={inputCx}
+            maxLength={HANDLE_MAX}
+            placeholder={handleFallback ? `${handleFallback} (leave blank for this)` : "e.g. Amrit S."}
+            value={(values.handle as string) ?? ""}
+            onChange={(e) => set("handle", e.target.value)}
+            aria-invalid={handleProblem ? true : undefined}
+          />
+          {handleProblem ? (
+            <span className="mt-2 block text-sm text-kesri">{handleProblem.message}</span>
+          ) : (
+            <span className="mt-2 block text-xs text-muted">
+              Leave it blank and we&apos;ll use{" "}
+              <span className="text-body">{handleFallback || "your first name"}</span>.
+            </span>
+          )}
+        </label>
 
         <div className="mt-5 grid grid-cols-4 gap-3 sm:grid-cols-8">
           {AVATARS.map((a) => (
@@ -700,7 +744,7 @@ export function SignupForm({
       <div className="flex flex-wrap items-center gap-4">
         <button
           type="submit"
-          disabled={submitting || !division}
+          disabled={submitting || !division || handleProblem !== null}
           className="rounded-xl bg-kesri px-8 py-4 font-bold text-ink transition-colors hover:bg-kesrisoft disabled:cursor-not-allowed disabled:opacity-40"
         >
           {submitting ? "Sending…" : demo ? "Submit (preview — saves nothing)" : "Register interest"}

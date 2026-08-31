@@ -60,9 +60,19 @@ medical notes. That single fact drives most of the rules below.
 7. **Nothing invented is ever rendered in production.** `showDemoData()` in
    `src/lib/features.ts` has no environment-variable override, deliberately: a bracket of
    plausible invented names is not a broken page, it is a convincing lie on a projector.
-8. **User-supplied text is escaped before it reaches email HTML.** `esc()` in
-   `src/lib/email-templates.ts`. A "name" containing an anchor tag would otherwise put an
-   attacker's link inside a safeguarding email sent from our verified domain to a parent.
+8. **A PlayStation ID is never public, and never goes on a screen.** It is a *contact
+   route*, not a label: search one and you can message a child. The bracket, the projector
+   and the player card show the tournament handle from `src/lib/handle.ts` via
+   `publicName()` — never `gamertag`, and never the full name. The handle is refused if it
+   equals the entrant's own PSN ID or contains their surname, in the browser and again in
+   `validateRegistration`.
+9. **A retention duration is decided before the code that enforces it is written.** Every
+   rule in `src/lib/retention.ts` matches a figure in `04_Legal/RETENTION-POLICY.md` with
+   the brackets taken off. A purge running to a guessed number is worse than no purge —
+   which is why the registration rule is still unbuilt (DPIA risk 14).
+10. **User-supplied text is escaped before it reaches email HTML.** `esc()` in
+    `src/lib/email-templates.ts`. A "name" containing an anchor tag would otherwise put an
+    attacker's link inside a safeguarding email sent from our verified domain to a parent.
 
 ## The registration lifecycle
 
@@ -89,6 +99,9 @@ before touching one.
   JSON, so `purgeMedical()` can delete them while keeping the registration — that is what
   makes `04_Legal/RETENTION-POLICY.md` enforceable. Do not move them into `answers`.
 - Only event-specific answers (`psnId`, `skill`) belong in the `answers` column.
+- Widening a `CHECK` constraint means rebuilding the table — SQLite cannot alter one in
+  place. See `migrations/0006_handles_and_dormancy.sql`, which carries the existing rows
+  over because `retention_runs` is the evidence that deletions happened.
 
 ## Feature flags
 
@@ -101,7 +114,7 @@ real form and skips only the write, for showing people the flow.
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 195 tests
+npm test                         # 239 tests
 npx tsc --noEmit
 npm run lint
 npm run build

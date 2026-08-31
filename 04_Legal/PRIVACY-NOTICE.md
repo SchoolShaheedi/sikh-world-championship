@@ -46,12 +46,13 @@ messages for us to hold.
 | Email address | To send your confirmation, your check-in code, and event updates | Contract |
 | Mobile number | So a volunteer can reach you on the day | Contract |
 | Region (e.g. "Birmingham") | Shown on your player card. **Never a postcode or street address** | Contract |
+| A name for the bracket | The name shown on the bracket, the big screen and your player card. You choose it; leave it blank and we use your first name and last initial. **It is not your surname and it must not be your PlayStation ID** — anyone reading the bracket could then look you up on PlayStation | Contract |
 | Chosen avatar | Shown on your player card | Contract |
 | Medical conditions, and any detail you add | So our first aider knows before the day rather than discovering it during an incident | **Explicit consent** (special category data — see below) |
 | Dietary needs | Langar is served; allergies matter | Explicit consent |
 | Accessibility needs | So we can actually accommodate you | Explicit consent |
 | Emergency contact: name, relationship, phone | Someone to call if you are hurt or unwell. Required of every adult entrant; for under-18s the parent or guardian below serves this purpose | Legitimate interests (vital interests in an emergency) |
-| Game-specific answers (PlayStation ID, self-rating, favourite team, whether you bring a controller) | To seed the bracket and print your player card | Contract |
+| Game-specific answers (PlayStation ID, self-rating, favourite team, whether you bring a controller) | To seed the bracket and find you on the day. **Your PlayStation ID is never shown publicly** — not on the bracket, not on the big screen | Contract |
 | Your agreement to the rules and to us creating an SWC profile | To show you agreed | Contract |
 | Whether you consent to photography | So our photographers know | Consent |
 
@@ -117,6 +118,8 @@ Most of our players are children. Under the ICO's Age Appropriate Design Code we
 - collect the minimum we need, and no more
 - default to the most private setting — photography is opt-in, not opt-out
 - never show a child's surname, school, home address or exact age publicly
+- never show a child's PlayStation ID publicly, because it is a way of contacting them —
+  the bracket shows a handle they chose instead
 - keep under-16s and over-16s completely separate online, enforced in how data is stored
 - require a parent or guardian's permission before an under-16 can use the board at all,
   and let them withdraw it instantly
@@ -138,9 +141,9 @@ them online, or use their data to train anything.
 > If you're under 18, we also have your mum, dad or carer's details, because we need their
 > OK before you can enter.
 >
-> **Who can see it?** Only the small team running the event. Other players see your first
-> name, your avatar, your region and your age group — never your surname, your school, your
-> address or your exact age.
+> **Who can see it?** Only the small team running the event. Other players see the name you
+> picked for the bracket, your avatar, your region and your age group — never your surname,
+> your school, your address, your exact age or your PlayStation ID.
 >
 > **There's no messaging here.** Nobody can send you a message. You pick from lists instead, so
 > nobody can type anything at you.
@@ -173,6 +176,10 @@ See `RETENTION-POLICY.md` for the full table. In short: registrations for `[12]`
 after the event, safeguarding records for `[6]` years, and medical notes deleted within
 `[30]` days of the event because their only purpose is that day.
 
+**Your profile**, if you never came to an event: deleted after **24 months** with no
+activity — no sign-in and no new registration. You do not have to do anything; if you want
+it gone sooner, ask and we will delete it.
+
 ## Your rights
 
 You can ask us to: show you what we hold, correct it, delete it, stop using it, or send it
@@ -187,15 +194,18 @@ so we can fix it.
 
 ## Keeping it safe
 
-`[TO BE TRUE BEFORE LAUNCH — as of round 25 the app stores data in JSON files on disk,
-which is fine for development and NOT fine for real registrations. Before this notice is
-published the following must be true:]`
+Since round 30 data is held in Cloudflare D1 — a managed database, encrypted at rest,
+reachable only through our own application and never over the open internet. There are no
+credentials in the code.
 
-- data held in a managed database with encryption at rest and access control
-- access limited to named people who need it, each with their own login and 2FA
-- medical notes and guardian contacts restricted to the roles that need them
-- a written breach procedure, with the ICO's 72-hour reporting deadline understood
-- no real registration data on anyone's laptop, ever
+- [x] data held in a managed database with encryption at rest and access control
+- [x] access limited to named people who need it — sign-in is passwordless, and reading
+      reports or applicants' details requires a moderator grant made directly in the
+      database, with no button anywhere in the app
+- [x] medical notes held in their own columns, so they can be deleted on their own schedule
+- [ ] `[a written breach procedure, with the ICO's 72-hour reporting deadline understood —
+      still owed]`
+- [ ] `[no real registration data on anyone's laptop, ever — a rule to state and keep]`
 
 ---
 

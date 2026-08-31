@@ -6,6 +6,8 @@ import { getEvent } from "@/data/events";
 import { runDraw, closeDraw } from "@/lib/draw";
 import { confirmSelection, notifyNotSelected } from "@/lib/selection";
 import { registrationsFor } from "@/lib/store";
+import { setHandle } from "@/lib/players";
+import { normaliseHandle, HANDLE_MIN, HANDLE_MAX } from "@/lib/handle";
 
 /**
  * Every action re-checks moderator status.
@@ -88,4 +90,31 @@ export async function closeAndNotify(formData: FormData) {
 
   revalidatePath("/admin");
   return { ok: true as const, message: `${pending.length} applicants told they were not selected.` };
+}
+
+
+/**
+ * Correct a public name.
+ *
+ * The last line of the projector safety argument: the handle is free text a child typed,
+ * lib/handle.ts catches only the two problems a machine can see, and this is how a
+ * moderator fixes the rest. Gated like every other action here — the page check is not a
+ * security boundary.
+ */
+export async function overrideHandle(formData: FormData) {
+  await gate();
+  const playerId = String(formData.get("playerId") ?? "");
+  const handle = normaliseHandle(String(formData.get("handle") ?? ""));
+
+  if (!playerId) return { error: "No player." };
+  if (handle.length < HANDLE_MIN || handle.length > HANDLE_MAX) {
+    return { error: `A name has to be ${HANDLE_MIN}–${HANDLE_MAX} characters.` };
+  }
+  if (!/^[A-Za-z0-9 ._-]+$/.test(handle)) {
+    return { error: "Letters, numbers, spaces, full stops, hyphens and underscores only." };
+  }
+
+  await setHandle(playerId, handle);
+  revalidatePath("/admin");
+  return { ok: true as const, message: `Public name set to “${handle}”.` };
 }

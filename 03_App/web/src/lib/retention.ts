@@ -32,9 +32,27 @@ export const MEDICAL_RETENTION_DAYS = 30;
  */
 export const CHECK_IN_TOKEN_RETENTION_DAYS = 1;
 
+/**
+ * Months of no activity before a profile that never attended an event is deleted.
+ *
+ * Signed off in round 44 and written into RETENTION-POLICY.md. It is the one duration in
+ * this file that is NOT anchored to an event date, and that is exactly why it had to be
+ * decided: round 42 began creating a profile for everyone who registers interest, so the
+ * project now holds accounts for children with no event to measure from. Without a rule
+ * they would be held forever, and "we never decided" defaults to keeping a child's data
+ * indefinitely. DPIA risk 13.
+ */
+export const DORMANT_PROFILE_RETENTION_MONTHS = 24;
+
+/**
+ * `event_slug` is NOT NULL on `retention_runs`, and a dormant profile belongs to no event.
+ * This sentinel keeps the audit trail readable rather than making the column nullable.
+ */
+export const PLATFORM_SCOPE = "(platform)";
+
 export interface RetentionAction {
   eventSlug: string;
-  action: "purge-medical" | "clear-check-in-tokens";
+  action: "purge-medical" | "clear-check-in-tokens" | "purge-dormant-profiles";
   rowsAffected: number;
   note: string;
 }
@@ -47,6 +65,174 @@ export interface RetentionReport {
 
 function daysSince(dateIso: string, now: Date): number {
   return (now.getTime() - new Date(dateIso).getTime()) / 864e5;
+}
+
+/**
+ * `now` shifted back by whole calendar months.
+ *
+ * Calendar months rather than 730 days because the policy is written in months and a
+ * parent asking "you said two years" should get an answer that matches a calendar.
+ */
+function monthsBefore(now: Date, months: number): string {
+  const d = new Date(now.getTime());
+  d.setUTCMonth(d.getUTCMonth() - months);
+  return d.toISOString();
+}
+
+/**
+ * The SQL behind the dormant-profile rule, shared by the purge and the admin preview so
+ * the number a moderator sees is produced by the same query that does the deleting.
+ *
+ * WHAT COUNTS AS ACTIVITY: the latest of account creation, last sign-in, and the most
+ * recent registration of interest. All three, because any one alone gets it wrong —
+ * `created_at` alone would delete somebody who signs in monthly, and `last_seen_at` alone
+ * would delete somebody who registered for an event last week without signing in again.
+ *
+ * FOUR EXEMPTIONS, each for a reason worth stating:
+ *
+ *  1. `is_moderator` — a staff account is not a dormant child's profile, and deleting one
+ *     silently removes someone's access to the safeguarding queue.
+ *  2. `event_verified`, and any registration checked in — somebody who ATTENDED is out of
+ *     scope entirely. This rule exists for the profile with no event behind it.
+ *  3. Named in a report, as reporter or as subject — safeguarding records are kept for six
+ *     years (RETENTION-POLICY.md) and a record whose subject has been deleted is a record
+ *     that cannot be acted on. Deleting it early is the classic safeguarding failure.
+ *  4. Named on a support ticket — same reasoning; a safety ticket is a safeguarding record.
+ */
+const DORMANT_WHERE = `
+  FROM players p
+ WHERE p.is_moderator = 0
+   AND p.event_verified = 0
+   AND NOT EXISTS (SELECT 1 FROM registrations r
+                    WHERE r.player_id = p.id AND r.status = 'checked-in')
+   AND NOT EXISTS (SELECT 1 FROM reports rep
+                    WHERE rep.reporter_id = p.id OR rep.target_player_id = p.id)
+   AND NOT EXISTS (SELECT 1 FROM support_tickets t WHERE t.player_id = p.id)
+   AND MAX(
+         p.created_at,
+         COALESCE(p.last_seen_at, p.created_at),
+         COALESCE((SELECT MAX(r2.created_at) FROM registrations r2
+                    WHERE r2.player_id = p.id), p.created_at)
+       ) < ?`;
+
+/**
+ * Every table that keys on a player id, and what to do with it when the player goes.
+ *
+ * Written out rather than left to `ON DELETE CASCADE` because only two of these tables
+ * declare that constraint, SQLite does not enforce foreign keys unless asked, and the
+ * consequence of getting it wrong here is an orphaned row containing a child's display
+ * name that no deletion request will ever find again.
+ */
+const CASCADE: { sql: string; params: (id: string) => unknown[] }[] = [
+  { sql: "DELETE FROM sessions WHERE player_id = ?", params: (id) => [id] },
+  { sql: "DELETE FROM auth_tokens WHERE player_id = ?", params: (id) => [id] },
+  { sql: "DELETE FROM guardian_approvals WHERE player_id = ?", params: (id) => [id] },
+  { sql: "DELETE FROM lfg_posts WHERE player_id = ?", params: (id) => [id] },
+  {
+    sql: "DELETE FROM game_requests WHERE from_player_id = ? OR to_player_id = ?",
+    params: (id) => [id, id],
+  },
+  {
+    sql: "DELETE FROM blocks WHERE blocker_id = ? OR blocked_id = ?",
+    params: (id) => [id, id],
+  },
+  /**
+   * The registration row is NOT deleted here. It has its own retention period, measured
+   * from the event, and it is the record of who applied — but the link to a deleted
+   * account has to go, or a later join resurrects an id that no longer exists.
+   *
+   * WORTH BEING HONEST ABOUT: the registration still holds the applicant's name, date of
+   * birth and email. Deleting the profile does not delete those, and the 12-month
+   * registration rule that would is not implemented yet. See RETENTION-POLICY.md.
+   */
+  { sql: "UPDATE registrations SET player_id = NULL WHERE player_id = ?", params: (id) => [id] },
+];
+
+/**
+ * Delete profiles that never attended an event and have been untouched for the policy
+ * period. Returns the number deleted.
+ *
+ * Deletes by id in a loop rather than one big `DELETE ... WHERE id IN (subquery)`, because
+ * each player fans out across seven statements and doing it per-player keeps the set the
+ * cascade operates on identical to the set that was selected.
+ */
+export async function purgeDormantProfiles(now: Date = new Date()): Promise<number> {
+  const db = await getDb();
+  const cutoff = monthsBefore(now, DORMANT_PROFILE_RETENTION_MONTHS);
+  const { results } = await db
+    .prepare(`SELECT p.id ${DORMANT_WHERE}`)
+    .bind(cutoff)
+    .all<{ id: string }>();
+
+  for (const { id } of results) {
+    for (const step of CASCADE) {
+      await db.prepare(step.sql).bind(...step.params(id)).run();
+    }
+    await db.prepare("DELETE FROM players WHERE id = ?").bind(id).run();
+  }
+  return results.length;
+}
+
+export interface DormancySnapshot {
+  /** Every profile on the platform, including moderators and people who attended. */
+  profiles: number;
+  /** In scope of this rule: no attendance, no safeguarding record. */
+  inScope: number;
+  /** Past the policy period right now. Should be zero the day after a run. */
+  dueNow: number;
+  /** Will pass it within 90 days, so a moderator sees it coming rather than after. */
+  dueWithin90Days: number;
+  /** Total ever deleted by this rule, from the audit trail. */
+  deletedAllTime: number;
+  lastRunAt: string | null;
+}
+
+/**
+ * Numbers for the admin panel.
+ *
+ * The point of showing this is that a silent deletion job is indistinguishable from one
+ * that has stopped working. `dueWithin90Days` is the useful column: it is the only one
+ * that is ever non-zero on a healthy system, and it is what lets somebody notice the rule
+ * is about to delete accounts before it does.
+ */
+export async function dormancySnapshot(now: Date = new Date()): Promise<DormancySnapshot> {
+  const db = await getDb();
+  const cutoff = monthsBefore(now, DORMANT_PROFILE_RETENTION_MONTHS);
+  const soon = monthsBefore(
+    new Date(now.getTime() + 90 * 864e5),
+    DORMANT_PROFILE_RETENTION_MONTHS,
+  );
+
+  const count = async (sql: string, ...params: unknown[]) =>
+    (await db.prepare(sql).bind(...params).first<{ n: number }>())?.n ?? 0;
+
+  const [profiles, inScope, dueNow, dueSoon, deleted, last] = await Promise.all([
+    count("SELECT COUNT(*) AS n FROM players"),
+    // The same filter with a cutoff far in the future: everyone the rule could ever touch.
+    count(`SELECT COUNT(*) AS n ${DORMANT_WHERE}`, "9999-12-31T00:00:00.000Z"),
+    count(`SELECT COUNT(*) AS n ${DORMANT_WHERE}`, cutoff),
+    count(`SELECT COUNT(*) AS n ${DORMANT_WHERE}`, soon),
+    count(
+      `SELECT COALESCE(SUM(rows_affected), 0) AS n FROM retention_runs
+        WHERE action = 'purge-dormant-profiles'`,
+    ),
+    db
+      .prepare(
+        `SELECT MAX(ran_at) AS ran_at FROM retention_runs
+          WHERE action = 'purge-dormant-profiles'`,
+      )
+      .first<{ ran_at: string | null }>(),
+  ]);
+
+  return {
+    profiles,
+    inScope,
+    dueNow,
+    // dueSoon includes anything already due; the panel wants "coming up", not a total.
+    dueWithin90Days: Math.max(0, dueSoon - dueNow),
+    deletedAllTime: deleted,
+    lastRunAt: last?.ran_at ?? null,
+  };
 }
 
 async function record(a: RetentionAction, ranAt: string): Promise<void> {
@@ -115,6 +301,25 @@ export async function applyRetention(now: Date = new Date()): Promise<RetentionR
       await record(a, ranAt);
     }
   }
+
+  /**
+   * Not inside the event loop, and deliberately last.
+   *
+   * This is the one rule with no event behind it, so it runs once per job rather than once
+   * per event. Recorded even at zero rows, for the same reason as the token clear: proving
+   * the job ran is half the point of the audit trail.
+   */
+  const dormant = await purgeDormantProfiles(now);
+  const a: RetentionAction = {
+    eventSlug: PLATFORM_SCOPE,
+    action: "purge-dormant-profiles",
+    rowsAffected: dormant,
+    note:
+      `Profiles with no attended event and no activity for ` +
+      `${DORMANT_PROFILE_RETENTION_MONTHS} months.`,
+  };
+  actions.push(a);
+  await record(a, ranAt);
 
   return { ranAt, actions, skipped };
 }

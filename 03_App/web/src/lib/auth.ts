@@ -130,6 +130,12 @@ export async function redeemSignInToken(token: string): Promise<RedeemResult> {
         new Date(now.getTime() + SESSION_DAYS * 864e5).toISOString(),
         now.toISOString(),
       ),
+    /**
+     * Signing in is activity. In the same batch as the session insert, so the retention
+     * clock cannot be left behind by a partial write — see touchPlayer() in players.ts
+     * for why an account with a stale clock is an account that gets deleted.
+     */
+    db.prepare("UPDATE players SET last_seen_at = ? WHERE id = ?").bind(now.toISOString(), player.id),
   ]);
 
   return { ok: true, sessionToken, player };

@@ -108,6 +108,9 @@ export default async function RegisterInterestPage({
                     email: me.email,
                     region: me.region ?? "",
                     avatarId: me.avatarId ?? "",
+                    // Their existing public name. Carried over so the bracket calls them
+                    // the same thing at every event they enter.
+                    handle: me.handle ?? "",
                   }
                 : undefined
             }
