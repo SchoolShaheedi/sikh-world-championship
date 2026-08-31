@@ -24,29 +24,42 @@ events and online.
 
 ## 3. Named people
 
-| Role | Name | Contact | DBS status |
-|---|---|---|---|
-| Designated Safeguarding Lead | `[FULL NAME]` | `[EMAIL]` / `[PHONE]` | `[STARTED? DATE?]` |
-| Deputy Safeguarding Lead | `[FULL NAME]` | `[EMAIL]` | `[  ]` |
-| Moderator 1 | `[FULL NAME]` | | `[  ]` |
-| Moderator 2 | `[FULL NAME]` | | `[  ]` |
+The Designated Safeguarding Lead and Deputy for SWC events are **the named leads in the
+parent charity's own safeguarding policy**, not a separate pair appointed for this project.
+This document does not restate them.
 
-> **These are currently "TBC" in `src/data/org.ts` and therefore on the live public page.**
-> A safeguarding page naming "TBC" as the person to contact is worse than no page. This
-> table is the highest-priority blank in the whole project — and DBS checks take weeks, so
-> the names must be settled first.
+That is deliberate. A second copy of a name and phone number in a second policy is a copy
+that goes out of date — and the version people reach for in an incident would be whichever
+one they happened to have. One source, held by the charity.
+
+What this project still owes:
+
+- [ ] Confirm the charity's named lead and deputy **accept covering SWC events**, including
+      the online platform, and that both know they are on call for 3 October 2026.
+- [ ] Confirm their DBS checks are current, and that the charity holds the record.
+- [ ] Confirm SWC moderators — who read safeguarding disclosures, applicants' names and
+      guardians' contact details — are within the charity's existing checked cohort.
 
 A deputy is not optional: the lead will sometimes be the person a concern is about, or
 simply unreachable.
 
+Nothing in the app publishes a name or an address. Contact goes through `/support`, which
+reaches the moderator queue with an audit trail and works with no account — see the
+comment at the top of `src/data/org.ts` for why there is no published email anywhere.
+
 ## 4. What we do at events
 
 - Every entrant under 18 has a parent or guardian's recorded permission.
-- Supervision is tiered by age, recorded at sign-up and checked at the desk:
-  - **8–11** — a parent or guardian remains at the venue throughout.
-  - **12–15** — dropped off and collected; may not leave unaccompanied; guardian
-    contactable and within a recorded travel time.
-  - **16–17** — may attend and leave independently where the guardian has permitted it.
+- Supervision is tiered by age, recorded at sign-up and checked at the desk. These are
+  the tiers the code enforces — `GUARDIAN_PRESENCE_UNTIL` and `ADULT_FROM` in
+  `src/lib/guardian-rules.ts`. If this list and that file ever disagree, one of them is a
+  bug:
+  - **Under 12** — cannot register at all. Event 1 is 12–21.
+  - **12–15** — a parent or guardian remains at the venue for the whole event. Not a
+    drop-off. They do not have to sit with their child.
+  - **16–17** — may attend and leave independently where the guardian has recorded
+    permission; guardian contact details are still held.
+  - **18+** — no guardian involvement.
 - Every entrant has an emergency contact on record.
 - A qualified first aider is present. Medical, allergy and dietary details are collected
   in advance and available to them. `[Decide: printed copy at the first aid point — venue
@@ -124,7 +137,8 @@ worried parent who has never logged in.
 
 ## 9. Recruitment and training
 
-- DBS checks for the leads and for any volunteer with unsupervised access to children.
+- DBS checks are held by the parent charity for the leads and for any volunteer with
+  unsupervised access to children.
 - `[Two references for anyone in a supervisory role?]`
 - Every volunteer reads this policy and signs to say so, before the event.
 - `[Decide the training standard — e.g. a recognised online safeguarding course for the

@@ -7,8 +7,20 @@ import { submitTicket } from "@/app/support/actions";
 const field =
   "mt-2 w-full rounded-xl border border-line bg-surface px-4 py-3 text-body placeholder:text-muted/60 focus:border-kesri focus:outline-none";
 
-export function SupportForm() {
-  const [categoryId, setCategoryId] = useState<string>(SUPPORT_CATEGORIES[0].id);
+export function SupportForm({ initialCategory }: { initialCategory?: string } = {}) {
+  /**
+   * The first category is the default because it is the safeguarding one — if someone
+   * lands here worried about a child, the right option is already selected.
+   *
+   * `initialCategory` overrides it when the person arrived from a page that already knows
+   * why (the volunteer page, for instance). Validated against the real list so a hand-typed
+   * query string cannot leave the form with no category selected.
+   */
+  const [categoryId, setCategoryId] = useState<string>(() =>
+    SUPPORT_CATEGORIES.some((c) => c.id === initialCategory)
+      ? initialCategory!
+      : SUPPORT_CATEGORIES[0].id,
+  );
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ reference: string; urgent: boolean } | null>(null);
 

@@ -62,7 +62,7 @@ messages for us to hold.
 | Parent or guardian's name and relationship to the player | So we know who is responsible |
 | Parent or guardian's email and mobile | To confirm permission, to reach them on the day, and to notify them if their child connects with another player online |
 | Their permission for the player to take part | Without it the entry is refused |
-| The supervision arrangement for that age: staying on site (8–11), drop-off and collection plus how far away they will be (12–15), or permission to attend independently (16–17) | So we know who is responsible for the child at every point of the day |
+| The supervision arrangement for that age: a parent or guardian staying at the venue throughout (12–15), or permission to attend independently (16–17) | So we know who is responsible for the child at every point of the day |
 | Whether the child may leave unaccompanied | So we do not let a child leave when they should not |
 | Whether the guardian consents to photography of their child | A child cannot give this for themselves |
 

@@ -32,6 +32,12 @@ export const SUPPORT_CATEGORIES = [
     urgent: false,
   },
   {
+    id: "volunteer",
+    label: "I'd like to volunteer",
+    help: "Which role suits you, and whether you can give the whole day. A 64-player event needs about 15 people.",
+    urgent: false,
+  },
+  {
     id: "technical",
     label: "Something on the site is broken",
     help: "A page won't load, a button doesn't work, something looks wrong.",

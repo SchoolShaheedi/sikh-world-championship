@@ -24,13 +24,19 @@ else has access to it.
 
 ## 4. Age
 
-Event 1 is open to ages 8 and over. Under-18s need a parent or guardian's permission.
-Supervision requirements depend on age — see the sign-up form and the safeguarding policy.
+Event 1 is open to ages 12 to 21. Under-18s need a parent or guardian's permission.
+Supervision requirements depend on age: under-16s need a parent or guardian at the venue
+for the whole event, and 16- and 17-year-olds may attend independently where their guardian
+has permitted it. See the registration form and the safeguarding policy.
 
 ## 5. Entering an event
 
-- Places are limited (64 for event 1) and allocated in order. When full, entries join a
-  waitlist and are promoted automatically as places free up.
+- **Registering interest is not a place.** Places are limited (64 for event 1) and we
+  expect more interest than places, so places are allocated by a **random draw** after
+  registration closes. Applicants referred by one of our partner organisations are drawn
+  first; the remaining places are drawn from everyone else. Within each group it is random —
+  nobody is ranked or judged. We email you either way.
+- If someone drops out we draw again from those not selected, so keep your details current.
 - Entry is free. `[Confirm this stays true for later events.]`
 - We may cancel, postpone or change the format of an event. If we do we will tell every
   registered entrant by email.

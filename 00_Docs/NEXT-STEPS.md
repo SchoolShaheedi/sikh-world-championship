@@ -10,13 +10,17 @@ Ordered by what it costs to leave undone.
 
 `SWC_REGISTRATION_OPEN` is off in production. Each of these is a reason why.
 
-- [ ] **Name the safeguarding lead and deputy** — `04_Legal/SAFEGUARDING-POLICY.md` has
-      the policy and no people in it. This is the single largest gap.
-- [ ] **DBS checks for anyone supervising** — volunteers are already checked; confirm the
-      list covers everyone who will be on the floor on 3 October.
-- [ ] **Sign off the DPIA** (`04_Legal/DPIA.md`) with the profile-first change from round
-      42 reflected: an account now exists for everyone who registers interest, including
-      children who are never selected.
+- [ ] **Confirm the charity's named safeguarding lead and deputy cover SWC events** —
+      including the online platform, and that both know they are on call for 3 October
+      2026. The names themselves live in the charity's own policy, not in this repo
+      (round 43); `04_Legal/SAFEGUARDING-POLICY.md` says so and lists what is still owed.
+- [ ] **Confirm the DBS-checked list covers everyone on the floor** on the day, including
+      anyone added late.
+- [ ] **Sign the DPIA** (`04_Legal/DPIA.md`). It has never been signed. Its risk table was
+      badly out of date in both directions and was rewritten in round 43 — three of the
+      four old blockers are built. One genuinely new question needs an answer first: how
+      long we keep a profile that never attended an event (proposed: 24 months of no
+      activity).
 - [ ] **Set the DMARC record** — `_dmarc` TXT, `v=DMARC1; p=none;
       rua=mailto:media@shaheedibunga.com; fo=1`. Without it the guardian notification is
       much more likely to be filed as spam, and a safeguarding email in a junk folder is

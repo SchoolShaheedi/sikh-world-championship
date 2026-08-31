@@ -92,3 +92,22 @@ describe("ticket queue", () => {
     expect(refs.size).toBe(40);
   });
 });
+
+/**
+ * The volunteer page deep-links to /support?about=volunteer. If that id ever drifts from
+ * the category list the link silently falls back to the safeguarding category, which is
+ * the wrong queue for "I'd like to help on the day" — and it lands as urgent-adjacent
+ * noise in front of a moderator looking for real concerns.
+ */
+describe("the volunteering category", () => {
+  it("exists, is addressable by the id the volunteer page links to, and is not urgent", () => {
+    const category = categoryById("volunteer");
+    expect(category).toBeDefined();
+    expect(category!.urgent).toBe(false);
+  });
+
+  it("is not the default — the safeguarding category is", () => {
+    expect(SUPPORT_CATEGORIES[0].id).toBe("safety");
+    expect(SUPPORT_CATEGORIES[0].urgent).toBe(true);
+  });
+});

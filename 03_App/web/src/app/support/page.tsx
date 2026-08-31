@@ -7,7 +7,14 @@ export const metadata: Metadata = {
     "Report a problem, raise a safety concern, or ask us anything. Open to players, parents and guardians — no account needed.",
 };
 
-export default function SupportPage() {
+export default async function SupportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ about?: string }>;
+}) {
+  // e.g. /support?about=volunteer — links can arrive with the right category already
+  // chosen. Validated inside the form against the real list.
+  const { about } = await searchParams;
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="display-xl text-[clamp(2.2rem,5vw,3.6rem)]">Support</h1>
@@ -35,7 +42,7 @@ export default function SupportPage() {
       </div>
 
       <div className="mt-10">
-        <SupportForm />
+        <SupportForm initialCategory={about} />
       </div>
 
       {/* Common answers, so people don't have to wait for a reply to simple questions.
