@@ -11,6 +11,46 @@ one.
 
 Ordered by how much each costs to leave unanswered.
 
+---
+
+## The one-page version — 21 questions, read them out
+
+**Blocking the event**
+
+1. **GNG FC adult capacity** — how many non-playing parents can Riverside actually seat and feed?
+2. **Day timings** — what is the running order inside 09:30–16:30, and who referees?
+3. **Safeguarding lead and deputy** — which two named people, and do they accept covering 3 October?
+4. **The DPIA** — who signs it, and when?
+5. **DBS list** — who is on the floor on the day, including anyone added in the last week?
+6. **Insurance** — is public liability bought, and what does the insurer require of us in return?
+
+**Decides what gets built next**
+
+7. **Open applications — now or wait?** One flag, one safeguarding decision.
+8. **Dietary needs** — keep asking (recommended: it is where allergies get declared) or drop?
+9. **Sponsors page** — take it down, turn it into a pitch, or leave it empty? And do we have anyone close?
+10. **Divisions** — one open bracket, or split 12–17 and 18–21?
+11. **Age boundary** — should a 16-year-old need a parent on site, or is 12–15 right?
+
+**Brand and identity**
+
+12. **Canonical name** — Championship, Championships, or Sikh Championships? The other two get redirected.
+13. **Legal structure** — charity, CIC, or unincorporated association?
+14. **Referral organisations** — who else joins the five we have?
+
+**Smaller, but before the day**
+
+15. **Profile retention after attending** — adopt the existing 24 months of inactivity, run from the event?
+16. **Sponsor offers** — has any sponsor actually agreed one, or does the promise come off the site?
+17. **Photography** — who briefs the photographers, and who carries the "do not film" list?
+18. **WhatsApp** — which account sends it, and where is the opt-out written down?
+19. **Sign-out at the end** — who is on the door, with what list?
+20. **Reading the 64 public names** — whose job, in the week before?
+21. **Prizes** — champion only, or runner-up, semi-finalists and a medal for everyone? Engraving takes weeks.
+
+The rest of this document is the same 21 questions with the reasoning, the recommendation
+where there is one, and what each costs to leave open.
+
 **Event: Sikh FC 27 Championship · Leicester · Saturday 3 October 2026 · 64 places · ages 12–21**
 Applications close **26 September**. That is the date everything else runs backwards from.
 

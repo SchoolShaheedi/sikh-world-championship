@@ -20,11 +20,12 @@ Ordered by what it costs to leave undone.
       disk. The mechanism that caused it is fixed (`00_Docs/SECRETS.md`); the keys
       themselves are still live. `./scripts/secrets-to-keychain.sh`, then
       `python3 scripts/scrub-transcripts.py --write` with this session closed.
-- [ ] **Set the DMARC record** — `_dmarc` TXT, `v=DMARC1; p=none;
-      rua=mailto:media@shaheedibunga.com; fo=1`. Without it the guardian notification is
-      much more likely to be filed as spam, and a safeguarding email in a junk folder is
-      worse than one never promised. Needs Zone → DNS → Edit on the API token, which the
-      current one does not have.
+- [x] **DMARC is set** — confirmed live 2026-09-01:
+      `v=DMARC1; p=none; rua=mailto:media@shaheedibunga.com; fo=1`. Resend's DKIM
+      (`resend._domainkey`) and Return-Path (`send.` subdomain, SPF + MX) are in place too,
+      so guardian mail aligns on both DKIM and SPF. `p=none` means reports only, nothing is
+      rejected yet — leave it there until the aggregate reports show only our own senders,
+      then move to `p=quarantine`.
 
 ## Before the event — 3 October 2026
 
