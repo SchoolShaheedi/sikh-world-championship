@@ -134,12 +134,49 @@ describe("guardian tiers", () => {
   });
 });
 
-describe("photo consent for under-18s", () => {
-  it("is the guardian's to give, and never blocks entry either way", () => {
-    // Decision 18: the photo is optional on purpose. Refusing must not stop a child
-    // competing, and the child must not be able to answer it for themselves.
-    expect(validateRegistration(event, division, onSite({ guardianPhotoConsent: true })).ok).toBe(true);
-    expect(validateRegistration(event, division, onSite({ guardianPhotoConsent: false })).ok).toBe(true);
+/**
+ * Round 47 changed this from a choice to a condition. The form no longer asks; it states
+ * that photos are taken, and registering is agreeing. These tests pin the consequence:
+ * whatever a client sends, the stored answer is "agreed" — because an omitted field and a
+ * refusal must not be storable as anything else, or the photographers' list on the day
+ * would be a mix of "agreed", "refused" and "never asked" with no way to tell them apart.
+ */
+describe("photography is a condition of registering, not a tick box", () => {
+  it("records agreement for an under-18 whatever the form sent", () => {
+    for (const body of [
+      onSite({ guardianPhotoConsent: true }),
+      onSite({ guardianPhotoConsent: false }),
+      onSite(),
+    ]) {
+      const r = validateRegistration(event, division, body);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.answers.guardianPhotoConsent).toBe(true);
+      expect(r.answers.photoConsent).toBe(true);
+    }
+  });
+
+  it("records agreement for an adult whatever the form sent", () => {
+    for (const body of [adult({ photoConsent: false }), adult()]) {
+      const r = validateRegistration(event, division, body);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.answers.photoConsent).toBe(true);
+    }
+  });
+
+  it("does not set the guardian answer for an adult entrant", () => {
+    // An adult has no guardian, so the guardian-shaped field must stay false: there is
+    // nobody who could have given that permission, and a `true` here would read on the
+    // day as a parent having agreed something for a 24-year-old.
+    const r = validateRegistration(event, division, adult());
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.answers.guardianPhotoConsent).toBe(false);
+    expect(r.answers.photoConsent).toBe(true);
+  });
+
+  it("never lets a missing photo answer block an entry", () => {
     const body = onSite();
     delete (body as Record<string, unknown>).guardianPhotoConsent;
     expect(validateRegistration(event, division, body).ok).toBe(true);
@@ -210,8 +247,8 @@ describe("required consents", () => {
     expect(r.fieldErrors).toHaveProperty(key);
   });
 
-  it("leaves the photo consent genuinely optional", () => {
-    // Decision 18: the photo is optional on purpose, so absence must not block entry.
+  it("never lets a missing photo answer block an entry", () => {
+    // Round 47: the answer is set by the validator, so absence is normal, not an error.
     expect(validateRegistration(event, division, adult()).ok).toBe(true);
     expect(validateRegistration(event, division, adult({ photoConsent: false })).ok).toBe(true);
   });

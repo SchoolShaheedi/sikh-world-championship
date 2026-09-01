@@ -63,6 +63,24 @@ export default async function RegisterInterestPage({
           : `Free to enter, ${event.capacity} places.`}
       </p>
 
+      {/* Said before the form, not after it. The team's feedback was that people read
+          "register" as "I have a place" — so the page states what the form actually does
+          before anyone starts filling it in, and the confirmation email says it again. */}
+      {(live || demo) && (
+        <p className="mt-4 rounded-xl border border-line bg-surface/60 p-4 text-sm text-muted">
+          <span className="text-body">This form registers your interest — it does not
+          give you a place.</span>{" "}
+          All {event.capacity} places are decided by a random draw
+          {event.applicationsCloseAt
+            ? ` after entries close on ${new Date(
+                event.applicationsCloseAt,
+              ).toLocaleDateString("en-GB", { day: "numeric", month: "long" })}`
+            : " after entries close"}
+          . You get a confirmation email as soon as you submit it, and another after the
+          draw either way — so there is nothing to chase.
+        </p>
+      )}
+
       {/* Registration is for the platform, not for one event. Said here rather than only
           on /join, because most people arrive on this page from a link and never see the
           explainer. */}

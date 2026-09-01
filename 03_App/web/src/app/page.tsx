@@ -54,7 +54,7 @@ export default function HomePage() {
                   href={`/events/${featured.slug}/register-interest`}
                   className="group pill relative inline-flex items-center gap-2 overflow-hidden bg-kesri px-7 py-3.5 font-bold text-ink shadow-lg shadow-black/30 transition-transform hover:scale-[1.04] active:scale-95 sm:px-8"
                 >
-                  Enter {featured.shortTitle} →
+                  Register interest →
                   {/* Shine sweep on hover. */}
                   <span
                     aria-hidden
@@ -174,7 +174,7 @@ export default function HomePage() {
           {[
             ["64", "Places"],
             ["1", "Open division"],
-            ["3+", "Matches each"],
+            ["6", "Rounds to win it"],
             ["£0", "To enter"],
           ].map(([value, label]) => (
             <div key={label} className="bg-surface px-6 py-8 text-center">
@@ -238,8 +238,9 @@ export default function HomePage() {
               </h2>
 
               <p className="mx-auto mt-5 max-w-md text-muted">
-                Two minutes to apply. Places are limited and decided by a draw — no
-                entry fee, langar on the day, and everyone plays at least three matches.
+                Two minutes. This registers your interest — it is not a place: all
+                {featured.capacity} are decided by a random draw after entries close. No
+                entry fee, langar on the day, straight knockout.
               </p>
 
               <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -247,7 +248,7 @@ export default function HomePage() {
                   href={`/events/${featured.slug}/register-interest`}
                   className="group pill relative inline-flex items-center gap-2 overflow-hidden bg-kesri px-8 py-4 font-bold text-ink shadow-lg shadow-black/30 transition-transform hover:scale-[1.04] active:scale-95"
                 >
-                  Enter {featured.shortTitle} →
+                  Register interest →
                   <span
                     aria-hidden
                     className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/60 to-transparent transition-transform duration-700 group-hover:translate-x-full"

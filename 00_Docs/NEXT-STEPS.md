@@ -36,6 +36,17 @@ Ordered by what it costs to leave undone.
       cabinet that derives from them empties itself in October 2027. Results should hold the
       handle and the placing, and nothing else — which is also the only version of a results
       table that is safe to keep indefinitely.
+- [ ] **Record a photography objection against a registration.** New in round 47.
+      Photography is now a condition of entering, so `photo_consent` is true on every row
+      and the only useful list is the opposite one — the people who objected. There is
+      nowhere to write that down: it arrives as a support message. Needs a moderator
+      toggle on `/admin` → Entries and a "do not film" list for the day. DPIA risk 18, and
+      the thing that keeps the wording on the form honest.
+- [ ] **Record a WhatsApp opt-out — before anything is ever sent.** Registering now says
+      we will message people about future events. Nothing sends messages today, which is
+      the only reason there is no problem yet; the day someone exports a column of mobile
+      numbers there is one. A flag on the profile and a rule that the export reads it.
+      DPIA risk 19.
 - [ ] **Check-in on the day.** The token is issued on selection and `checkIn()` exists;
       there is no scanner UI.
 - [ ] **Score entry**, so the bracket advances during the event.

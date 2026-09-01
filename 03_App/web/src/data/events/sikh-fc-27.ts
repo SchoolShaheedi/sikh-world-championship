@@ -13,19 +13,19 @@ export const sikhFc27: ChampionshipEvent = {
   shortTitle: "FC 27",
   discipline: "fifa",
   status: "announced",
-  format: "groups-then-knockout",
+  format: "single-elimination",
 
   tagline: "64 players. One bracket. One champion. PS5.",
   description:
     "The first Sikh World Championship event. Sixty-four players aged 12 to 21, in one " +
-    "hall in Leicester, on PS5 — group stage into knockouts, so everyone plays at least " +
-    "three matches. One open division, one champion. Free to enter, langar on the day, " +
-    "and a live bracket on the big screen from first whistle to final.",
+    "hall in Leicester, on PS5 — straight knockout, win and you go through. One open " +
+    "division, one champion. Free to enter, langar on the day, and a live bracket on the " +
+    "big screen from first whistle to final.",
 
   date: "2026-10-03",
-  // Start and finish. The detailed running order — group stage slots, when each station
-  // turns over, when langar is served — is not this field: it belongs on the reminder
-  // email and the day sheet, and it is not confirmed yet.
+  // Start and finish. The detailed running order — when each round is called, when each
+  // station turns over, when langar is served — is not this field: it belongs on the
+  // reminder email and the day sheet, and it is not confirmed yet.
   times: "09:30 – 16:30",
   venue: {
     name: "GNG FC — Riverside Football Ground",
@@ -71,10 +71,10 @@ export const sikhFc27: ChampionshipEvent = {
     "Played on PS5. Consoles, screens and controllers are provided — bring your own controller if you prefer, it must be a standard PS5 pad.",
     "Kick-off mode only. No Ultimate Team, no custom squads.",
     "Teams must be equal star rating. Both players agree, or the referee assigns.",
-    "6-minute halves in the group stage. The final is played with 8-minute halves.",
+    "6-minute halves. The final is played with 8-minute halves.",
     "One open division — ages 12 to 21 compete in the same bracket.",
-    "Group stage: 16 groups of 4. Top two in each group go through to the knockouts.",
-    "Knockouts are single elimination. Draws go to extra time, then penalties.",
+    "Straight knockout from the first round. Win and you go through; lose and you are out.",
+    "Draws go to extra time, then penalties.",
     "Default game settings. Legacy defending off. No custom tactics carried in on a USB.",
     "Report to your station within 5 minutes of being called, or the match is forfeited.",
     "Disconnects before the 10th minute are replayed. After that, the score stands.",
@@ -118,7 +118,7 @@ export const sikhFc27: ChampionshipEvent = {
       type: "select",
       required: true,
       options: ["First time competing", "Casual player", "Play a lot", "Very competitive"],
-      help: "Only used for seeding, so first-round matches aren't lopsided. Be honest — it makes your day better.",
+      help: "Only used to seed the draw, so the strongest players don't all meet in round one. Be honest — it makes your day better.",
     },
     {
       name: "favouriteTeam",

@@ -104,8 +104,19 @@ Applications close **26 September**. That is the date everything else runs backw
   as "coming" and no offer is live. Has any sponsor actually agreed one? Until one has,
   this is a promise with a date attached to it.
 
-- **Photography.** Consent is opt-in and recorded per applicant, but nothing on the day
-  tells a photographer who said no. Wristbands are the usual answer. Who briefs them?
+- **Photography — who briefs the photographers, and how do they know who objected?**
+  Changed in round 47: photography is no longer a tick box, it is a condition of
+  registering. That makes the day *easier* in one way — almost everyone is fair game — and
+  harder in another: the only people on the "do not film" list are those who actively
+  objected, and an objection arrives as a support message rather than as a field in the
+  system. Wristbands are the usual answer. Who briefs them, and who carries the list?
+
+- **WhatsApp: whose number sends it, and who keeps the opt-out list?** Registering now
+  says we will message you about future events. Nothing sends anything yet. Before the
+  first message: which number or Business account it comes from, who is allowed to export
+  the list, and where a "they asked to stop" is written down so it survives the person who
+  took the request. For under-18s the message goes to the parent or guardian's number —
+  that is already built into the wording and should stay that way.
 
 - **Sign-out at the end.** The app records whether a 16–17 may leave unaccompanied. Nothing
   enforces it at the door. Who is on that, and with what list?
@@ -121,6 +132,21 @@ Applications close **26 September**. That is the date everything else runs backw
 
 ## 5. For the record — already decided, no action needed
 
+- **Straight knockout, not groups.** Confirmed 2026-09-01: 64 players, single
+  elimination, win and you go through. The site said "group stage into knockouts, everyone
+  plays at least three matches" — that promise is gone from every page, the rules and the
+  demo bracket. Worth knowing the consequence: **32 of the 64 play one match and are
+  finished**, some of them 12-year-olds whose parent has taken the day off. If there is
+  ever budget for a plate competition or friendlies on spare stations, that is the gap it
+  fills.
+- **Photography is a condition of entering, not a choice.** Team decision, 2026-09-01,
+  built the same day. Stated on the form, in the confirmation email and in full in the
+  guardian's email. Objecting is still free and reasonless and changes nothing about a
+  place. Recorded honestly in the DPIA as risk 18: it is not "consent" any more, and the
+  paperwork no longer calls it that.
+- **Registering signs you up to WhatsApp news about future events.** Team decision,
+  2026-09-01. Under-18s are never messaged directly — it goes to the guardian's number.
+  DPIA risk 19.
 - **Venue: GNG FC — Riverside Football Ground, 51 Braunstone Lane East, Braunstone Town,
   Leicester LE3 2FD.** Confirmed 2026-08-31 and live on the site: the event page names it
   with the full address, the "being finalised" notices are gone, and the guardian email

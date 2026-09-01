@@ -444,6 +444,15 @@ export function interestReceived(n: {
     `future event — sign in any time at https://sikhchampionships.com/signin. There is no`,
     `password; we email you a link.`,
     ``,
+    `WHAT YOU AGREED TO BY REGISTERING:`,
+    `  - Photos and video are taken at the event and may be used on our website, our`,
+    `    social media, and in material promoting future events. Not sold, and not used`,
+    `    in sponsors' own advertising.`,
+    `  - We will message you on WhatsApp about future events. Event news only, a few`,
+    `    times a year, never anyone else's advertising.`,
+    `Either can be stopped at any time, with no effect on your place — reply STOP to a`,
+    `WhatsApp message, or tell us at https://sikhchampionships.com/support.`,
+    ``,
     `Need to change or withdraw anything? https://sikhchampionships.com/support`,
   ].join("\n");
 
@@ -467,6 +476,14 @@ export function interestReceived(n: {
        future event — no password, we email you a link.
      </p>
      ${button("https://sikhchampionships.com/signin", "Sign in to your profile")}
+     <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+       <strong>What you agreed to by registering:</strong> photos and video are taken at
+       the event and may be used on our website, our social media and in material
+       promoting future events — not sold, and not used in sponsors&rsquo; own
+       advertising. We will also message you on WhatsApp about future events: event news
+       only, a few times a year. Either can be stopped at any time, with no effect on
+       your place — reply STOP to a WhatsApp message, or just tell us.
+     </p>
      <p style="margin:0;font-size:14px;color:#55554f;">
        Need to change or withdraw anything? Get in touch and we will sort it.
      </p>`,
@@ -514,6 +531,16 @@ export function guardianInterestNotice(n: {
     ``,
     `Reference ${n.reference}.`,
     ``,
+    `TWO THINGS THE REGISTRATION ALSO COVERS, so you know before the day:`,
+    `  - Photos and video are taken at the event, and may be used on our website, our`,
+    `    social media, and in material promoting future events. They are not sold and`,
+    `    not used in sponsors' own advertising. If you would rather they were not`,
+    `    filmed, tell us and our photographers are told.`,
+    `  - We will message YOU - the parent or guardian number on the form, never the`,
+    `    player's - on WhatsApp about future events. A few times a year, event news`,
+    `    only. Reply STOP and it ends.`,
+    `Neither has any effect on their place, and you can stop either at any time.`,
+    ``,
     `IF THIS WAS NOT AGREED WITH YOU, or you do not want them to take part, tell us at`,
     `https://sikhchampionships.com/support and we will remove the registration. You do not`,
     `need an account and you do not have to give a reason.`,
@@ -537,6 +564,16 @@ export function guardianInterestNotice(n: {
        This is not a place yet — places are decided by a random draw, and we will email
        again either way. Reference
        <strong style="font-family:monospace;">${esc(n.reference)}</strong>.
+     </p>
+     <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+       <strong>Two things the registration also covers, so you know before the day.</strong>
+       Photos and video are taken at the event and may be used on our website, our social
+       media and in material promoting future events — not sold, and not used in
+       sponsors&rsquo; own advertising; if you would rather they were not filmed, tell us
+       and our photographers are told. And we will message <em>you</em> — the parent or
+       guardian number on the form, never the player&rsquo;s — on WhatsApp about future
+       events, a few times a year. Reply STOP and it ends. Neither has any effect on
+       their place.
      </p>
      ${button("https://sikhchampionships.com/support", "This was not agreed with me")}
      <p style="margin:0;font-size:14px;color:#55554f;">

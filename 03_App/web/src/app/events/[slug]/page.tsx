@@ -80,7 +80,7 @@ export default async function EventPage({
               event.venue?.postcode ??
               "United Kingdom",
           ],
-          ["Format", "Groups into knockouts", "Everyone plays at least 3 matches"],
+          ["Format", "Straight knockout", "Win and you go through, lose and you are out"],
           ["Platform", "PlayStation 5", "Consoles and screens provided"],
         ].map(([k, v, sub]) => (
           <div key={k} className="rounded-2xl border border-line bg-surface/60 p-5">
@@ -114,13 +114,6 @@ export default async function EventPage({
               <p className="mt-4 text-sm text-body">
                 <strong className="font-bold">{d.capacity}</strong> places
               </p>
-              {event.divisions.length === 1 && (
-                <p className="mt-4 text-sm text-muted">
-                  Everyone plays in the same bracket. The group stage seeds on how you rate
-                  yourself at sign-up, so your first matches are against players at a
-                  similar level.
-                </p>
-              )}
             </div>
           ))}
         </div>

@@ -22,8 +22,8 @@ export async function generateMetadata({
 /**
  * PREVIEW DATA — never shown in production. See `showDemoData()`.
  *
- * Thirty-two invented Sikh names, so the layout can be checked on a projector and on a
- * phone before anyone has registered. Shown publicly they are indistinguishable from a
+ * Sixty-four invented Sikh names — the full first round of a straight knockout — so the
+ * layout can be checked on a projector and on a phone before anyone has registered. Shown publicly they are indistinguishable from a
  * real draw: someone would look for their own name, and on the day the hall would be
  * looking at a screen full of people who do not exist.
  *
@@ -38,6 +38,11 @@ function demoEntrants(divisionId: string, n: number): Entrant[] {
     "Manpreet S.", "Rupinder K.", "Sahib S.", "Onkar S.", "Meher K.", "Dilraj S.",
     "Ekam S.", "Guneet K.", "Hardeep S.", "Ishar S.", "Jeevan S.", "Kamal K.",
     "Lakhbir S.", "Mandeep K.",
+    "Nirmal S.", "Opinder K.", "Paramjit S.", "Rajvir S.", "Sandeep K.", "Taran S.",
+    "Ujagar S.", "Vikram S.", "Yadwinder S.", "Amanpreet K.", "Bikram S.", "Charan S.",
+    "Daljit K.", "Eshan S.", "Fateh S.", "Gagan K.", "Harjot S.", "Ikroop K.",
+    "Jasmeet S.", "Kulwant S.", "Loveleen K.", "Mohit S.", "Nanak S.", "Pavit K.",
+    "Ranjit S.", "Sehaj S.", "Tarnjit K.", "Udham S.", "Veer S.", "Waris S.",
   ];
   return Array.from({ length: n }, (_, i) => ({
     id: `${divisionId}-p${i}`,
@@ -79,9 +84,9 @@ export default async function BracketPage({
         <div className="mt-10 rounded-3xl border border-line bg-surface/60 p-8">
           <h2 className="font-display text-2xl text-kesri">The bracket goes live on the day</h2>
           <p className="mt-4 text-muted">
-            Once places are drawn and the group stage is played, the knockout bracket
-            appears here and updates as scores come in — on the big screen in the hall, and
-            on this page for anyone following from home.
+            Once places are drawn, the bracket appears here and updates as scores come
+            in — on the big screen in the hall, and on this page for anyone following from
+            home.
           </p>
           <Link
             href={`/events/${event.slug}`}
@@ -96,7 +101,7 @@ export default async function BracketPage({
       <div className="mt-12 space-y-16">
         {event.divisions.map((d) => {
           const bracket = advanceWinners(
-            generateKnockout(d.id, d.name, demoEntrants(d.id, 32)),
+            generateKnockout(d.id, d.name, demoEntrants(d.id, 64)),
           );
           return (
             <section key={d.id}>
@@ -104,11 +109,11 @@ export default async function BracketPage({
                 <span className="text-kesri">{d.name}</span> division
               </h2>
               <p className="mb-5 text-sm text-muted">
-                The knockout stage — the 32 players who came through the group stage.
+                Straight knockout — all 64 players, first round to final.
               </p>
               <BracketView
                 bracket={bracket}
-                names={new Map(demoEntrants(d.id, 32).map((e) => [e.id, e.name]))}
+                names={new Map(demoEntrants(d.id, 64).map((e) => [e.id, e.name]))}
               />
             </section>
           );

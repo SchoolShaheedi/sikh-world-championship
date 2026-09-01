@@ -1943,3 +1943,108 @@ else's, is now a short list that can be worked through and a longer one that goe
 meeting. The one item that genuinely sits on both is `SWC_REGISTRATION_OPEN`, and it is
 recorded as a safeguarding decision rather than a technical one — which is why the test key
 from round 45 exists at all.
+
+# Round 47 — the format was wrong, and two choices became conditions
+
+Team feedback, relayed 2026-09-01. Four copy corrections and two questions. Two of the
+corrections are ordinary; two of them change what a person is agreeing to, and those are
+written up here at length because a decision that reduces what a child controls should be
+harder to find later than one that does not.
+
+## Straight knockout
+
+The site said "group stage into knockouts, so everyone plays at least three matches". It
+is a straight knockout. That sentence was on the homepage, in the event description, in
+two rules, on the bracket page and in the terms; it is gone from all of them, `format` is
+now `single-elimination`, and the demo bracket renders 64 entrants over six rounds instead
+of 32 over five — the layout that will actually be on the projector.
+
+Worth recording rather than quietly fixing: **32 of the 64 now play one match and are
+finished**, some of them twelve years old, brought by a parent who took the day off. The
+old copy was wrong, but the thing it promised was a good thing. If there is ever a spare
+station and a volunteer, a plate competition is the cheapest way to buy that back. Noted
+in `MEETING-QUESTIONS.md`, not built.
+
+The self-rating question stays, and its help text changed. It used to promise "so
+first-round matches aren't lopsided", which was true of a group draw and is the opposite
+of true in a seeded knockout, where the first round is 1 v 64 by design. It now says the
+strongest players will not all meet in round one, which is what seeding actually does.
+
+## The divisions paragraph
+
+Removed on request. "Everyone plays in the same bracket. The group stage seeds on how you
+rate yourself at sign-up" was two sentences of explanation nobody asked for, and the first
+half was already said by the heading above it.
+
+## Photography stopped being a choice
+
+Asked for directly: by registering interest you are agreeing to have pictures and video
+taken of you. Both tick boxes are gone — the adult's, and the guardian's on behalf of a
+child. `validateRegistration()` now records agreement for every submission, and the form
+states it above the submit button instead of asking.
+
+This is the team's call to make and it is made. What is not optional is how it is
+described, so:
+
+- **It is no longer consent, and nothing in the paperwork calls it that.** Consent has to
+  be freely given, and agreement you cannot decline while still entering is not. The
+  lawful basis is legitimate interests with a right to object, and
+  `04_Legal/PHOTOGRAPHY-CONSENT.md`, the privacy notice and the DPIA now say exactly that.
+- **It is stated three times, not buried once**: on the form, in the applicant's
+  confirmation email, and in full in the email the guardian receives before the day —
+  which is the one that matters, because the form was filled in by whoever was at the
+  keyboard.
+- **Objecting is free, reasonless, and changes nothing about a place.** Every statement of
+  it names the way out.
+- The value is written as `true` rather than dropped, because the day still needs a list
+  and an objection needs a row to flip. Recording "agreed" for everyone and nothing at all
+  for the objectors would leave no way to tell an objection from an unanswered question.
+
+**The gap, stated plainly: nothing in the app can record an objection.** When photography
+was opt-in, the app produced the "do not film" list for free. Now that list is whoever
+sent a support message, remembered by a person. That is a small piece of work and it is in
+the build backlog as DPIA risk 18. Until it exists, the form's promise that "our
+photographers are told" is kept by a human being, not by the system.
+
+## WhatsApp
+
+Also asked for: say that registering means being sent WhatsApp messages about future
+events. Said, on the form and in both emails.
+
+Two judgement calls were made rather than asked about, because both are the safe default
+and neither is reversible in the wrong direction:
+
+1. **An under-18 is never messaged directly.** The messages go to the parent or guardian's
+   number, which is already on the form. Sending event marketing to a twelve-year-old's
+   phone is a safeguarding question nobody has asked, and it is also below WhatsApp's own
+   minimum age.
+2. **The scope is stated narrowly** — our own events, a few times a year, nobody else's
+   advertising — because an unbounded promise is the one that gets complained about.
+
+This is a new purpose for a number collected to reach someone on the day, which is the
+kind of change that gets flagged rather than done quietly. It is DPIA risk 19. The privacy
+notice used to say "we do not advertise to you"; that sentence was no longer true and has
+been rewritten rather than left standing.
+
+**Nothing sends WhatsApp messages today.** That is the only reason there is no problem
+yet: there is no list, no sender and no opt-out store. The day someone exports a column of
+mobile numbers, the opt-out has to exist first. It is in the build backlog.
+
+## "Will the person who registers get an email reply?"
+
+Yes, and they always have — `interestReceived()` goes out at submission with a reference,
+saying in capitals that this is not a place yet and that we will email either way after
+the draw. An under-18's guardian gets a separate one at the same time. Both now also carry
+the photography and WhatsApp statements. The question is answered on the page too: the
+register-interest page says, before the form rather than after it, that a confirmation
+email arrives on submission and another after the draw.
+
+## "Make it clear they are registering interest"
+
+The strongest version of this was already in place — the success screen refuses to say
+"You're in", and the acknowledgement email leads with "THIS IS NOT A PLACE YET". What was
+missing was everything before the form. Both homepage buttons said "Enter FC 27", the
+homepage promised "two minutes to apply", and the first thing a registrant read about the
+draw was the confirmation email. The buttons now say "Register interest", the homepage
+says what the draw is, the form page states it in a panel above the first field, and the
+success heading reads "Interest registered" rather than "Application received".

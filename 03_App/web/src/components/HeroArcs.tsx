@@ -46,9 +46,8 @@ export function HeroArcs({ event }: { event: ChampionshipEvent }) {
       from: -56,
       to: 60,
       at: 2,
-      value: "3",
-      suffix: "+",
-      label: "Matches each",
+      value: String(Math.ceil(Math.log2(Math.max(2, event.capacity)))),
+      label: "Rounds to win it",
     },
     {
       r: 460,

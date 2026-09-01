@@ -37,13 +37,11 @@ const FIELD_LABELS: Record<string, string> = {
   guardianOnSite: "Staying at the venue",
   guardianIndependentConsent: "Permission to attend independently",
   mayLeaveUnaccompanied: "Leaving unaccompanied",
-  guardianPhotoConsent: "Photo permission",
   emergencyName: "Emergency contact name",
   emergencyRelation: "Emergency contact relationship",
   emergencyPhone: "Emergency contact phone",
   rulesAgreed: "Rules and code of conduct",
   referralOrg: "How you heard about this",
-  photoConsent: "Photo permission",
   psnId: "PSN ID",
   skill: "Self-rating",
   favouriteTeam: "Favourite team",
@@ -228,12 +226,12 @@ export function SignupForm({
             there are more applications than places and they are decided by a draw. Saying
             anything warmer here would be a promise we cannot keep, and the person who
             reads it is often a parent. */}
-        <h2 className="font-display text-3xl">Application received</h2>
+        <h2 className="font-display text-3xl">Interest registered</h2>
 
         <p className="mx-auto mt-3 max-w-md text-muted">
-          Thanks {String(values.fullName ?? "").split(" ")[0] || "—"}. This is an
-          application, not a place yet: there are {event.capacity} places and we expect more
-          applications than that.
+          Thanks {String(values.fullName ?? "").split(" ")[0] || "—"}. This is a
+          registration of interest, not a place yet: there are {event.capacity} places and
+          we expect more interest than that.
         </p>
         <p className="mx-auto mt-3 max-w-md text-muted">
           Applications close{" "}
@@ -524,14 +522,6 @@ export function SignupForm({
               </>
             )}
 
-            {/* Photo consent is the guardian's to give, not the child's — a child can't
-                agree to their own image being used. Optional either way: decision 18. */}
-            <Check
-              checked={!!values.guardianPhotoConsent}
-              onChange={(v) => set("guardianPhotoConsent", v)}
-              label="I'm happy for my child to appear in photos and video from the day."
-              hint="Completely optional, and it never affects their place. If you leave it, our photographers are told and they won't be filmed."
-            />
           </div>
         </fieldset>
       )}
@@ -684,17 +674,6 @@ export function SignupForm({
           </label>
         </div>
 
-        {!isMinor && (
-          <div className="mt-6">
-            <Check
-              checked={!!values.photoConsent}
-              onChange={(v) => set("photoConsent", v)}
-              label="I'm happy to appear in photos and video from the day."
-              hint="Optional."
-            />
-          </div>
-        )}
-
         <div className="mt-5 space-y-4">
           <Check
             required
@@ -702,17 +681,63 @@ export function SignupForm({
             onChange={(v) => set("rulesAgreed", v)}
             label="I've read the rules and the code of conduct, and I'll play by them."
           />
-          {/* A statement, not a checkbox. A profile is part of taking part, not an optional
-              extra — so offering it as a choice would be offering a choice that does not
-              exist. Note this also moves the lawful basis from consent to contract; the
-              privacy notice says so. */}
-          <p className="rounded-xl border border-line bg-ink/20 p-4 text-sm text-muted">
-            <span className="text-body">If you get a place, we&apos;ll create your SWC
-            profile.</span>{" "}
-            It saves your results and trophies across every event you play in, and you sign
-            in with this email address — no password. If you don&apos;t get a place this
-            time, no profile is created.
-          </p>
+          {/* STATEMENTS, NOT CHECKBOXES.
+              Each of these is a condition of registering rather than a choice, so
+              offering a tick box would be offering a choice that does not exist. That is
+              a deliberate decision (round 47, team feedback) and it has a legal cost:
+              agreement bundled into entry is not "consent" under UK GDPR, so the basis
+              for the photography and the WhatsApp messages is legitimate interests with
+              a right to object — which is why each one names the way out.
+              See 04_Legal/PHOTOGRAPHY-CONSENT.md and DPIA risks 18 and 19. */}
+          <div className="space-y-3 rounded-xl border border-line bg-ink/20 p-4 text-sm text-muted">
+            <p className="font-semibold text-body">What registering means</p>
+            <p>
+              <span className="text-body">This registers your interest — it is not a
+              place.</span>{" "}
+              All {event.capacity} places are decided by a random draw after entries
+              close. We email you either way, and we email you now to confirm we have
+              this form.
+            </p>
+            <p>
+              <span className="text-body">If you get a place, we&apos;ll create your SWC
+              profile.</span>{" "}
+              It saves your results and trophies across every event you play in, and you
+              sign in with this email address — no password. If you don&apos;t get a place
+              this time, no profile is created.
+            </p>
+            <p>
+              <span className="text-body">
+                Photos and video are taken at the event.
+              </span>{" "}
+              By registering{" "}
+              {isMinor
+                ? "you agree your child may appear in them"
+                : "you agree you may appear in them"}
+              , on our website, our social media, and in material promoting future
+              events. Not for sale, not for sponsors&apos; own advertising. If
+              you&apos;d rather{" "}
+              {isMinor ? "they were not filmed" : "not be filmed"}, tell us before
+              the day and our photographers are told.
+            </p>
+            <p>
+              <span className="text-body">
+                We&apos;ll message you on WhatsApp about future events.
+              </span>{" "}
+              {isMinor
+                ? "To the parent or guardian mobile above, never to the player's — an under-18 is not messaged directly."
+                : "To the mobile above."}{" "}
+              Event news only, never anyone else&apos;s advertising, and never more than
+              a few times a year. Reply STOP, or ask us, and it ends.
+            </p>
+            <p className="text-xs">
+              Either of the last two can be stopped at any time — before the day or after
+              it — at{" "}
+              <a href="/support" className="text-kesri hover:underline">
+                sikhchampionships.com/support
+              </a>
+              . Neither has any effect on your place.
+            </p>
+          </div>
         </div>
       </fieldset>
 

@@ -26,9 +26,15 @@ controller for the information described here.
 ## Plain-English summary
 
 We ask for what we need to run a competition safely and nothing more. We do not sell your
-data, we do not advertise to you, and we do not use it to profile you. Most of it is
-deleted within a year of the event. If you are under 18, a parent or guardian has to give
-permission, and they can withdraw it at any time.
+data, we do not show you anyone else's advertising, and we do not use it to profile you.
+Most of it is deleted within a year of the event. If you are under 18, a parent or
+guardian has to give permission, and they can withdraw it at any time.
+
+**Two things happen because you registered, and you can stop either at any time with no
+effect on your place.** Photographs and video are taken at the event and used to promote
+future ones. And we message you on WhatsApp about future events — a few times a year, our
+own events only. **If the player is under 18 those messages go to the parent or guardian's
+number, never the player's.**
 
 There is **no messaging on our platform**, for anyone, at any age — so there are no private
 messages for us to hold.
@@ -44,7 +50,7 @@ messages for us to hold.
 | Full name | To identify you at the check-in desk and on the bracket | Contract |
 | Date of birth | To check you meet the age limit and to decide what supervision rules apply. **We never publish it** — profiles show an age band only | Legal obligation / legitimate interests (child safety) |
 | Email address | To send your confirmation, your check-in code, and event updates | Contract |
-| Mobile number | So a volunteer can reach you on the day | Contract |
+| Mobile number | So a volunteer can reach you on the day, and — for an adult entrant — to send you WhatsApp messages about future SWC events. **For an under-18 the WhatsApp messages go to the guardian's number instead, never the player's** | Contract (running the event); legitimate interests (event news), with a right to object |
 | Region (e.g. "Birmingham") | Shown on your player card. **Never a postcode or street address** | Contract |
 | A name for the bracket | The name shown on the bracket, the big screen and your player card. You choose it; leave it blank and we use your first name and last initial. **It is not your surname and it must not be your PlayStation ID** — anyone reading the bracket could then look you up on PlayStation | Contract |
 | Chosen avatar | Shown on your player card | Contract |
@@ -54,7 +60,7 @@ messages for us to hold.
 | Emergency contact: name, relationship, phone | Someone to call if you are hurt or unwell. Required of every adult entrant; for under-18s the parent or guardian below serves this purpose | Legitimate interests (vital interests in an emergency) |
 | Game-specific answers (PlayStation ID, self-rating, favourite team, whether you bring a controller) | To seed the bracket and find you on the day. **Your PlayStation ID is never shown publicly** — not on the bracket, not on the big screen | Contract |
 | Your agreement to the rules and to us creating an SWC profile | To show you agreed | Contract |
-| Whether you consent to photography | So our photographers know | Consent |
+| That photos and video may include you | Taking part at an event that is photographed. Used on our site, our social media and in material promoting future events — never sold, never in a sponsor's own advertising | Legitimate interests, with a right to object at any time |
 
 ### If the player is under 18, we also collect
 
@@ -65,7 +71,7 @@ messages for us to hold.
 | Their permission for the player to take part | Without it the entry is refused |
 | The supervision arrangement for that age: a parent or guardian staying at the venue throughout (12–15), or permission to attend independently (16–17) | So we know who is responsible for the child at every point of the day |
 | Whether the child may leave unaccompanied | So we do not let a child leave when they should not |
-| Whether the guardian consents to photography of their child | A child cannot give this for themselves |
+| That photos and video may include their child | Recorded against the registration and stated in full in the email we send the guardian before the day. It is theirs to object to, at any time, and objecting has no effect on the child's place |
 
 **We never take a guardian's email from a field the child fills in.** It comes from the
 registration record. If a child could type it, the whole permission system would be
@@ -116,7 +122,9 @@ withdrawal, and withdrawal mid-event is awkward. Please advise.]`
 Most of our players are children. Under the ICO's Age Appropriate Design Code we:
 
 - collect the minimum we need, and no more
-- default to the most private setting — photography is opt-in, not opt-out
+- default to the most private setting everywhere the choice is ours to make
+- **do not message a child directly.** Event news on WhatsApp goes to the parent or
+  guardian's number for every player under 18
 - never show a child's surname, school, home address or exact age publicly
 - never show a child's PlayStation ID publicly, because it is a way of contacting them —
   the bracket shows a handle they chose instead
@@ -127,8 +135,16 @@ Most of our players are children. Under the ICO's Age Appropriate Design Code we
 - provide **no messaging**, so there is no private channel between a child and a stranger
 - explain all of this in language a child can read — see below
 
-We do not profile children, target them with advertising, use nudge techniques to keep
-them online, or use their data to train anything.
+We do not profile children, show them anyone else's advertising, use nudge techniques to
+keep them online, or use their data to train anything.
+
+**Where we are honest about falling short of the ideal:** photography is no longer a tick
+box — taking part at an event that is photographed is a condition of entering, and news
+about our own future events is sent on the strength of having registered rather than a
+separate opt-in. Both are set out plainly on the form, in the confirmation email and in
+the email the guardian gets before the day, and either can be stopped at any time with no
+effect on a place. A parent who would rather their child were not filmed says so and we
+tell the photographers.
 
 ### For players — the short version
 
@@ -147,6 +163,13 @@ them online, or use their data to train anything.
 >
 > **There's no messaging here.** Nobody can send you a message. You pick from lists instead, so
 > nobody can type anything at you.
+>
+> **Photos.** There will be cameras. Pictures and video from the day go on our website
+> and our social media, and in things we make about the next event. If you'd rather not be
+> in them, tell us — or get your mum, dad or carer to tell us — and we'll let the
+> photographers know. It makes no difference to your place.
+>
+> **Messages about the next event** go to your parent or carer's phone, not yours.
 >
 > **You can ask us to delete everything** about you, at any time, and we will. You don't
 > need a reason. Email `[privacy@sikhworldchampionship.com]` or use the Support page.

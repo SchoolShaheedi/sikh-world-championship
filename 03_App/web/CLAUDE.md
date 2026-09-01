@@ -82,7 +82,15 @@ medical notes. That single fact drives most of the rules below.
 11. **User-supplied text is escaped before it reaches email HTML.** `esc()` in
     `src/lib/email-templates.ts`. A "name" containing an anchor tag would otherwise put an
     attacker's link inside a safeguarding email sent from our verified domain to a parent.
-12. **No secret is ever a literal in a file in this tree.** API keys live in the macOS
+12. **A condition of entry is stated, never disguised as a choice.** Round 47 turned
+    photography and WhatsApp event news into conditions of registering, on the team's
+    instruction. That is theirs to decide; how it is presented is not. There is no tick
+    box that cannot be unticked, no pre-checked box, and no wording calling it consent —
+    the form states it, the confirmation email states it, the guardian email states it in
+    full before the day, and each statement names the way out. `validateRegistration()`
+    sets `photoConsent` itself rather than trusting a client, so an omitted field cannot
+    quietly become a refusal on the photographers' list. DPIA risks 18 and 19.
+13. **No secret is ever a literal in a file in this tree.** API keys live in the macOS
     Keychain and are loaded by `.envrc.local`, which contains lookups and no values —
     `scripts/secrets-to-keychain.sh` writes it. Two leaks came from that file being read
     aloud into a transcript; git was never involved. `.claude/hooks/deny-secret-reads.py`
@@ -152,7 +160,7 @@ saves nothing, in tester mode it saves a real child's details to the live databa
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 277 tests
+npm test                         # 280 tests
 npx tsc --noEmit
 npm run lint
 npm run build

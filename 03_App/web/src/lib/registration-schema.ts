@@ -216,10 +216,11 @@ function guardianSchema(tier: GuardianTier) {
       "A parent or guardian must give permission for an under-18 to enter",
     ),
     /**
-     * Photo consent is the guardian's to give, separately from entry consent — a child
-     * cannot agree to their own image being used. Genuinely optional either way:
-     * decision 18 made the player photo optional for exactly this reason, so refusing
-     * must never block entry.
+     * NO LONGER A TICK BOX (round 47, team feedback). Photography is stated as a
+     * condition of registering, so this field is set to true for every submission by
+     * `validateRegistration` rather than read from the form. It stays in the schema
+     * because it stays in the stored record: the photographers' list has to say
+     * something, and an objection later flips it back to false.
      */
     guardianPhotoConsent: optionalConsent,
   };
@@ -308,7 +309,7 @@ function schemaFor(event: ChampionshipEvent, division: Division, age: number) {
     referralOrg: z.enum(REFERRAL_OPTIONS, {
       message: "Let us know how you heard about this",
     }),
-    // Genuinely optional — decision 18 made the photo optional on purpose.
+    // Set by validateRegistration, not by the form — see guardianPhotoConsent above.
     photoConsent: optionalConsent,
   });
 
@@ -420,9 +421,26 @@ export function validateRegistration(
     };
   }
 
-  return {
-    ok: true,
-    answers: parsed.data as Record<string, string | boolean | string[]>,
-    age,
-  };
+  const answers = parsed.data as Record<string, string | boolean | string[]>;
+
+  /**
+   * PHOTOGRAPHY IS A CONDITION OF REGISTERING, NOT A TICK BOX (round 47).
+   *
+   * The form no longer asks; it states, in the block above the submit button. So the
+   * answer is set here, at the one point every submission passes through — the browser
+   * form, the API and the tests all come this way — rather than trusted from a client
+   * that may simply have omitted the field.
+   *
+   * It is written as `true` and not dropped because the value is still needed: on the day
+   * a photographer needs a list, and somebody who objects afterwards needs a row to flip
+   * from true to false. Recording "agreed" for everyone and nothing for the objectors
+   * would leave no way to tell an objection from a missing answer.
+   *
+   * This is a real change of legal basis, from consent to legitimate interests, because
+   * agreement bundled into entry is not freely given. DPIA risk 18 records it.
+   */
+  answers.photoConsent = true;
+  if (age < 18) answers.guardianPhotoConsent = true;
+
+  return { ok: true, answers, age };
 }
