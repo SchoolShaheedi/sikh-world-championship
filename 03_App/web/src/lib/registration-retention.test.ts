@@ -12,7 +12,7 @@ import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 import { useTempDataDir, clearDataDir } from "./test-helpers";
 import { getDb } from "./db";
 import { apply, registrationsFor } from "./store";
-import { upsertPlayer } from "./players";
+import { upsertPlayer, playerByEmail } from "./players";
 
 /** Control the event list, so these tests do not depend on real event data. */
 let events: { slug: string; date: string | null }[] = [];
@@ -22,7 +22,12 @@ vi.mock("@/data/events", () => ({
   },
 }));
 
-const { applyRetention, purgeRegistrations, REGISTRATION_RETENTION_MONTHS } =
+const {
+  applyRetention,
+  purgeRegistrations,
+  purgeStaleProfileContact,
+  REGISTRATION_RETENTION_MONTHS,
+} =
   await import("./retention");
 
 const EVENT_DATE = "2026-10-03";
@@ -239,5 +244,90 @@ describe("the audit trail", () => {
 describe("the policy figure", () => {
   it("is 12 months, matching 04_Legal/RETENTION-POLICY.md", () => {
     expect(REGISTRATION_RETENTION_MONTHS).toBe(12);
+  });
+});
+
+/**
+ * The profile's copy of the contact details.
+ *
+ * Added 2026-09-02 so a returning player does not retype their name, mobile and their
+ * guardian's details. Those are the same fields the twelve-month purge above deletes, and
+ * profiles are kept indefinitely — so without this rule the convenience would cancel the
+ * promise. These tests are what stop that happening quietly.
+ */
+describe("the profile's copy of the contact details", () => {
+  async function profileWith(email: string) {
+    return upsertPlayer({
+      email,
+      displayName: "Child",
+      ageBand: "U16",
+      dateOfBirth: "2013-05-02",
+      fullName: "A Child Sandhu",
+      mobile: "07700900123",
+      guardianName: "A Parent",
+      guardianRelation: "Mother",
+      guardianMobile: "07700900125",
+    });
+  }
+
+  it("is cleared once the person has no registration left", async () => {
+    const player = await profileWith("gone@example.com");
+
+    expect(await purgeStaleProfileContact()).toBe(1);
+
+    const after = await playerByEmail("gone@example.com");
+    expect(after!.id).toBe(player.id);
+    expect(after!.fullName).toBeNull();
+    expect(after!.mobile).toBeNull();
+    expect(after!.guardianName).toBeNull();
+    expect(after!.guardianRelation).toBeNull();
+    expect(after!.guardianMobile).toBeNull();
+  });
+
+  it("keeps the profile itself — this clears fields, it does not delete accounts", async () => {
+    await profileWith("kept@example.com");
+    await purgeStaleProfileContact();
+    const after = await playerByEmail("kept@example.com");
+    expect(after).not.toBeNull();
+    expect(after!.displayName).toBe("Child");
+    expect(after!.dateOfBirth).toBe("2013-05-02");
+  });
+
+  it("leaves them alone while a registration still uses them", async () => {
+    const player = await profileWith("active@example.com");
+    await entrant("e1", player.id);
+
+    expect(await purgeStaleProfileContact()).toBe(0);
+    expect((await playerByEmail("active@example.com"))!.mobile).toBe("07700900123");
+  });
+
+  it("runs as part of the nightly job, and is recorded when it does something", async () => {
+    await profileWith("nightly@example.com");
+    const report = await applyRetention(AFTER);
+    const action = report.actions.find((a) => a.action === "clear-profile-contact");
+    expect(action).toBeDefined();
+    expect(action!.rowsAffected).toBe(1);
+    expect(action!.note).toMatch(/profile itself is kept/i);
+  });
+
+  it("writes nothing when there was nothing to clear", async () => {
+    const report = await applyRetention(AFTER);
+    expect(report.actions.map((a) => a.action)).not.toContain("clear-profile-contact");
+  });
+
+  it("follows the twelve-month rule without a number of its own", async () => {
+    /**
+     * The whole point of keying on "no registration left" rather than a date: the purge
+     * above deletes the registration at twelve months, and this then finds the profile in
+     * the same nightly run. One rule, one number, no second figure to keep in step.
+     */
+    const player = await profileWith("chain@example.com");
+    await entrant("e1", player.id);
+
+    await applyRetention(BEFORE);
+    expect((await playerByEmail("chain@example.com"))!.mobile).toBe("07700900123");
+
+    await applyRetention(AFTER);
+    expect((await playerByEmail("chain@example.com"))!.mobile).toBeNull();
   });
 });

@@ -51,6 +51,14 @@ export async function confirmSelection(
     // From this record and nowhere else — never a field a child can fill in.
     guardianEmail:
       age < 18 && typeof a.guardianEmail === "string" ? a.guardianEmail : null,
+    // Reusable contact details — see the same block in lib/interest.ts.
+    fullName: String(a.fullName ?? "") || null,
+    mobile: typeof a.mobile === "string" ? a.mobile : null,
+    guardianName: age < 18 && typeof a.guardianName === "string" ? a.guardianName : null,
+    guardianRelation:
+      age < 18 && typeof a.guardianRelation === "string" ? a.guardianRelation : null,
+    guardianMobile:
+      age < 18 && typeof a.guardianMobile === "string" ? a.guardianMobile : null,
   });
 
   const token = registration.checkInToken || makeCheckInToken();

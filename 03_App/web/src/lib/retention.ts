@@ -99,7 +99,8 @@ export interface RetentionAction {
     | "purge-medical"
     | "clear-check-in-tokens"
     | "purge-dormant-profiles"
-    | "purge-registrations";
+    | "purge-registrations"
+    | "clear-profile-contact";
   rowsAffected: number;
   note: string;
 }
@@ -235,6 +236,55 @@ export async function purgeRegistrations(eventSlug: string): Promise<number> {
   for (const { id } of results) {
     await db.prepare("DELETE FROM registrations WHERE id = ?").bind(id).run();
   }
+  return results.length;
+}
+
+/**
+ * Clear the reusable contact details from any profile with no registration left.
+ *
+ * WHY THIS EXISTS. On 2026-09-02 the profile started holding a full name, a mobile and a
+ * guardian's name, relationship and mobile, so a returning player would not retype them.
+ * Those are exactly the fields `purgeRegistrations()` deletes twelve months after an
+ * event — and profiles are kept indefinitely. Left alone, the convenience would have
+ * quietly cancelled the retention promise: the registration row would go and a copy of a
+ * child's name, their mobile and their parent's contact details would sit on a profile
+ * with no end date.
+ *
+ * So the same nightly job clears them. The rule is "no registration left", not a date of
+ * its own, which means it needs no new number and it follows the twelve-month rule
+ * automatically: the details survive exactly as long as a registration that used them.
+ * Somebody entering an event every year keeps their convenience; somebody who entered once
+ * in 2026 has nothing left on record by late 2027 but a profile with a first name on it.
+ *
+ * `display_name`, `date_of_birth`, `region`, `avatar_id` and `handle` are NOT touched —
+ * they are the profile itself, they are what the trophy cabinet and the bracket need, and
+ * keeping them is the decision taken on 2026-09-01.
+ */
+export async function purgeStaleProfileContact(): Promise<number> {
+  const db = await getDb();
+
+  const { results } = await db
+    .prepare(
+      `SELECT p.id FROM players p
+        WHERE (p.full_name IS NOT NULL OR p.mobile IS NOT NULL
+               OR p.guardian_name IS NOT NULL OR p.guardian_relation IS NOT NULL
+               OR p.guardian_mobile IS NOT NULL)
+          AND NOT EXISTS (SELECT 1 FROM registrations r WHERE r.player_id = p.id)`,
+    )
+    .all<{ id: string }>();
+
+  for (const { id } of results) {
+    await db
+      .prepare(
+        `UPDATE players
+            SET full_name = NULL, mobile = NULL, guardian_name = NULL,
+                guardian_relation = NULL, guardian_mobile = NULL
+          WHERE id = ?`,
+      )
+      .bind(id)
+      .run();
+  }
+
   return results.length;
 }
 
@@ -394,6 +444,25 @@ export async function applyRetention(now: Date = new Date()): Promise<RetentionR
       actions.push(a);
       await record(a, ranAt);
     }
+  }
+
+  /**
+   * Runs after the per-event loop, because it depends on what that loop deleted: a
+   * registration purged a moment ago is what makes a profile's contact details stale.
+   * Recorded only when it did something — the token clear already proves the job ran.
+   */
+  const contactCleared = await purgeStaleProfileContact();
+  if (contactCleared > 0) {
+    const a: RetentionAction = {
+      eventSlug: SCOPE,
+      action: "clear-profile-contact",
+      rowsAffected: contactCleared,
+      note:
+        "Full name, mobile and guardian contact cleared from profiles with no " +
+        "registration left. The profile itself is kept.",
+    };
+    actions.push(a);
+    await record(a, ranAt);
   }
 
   /**

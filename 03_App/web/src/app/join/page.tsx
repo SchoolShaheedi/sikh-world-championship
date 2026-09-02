@@ -47,8 +47,13 @@ export default async function JoinPage() {
         </p>
       ) : (
         <p className="mt-4 text-lg text-muted">
-          One profile, every Sikh World Championships event. Make it once — after that,
-          entering a new event is just registering your interest, not filling this in again.
+          One profile, every Sikh World Championships event.{" "}
+          <span className="text-body">
+            There is no separate sign-up — registering interest in an event below is what
+            creates it.
+          </span>{" "}
+          After that, entering a new event is confirming details we already hold, not
+          typing them again.
         </p>
       )}
 
@@ -82,8 +87,8 @@ export default async function JoinPage() {
         </h2>
         <p className="mt-3 text-muted">
           {me
-            ? "Pick an event. We only ask what's specific to it."
-            : "Registering interest in your first event is what creates your profile. Places are drawn, so registering interest is not a place — we'll email you either way."}
+            ? "Your name, contact details and — if you're under 18 — your parent or guardian's details are already with us, so they're filled in for you. What's left is the questions about the event, your medical answers, and the consents. Those are asked every time, on purpose."
+            : "Registering interest in your first event is what creates your profile — there is no separate sign-up form, and no details to enter twice. Places are drawn, so registering interest is not a place; we'll email you either way."}
         </p>
 
         <div className="mt-6 space-y-4">

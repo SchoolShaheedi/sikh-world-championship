@@ -35,10 +35,17 @@ function wrap(heading: string, bodyHtml: string): string {
           <h1 style="margin:0 0 16px;font-size:21px;line-height:1.3;">${heading}</h1>
           ${bodyHtml}
           <hr style="border:none;border-top:1px solid #e6e6e2;margin:26px 0 14px;">
+          <!-- NOT "reply to this email". It said that until 2026-09-02, and the address
+               it was sent from does not receive mail — so a parent who replied to a
+               safeguarding notice got a bounce saying our server was misconfigured. The
+               place to say a mailbox is unattended is in the email, before somebody
+               presses reply. -->
           <p style="margin:0;font-size:12px;color:#6b6b66;">
             ${BRAND} — competitions for Sikhs.<br>
-            Questions, or think you got this by mistake? Reply to this email or visit
-            <a href="https://sikhchampionships.com/support" style="color:#8a6d1f;">sikhchampionships.com/support</a>.
+            <strong>This address does not receive email</strong> — replies to it will not
+            reach us. Questions, or think you got this by mistake? Tell us at
+            <a href="https://sikhchampionships.com/support" style="color:#8a6d1f;">sikhchampionships.com/support</a>
+            — no account needed, and we read every message.
           </p>
         </td></tr>
       </table>

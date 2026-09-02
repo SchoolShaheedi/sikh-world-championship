@@ -36,6 +36,50 @@ function mockResend(status: number, body: unknown) {
   );
 }
 
+/**
+ * The unattended mailbox.
+ *
+ * We send from `no-reply@`, which has no mailbox. The footer used to say "reply to this
+ * email", so a parent replying to a safeguarding notice got a bounce claiming our server
+ * was misconfigured. These pin the fix: every email says the address is unattended, and a
+ * Reply-To is only ever advertised when there is a real address to advertise.
+ */
+describe("replies", () => {
+  async function sentBody(): Promise<Record<string, unknown>> {
+    const fetchMock = vi.fn(
+      async () => new Response(JSON.stringify({ id: "e1" }), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await sendEmail(mail());
+    const call = fetchMock.mock.calls[0] as unknown as [string, { body: string }];
+    return JSON.parse(call[1].body);
+  }
+
+  it("tells the reader the address does not receive email", async () => {
+    const body = await sentBody();
+    expect(body.text).toMatch(/does not receive email/i);
+    // And still points somewhere that does.
+    expect(body.text).toContain("sikhchampionships.com/support");
+  });
+
+  it("keeps the template's own body intact", async () => {
+    const body = await sentBody();
+    expect(body.text).toContain("text body");
+  });
+
+  it("sends no Reply-To when there is no address that works", async () => {
+    delete process.env.MAIL_REPLY_TO;
+    expect(await sentBody()).not.toHaveProperty("reply_to");
+  });
+
+  it("sends one when there is", async () => {
+    process.env.MAIL_REPLY_TO = "hello@sikhchampionships.com";
+    const body = await sentBody();
+    expect(body.reply_to).toEqual(["hello@sikhchampionships.com"]);
+    delete process.env.MAIL_REPLY_TO;
+  });
+});
+
 describe("sending", () => {
   it("records a successful send with the provider id", async () => {
     mockResend(200, { id: "resend-abc" });

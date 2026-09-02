@@ -1,17 +1,25 @@
 # Deployment — Cloudflare Workers
 
-> **LIVE (preview):** https://sikh-world-championship.shaheedibunga.workers.dev
-> Deployed to the `media@shaheedibunga.com` account. Registration and the Looking For
-> Game board are **switched off** — see "Feature flags" below. Every other page works.
+> **LIVE:** https://sikhchampionships.com — the apex is the canonical host (decision 139),
+> `www` redirects to it, and the `workers.dev` URL still answers as the preview.
+> Deployed to the `media@shaheedibunga.com` account.
 >
-> **`sikhchampionships.com` is not attached yet.** It needs a nameserver change first —
-> see "Attaching the domain".
+> **Registration is OPEN** as of 2026-09-01: `SWC_REGISTRATION_OPEN` is `"true"` in
+> `wrangler.jsonc` and the form writes real children's records. That was a safeguarding
+> decision taken at a meeting — read `04_Legal/DPIA.md` before touching it. The Looking For
+> Game board is still off and its decision has not been taken.
+>
+> This banner said the opposite of all three things until 2026-09-02 — domain not attached,
+> registration off — for four days after decision 137 and one day after entries opened. It
+> was read as current and acted on. **`DECISIONS.md` is the source of truth for what is
+> live; if this file disagrees with it, this file is wrong.**
 
-## Feature flags — why the sign-up form is not there
+## Feature flags
 
 `src/lib/features.ts` gates registration and the LFG board. Both are **off in production by
 default** and on in local development, so a deploy is safe unless someone deliberately
-turns them on.
+turns them on. Registration has been deliberately turned on since 2026-09-01; the LFG board
+has not.
 
 Two independent reasons, and both currently apply:
 
@@ -39,14 +47,18 @@ The sign-up page is `force-dynamic` so the page and the API always agree about w
 entries are open. Prerendering it would bake "closed" into the HTML at build time, and
 flipping the flag would then open the endpoint while the page still said closed.
 
-## Attaching sikhchampionships.com
+## Attaching sikhchampionships.com — DONE 2026-08-29
 
-The domain is registered at **Namecheap** (created 2026-08-26) and still uses Namecheap
-nameservers, so Cloudflare cannot serve it yet. Workers custom domains require the zone to
-be on Cloudflare — there is no CNAME-only shortcut for Workers.
+> Kept as the runbook for the next domain. The zone is on Cloudflare
+> (`zita`/`phil.ns.cloudflare.com`), the apex serves the site, and decision 137 records it.
+> Nothing below needs doing again for this domain.
 
-This part cannot be scripted from here: the wrangler OAuth token has `zone (read)` but not
-zone-create, so adding the zone is a dashboard action.
+The domain is registered at **Namecheap** (created 2026-08-26). Workers custom domains
+require the zone to be on Cloudflare — there is no CNAME-only shortcut for Workers — so the
+nameservers had to move.
+
+This part could not be scripted from here: the wrangler OAuth token has `zone (read)` but
+not zone-create, so adding the zone was a dashboard action.
 
 1. **Add the site** at https://dash.cloudflare.com → Add a site → `sikhchampionships.com`
    → Free plan. Cloudflare will show two assigned nameservers.
@@ -133,7 +145,7 @@ route, and the stores use `node:crypto` and `node:fs`. That is a rewrite, not a 
 blocker on the custom domain: Pages supports custom domains for zones that are *not* on
 Cloudflare — you CNAME from the external registrar to `<project>.pages.dev` and Cloudflare
 issues the certificate. Workers custom domains require the zone on Cloudflare, which is why
-`sikhchampionships.com` needs a nameserver change.
+`sikhchampionships.com` needed a nameserver change — since done.
 
 That is a real trade-off, but not one worth taking: it would mean building on a deprecated
 adapter and rewriting every route for the edge runtime, to avoid a single one-off DNS

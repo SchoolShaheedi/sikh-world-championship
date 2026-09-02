@@ -47,6 +47,16 @@ export interface SessionPlayer {
   guardianApprovedForBoard: boolean;
   /** Where the guardian notification goes when an under-16 connects with someone. */
   guardianEmail: string | null;
+  /**
+   * The reusable contact details, so entering a second event is confirming rather than
+   * retyping. Their own data, shown only to them, and cleared from the profile once the
+   * registration behind it is purged — see `purgeStaleProfileContact()`.
+   */
+  fullName: string | null;
+  mobile: string | null;
+  guardianName: string | null;
+  guardianRelation: string | null;
+  guardianMobile: string | null;
   isModerator: boolean;
 }
 
@@ -77,6 +87,13 @@ export async function currentPlayer(): Promise<SessionPlayer | null> {
     guardianApprovedForBoard:
       player.ageBand === "16+" ? true : await hasApproval(player.id),
     guardianEmail: player.ageBand === "16+" ? null : player.guardianEmail,
+    fullName: player.fullName,
+    mobile: player.mobile,
+    // Guardian details are meaningless for 16+ and must not be offered to an adult's
+    // next entry form — the same reasoning as guardianEmail directly above.
+    guardianName: player.ageBand === "16+" ? null : player.guardianName,
+    guardianRelation: player.ageBand === "16+" ? null : player.guardianRelation,
+    guardianMobile: player.ageBand === "16+" ? null : player.guardianMobile,
     isModerator: player.isModerator,
   };
 }

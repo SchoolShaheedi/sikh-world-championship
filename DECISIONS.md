@@ -2307,3 +2307,139 @@ this was in the backlog to avoid.
 database so the screen can be watched updating. It refuses `--remote`, always passes
 `--local` to wrangler, and prefixes every row it writes so `--clear` removes exactly what
 it made and nothing else.
+
+---
+
+# Round 50 (2026-09-02) — the sponsor discount is gone, and a licensed range replaces it
+
+## The 10% is dropped
+
+`SWC26` and "10% off with code" are withdrawn. There is no discount code, and the
+`/sponsors` page and the profile benefits list no longer offer one.
+
+What replaced it is not nothing, and is a better fit for what a sponsor listing is meant
+to give a player: **access to an event-exclusive range that does not exist anywhere else.**
+A percentage off a catalogue anyone can already buy is a weaker offer than a shirt that
+only exists because this championship does, and it needs no code, no expiry date, and no
+one checking whether the code still works — which is the failure mode round 48 was
+worried about ("a discount code that does not work is worse for the sponsor than no
+mention at all").
+
+## Vismaad Creatives is licensed to make SWC merchandise
+
+Live at **https://www.vismaadcreatives.com/swc/**, in SWC's own palette and type rather
+than the shop's, backed by an `swc-fc-27` product collection. `src/data/sponsors.ts`
+points at it.
+
+**13% of net receipts on that range comes back to the championship.** Terms are written
+out in `todo-swc-licensed-merch.md` in the Vismaad repo — the royalty base is defined
+there precisely (line items only, discounts apportioned, shipping and refunds excluded)
+because "13% of sales" is the kind of phrase that starts an argument a year later.
+
+**The royalty is the sponsorship.** Vismaad is both our first sponsor and our first
+licensee, and both entities belong to the same person. There is no separate sponsorship
+fee and the licence is not payment for the `/sponsors` listing. Two labels on one flow of
+money is how somebody later concludes two payments were owed, so it is stated once, here.
+
+## Merchandise is not entry, and must never look like it
+
+Entry is free, there is no payment anywhere in registration, and event 1 seats
+twelve-year-olds. So:
+
+- **Nothing on the sign-up path links to merchandise.** Not the form, not the
+  confirmation email, not the guardian email. The link runs the other way only.
+- The merch page states, in its footer, that merchandise is not entry to the event and
+  that entry is arranged only here. There is a test in the Vismaad repo asserting that
+  sentence stays on the page.
+- Vismaad is solely responsible for orders, payment, delivery and returns. We take no
+  money, hold no stock, and are not a party to anybody's order.
+
+A paid page a parent could mistake for a paid entry route is the one way this range could
+damage the event. That is a safeguarding line, not a commercial one, and it is why the
+disclaimer is a test rather than a good intention.
+
+# Round 50 — a mailbox that bounces, a page nobody could find, and a profile worth having
+
+## "Reply to this email" was a lie
+
+The footer of every email said "Questions, or think you got this by mistake? Reply to this
+email or visit …". Mail is sent from `no-reply@sikhchampionships.com`, which has no mailbox
+behind it — so a parent who replied to a safeguarding notice got a bounce saying our server
+was misconfigured. Of all the people to send an unintelligible error to, somebody trying to
+say "this wasn't agreed with me" is the worst.
+
+Two halves to the fix, and only one of them is code.
+
+**In the app, now:** every email says, in the footer, that the address does not receive
+email and points at the contact form instead. The plain-text version is appended in
+`sendEmail` rather than in each template, because a footer that eight templates have to
+remember is a footer that goes missing from the one email that needed it. And `sendEmail`
+now sends a `Reply-To` when `MAIL_REPLY_TO` is set, because some people will reply to the
+address in their mail client regardless of what the footer says. Unset means no header at
+all, which is the honest state — better to advertise nothing than a second address that
+also bounces.
+
+**In DNS, theirs:** the bounce text itself is written by the receiving mail server, not by
+us, so it cannot be authored from here. Making it accurate means making the rejection
+accurate, and the cheapest way to do that is to stop rejecting: a forwarding alias at the
+registrar so mail to that address lands in a real inbox. Recommended in the reply rather
+than done, because it decides whether there is an inbox somebody has to watch.
+
+## Everything for the day, in one row
+
+Messages were being looked for on `/admin` and have always lived on `/moderation`. The
+narrow fix is a sentence; the real problem is bigger than one page, because on 3 October
+somebody will be hunting for a URL while a hall waits.
+
+So `/admin` now opens with a row of links: messages and reports, the big screen, the public
+bracket, the event page. No new functionality — it is the difference between knowing the
+app and having to remember it under pressure. The two that open on the television or a
+projector open in a new tab, so the admin page they were working in is still there behind.
+
+## A profile worth having
+
+The question was "why does the profile not hold the details, where do they go?" — and the
+answer was that they went onto the registration row and the profile held almost nothing: a
+first name, an email, a date of birth, a region, an avatar. Entering a second event meant
+retyping twenty-odd fields, which is indefensible for a platform whose whole pitch is
+"make it once".
+
+The profile now also holds the full name, the mobile, and for an under-18 the guardian's
+name, relationship, email and mobile. Written only from a validated registration and never
+from an editable page, which is what keeps invariant 3 worth anything — a guardian's
+details still originate from a registration record every single time.
+
+**What is still asked every event, and why it is not laziness:**
+
+- **Medical, allergies, accessibility.** Purged 30 days after each event, they genuinely
+  change, and a stale allergy displayed as already-answered is worse than an empty box.
+- **Every consent.** A consent given for October is not a consent for next March. The
+  guardian is emailed again each time, so the claim is re-made rather than inherited.
+- **The event's own questions.** That is the point of asking them.
+
+So a returning player confirms a filled-in form, answers the event questions, ticks the
+consents, and is done. Not a single checkbox, but close, and the difference is made of
+things that should not be inherited.
+
+### The consequence, handled the same day
+
+Those six fields are exactly what `purgeRegistrations()` deletes twelve months after an
+event. Profiles are kept indefinitely as of yesterday. Copying purgeable fields onto an
+unbounded row would have quietly cancelled the twelve-month rule — the registration would
+go and a copy of a child's name, their mobile and their parent's contact details would sit
+on a profile with no end date, while the privacy notice went on promising deletion.
+
+`purgeStaleProfileContact()` clears all six once the person has no registration left. It is
+keyed on "no registration left" rather than a date of its own, deliberately: it needs no
+second number, it can never drift out of step with the twelve-month rule, and it follows it
+automatically in the same nightly run. Somebody who enters an event every year keeps their
+convenience. Somebody who entered once in 2026 has a first name and a trophy cabinet by
+late 2027 and nothing else.
+
+Migration 0011 widens the audit CHECK for the new action, so the clear is recorded like
+every other deletion. Six tests, including one that runs the whole nightly job across the
+twelve-month boundary and asserts the contact details are there before it and gone after.
+
+**A rule for anything added to `players` from now on**, written into CLAUDE.md: if the
+registration purge deletes a field, a copy of it on the profile needs its own rule in that
+function. Otherwise the copy outlives the original and the purge is decoration.

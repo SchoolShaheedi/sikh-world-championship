@@ -29,6 +29,20 @@ export interface Player {
   eventVerified: boolean;
   isModerator: boolean;
   guardianEmail: string | null;
+  /**
+   * REUSABLE CONTACT DETAILS, added 2026-09-02 so a second event does not ask for them
+   * again. Shown only to the person themselves, to prefill their next entry form.
+   *
+   * These are the same fields the twelve-month registration purge deletes, so they are
+   * NOT kept for the life of the profile: `purgeStaleProfileContact()` clears all five
+   * once the person has no registration left. The profile survives; the contact details
+   * do not outlive the event they were given for.
+   */
+  fullName: string | null;
+  mobile: string | null;
+  guardianName: string | null;
+  guardianRelation: string | null;
+  guardianMobile: string | null;
   createdAt: string;
   /**
    * Last time this account was used, or null if never since it was made.
@@ -62,6 +76,11 @@ function toPlayer(r: Row): Player {
     eventVerified: fromBool(r.event_verified),
     isModerator: fromBool(r.is_moderator),
     guardianEmail: (r.guardian_email as string | null) ?? null,
+    fullName: (r.full_name as string | null) ?? null,
+    mobile: (r.mobile as string | null) ?? null,
+    guardianName: (r.guardian_name as string | null) ?? null,
+    guardianRelation: (r.guardian_relation as string | null) ?? null,
+    guardianMobile: (r.guardian_mobile as string | null) ?? null,
     createdAt: r.created_at as string,
     lastSeenAt: (r.last_seen_at as string | null) ?? null,
   };
@@ -106,6 +125,16 @@ export interface NewPlayer {
   handle?: string | null;
   /** Under-16s only, and only ever from the registration record. */
   guardianEmail?: string | null;
+  /**
+   * The reusable contact details. All optional and all only ever written from a
+   * registration — never from a page the person can edit, which is what keeps the
+   * guardian fields trustworthy (invariant 3).
+   */
+  fullName?: string | null;
+  mobile?: string | null;
+  guardianName?: string | null;
+  guardianRelation?: string | null;
+  guardianMobile?: string | null;
 }
 
 /**
@@ -133,6 +162,14 @@ export async function upsertPlayer(input: NewPlayer): Promise<Player> {
                 avatar_id = COALESCE(?, avatar_id), gamertag = COALESCE(?, gamertag),
                 handle = COALESCE(?, handle),
                 guardian_email = COALESCE(?, guardian_email),
+                -- COALESCE, like everything above it: a later registration is more
+                -- likely to be right, and a field the new form did not send must not
+                -- blank out one we already had.
+                full_name = COALESCE(?, full_name),
+                mobile = COALESCE(?, mobile),
+                guardian_name = COALESCE(?, guardian_name),
+                guardian_relation = COALESCE(?, guardian_relation),
+                guardian_mobile = COALESCE(?, guardian_mobile),
                 -- Registering interest is activity. See touchPlayer().
                 last_seen_at = ?
           WHERE id = ?`,
@@ -144,6 +181,11 @@ export async function upsertPlayer(input: NewPlayer): Promise<Player> {
         input.gamertag ?? null,
         input.handle ?? null,
         input.guardianEmail ?? null,
+        input.fullName ?? null,
+        input.mobile ?? null,
+        input.guardianName ?? null,
+        input.guardianRelation ?? null,
+        input.guardianMobile ?? null,
         new Date().toISOString(),
         existing.id,
       )
@@ -164,6 +206,11 @@ export async function upsertPlayer(input: NewPlayer): Promise<Player> {
     eventVerified: false,
     isModerator: false,
     guardianEmail: input.guardianEmail ?? null,
+    fullName: input.fullName ?? null,
+    mobile: input.mobile ?? null,
+    guardianName: input.guardianName ?? null,
+    guardianRelation: input.guardianRelation ?? null,
+    guardianMobile: input.guardianMobile ?? null,
     createdAt: new Date().toISOString(),
     lastSeenAt: null,
   };
@@ -172,13 +219,18 @@ export async function upsertPlayer(input: NewPlayer): Promise<Player> {
     .prepare(
       `INSERT INTO players
          (id, email, display_name, age_band, date_of_birth, region, avatar_id, gamertag,
-          handle, event_verified, is_moderator, guardian_email, created_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          handle, event_verified, is_moderator, guardian_email,
+          full_name, mobile, guardian_name, guardian_relation, guardian_mobile,
+          created_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     )
     .bind(
       player.id, player.email, player.displayName, player.ageBand, player.dateOfBirth,
       player.region, player.avatarId, player.gamertag, player.handle,
-      bool(false), bool(false), player.guardianEmail, player.createdAt,
+      bool(false), bool(false), player.guardianEmail,
+      player.fullName, player.mobile, player.guardianName, player.guardianRelation,
+      player.guardianMobile,
+      player.createdAt,
     )
     .run();
 

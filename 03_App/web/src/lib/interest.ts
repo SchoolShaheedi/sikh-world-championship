@@ -71,6 +71,27 @@ export async function registerInterest(
       age < 18 && typeof answers.guardianEmail === "string"
         ? answers.guardianEmail
         : null,
+    /**
+     * The reusable contact details, so a second event does not ask for them again
+     * (2026-09-02). Written here — from a validated registration — and never from a page
+     * anybody can edit, which is what keeps the guardian fields worth trusting.
+     *
+     * The guardian block is stored only for an under-18. An adult has no guardian, and
+     * copying an empty one onto a profile would mean a 24-year-old's next entry form
+     * offered to fill in a parent's name.
+     */
+    fullName,
+    mobile: typeof answers.mobile === "string" ? answers.mobile : null,
+    guardianName:
+      age < 18 && typeof answers.guardianName === "string" ? answers.guardianName : null,
+    guardianRelation:
+      age < 18 && typeof answers.guardianRelation === "string"
+        ? answers.guardianRelation
+        : null,
+    guardianMobile:
+      age < 18 && typeof answers.guardianMobile === "string"
+        ? answers.guardianMobile
+        : null,
   });
 
   const result = await apply({

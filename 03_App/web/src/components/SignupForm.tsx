@@ -337,6 +337,18 @@ export function SignupForm({
       <fieldset className="rounded-3xl border border-line bg-surface/60 p-6">
         <legend className="font-display px-2 text-lg text-kesri">1. About you</legend>
 
+        {/* Said once, at the top of the first fieldset a returning player reads. The
+            point is not the reassurance — it is that they should CHECK rather than skim:
+            a mobile number that changed since the last event is the one thing here that
+            matters on the day. */}
+        {prefill?.fullName && (
+          <p className="mb-5 rounded-xl border border-line bg-ink/20 p-4 text-sm text-muted">
+            <span className="text-body">Filled in from your profile.</span> Change anything
+            that has changed — especially a phone number. Your medical answers and the
+            consents below are asked again for every event, on purpose.
+          </p>
+        )}
+
         <div className="grid gap-5 sm:grid-cols-2">
           <label className="block sm:col-span-2">
             <Label>Full name</Label>

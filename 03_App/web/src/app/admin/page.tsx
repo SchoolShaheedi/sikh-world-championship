@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { currentPlayer } from "@/lib/session";
 import { EVENTS } from "@/data/events";
 import { registrationsFor } from "@/lib/store";
@@ -111,16 +110,51 @@ export default async function AdminPage() {
         each event.
       </p>
 
-      {/* Messages are NOT here, and people kept looking for them here. Two pages, two
-          jobs: this one runs the competition, /moderation reads what people sent us. */}
-      <p className="mt-3 text-muted">
-        Looking for messages? Everything sent through the contact form — questions, safety
-        concerns, sponsor enquiries, erasure requests — is in{" "}
-        <Link href="/moderation" className="text-kesri hover:underline">
-          Moderation
-        </Link>
-        , not here.
-      </p>
+      {/* EVERY PAGE THAT MATTERS ON THE DAY, in one row.
+          Added because messages were being looked for here and live on /moderation — but
+          the general problem is bigger than that one page: on 3 October somebody will be
+          hunting for a URL while a hall waits. Nothing here is new functionality, it is
+          the difference between knowing the app and having to remember it. */}
+      <nav className="mt-6 flex flex-wrap gap-2" aria-label="Game day">
+        {[
+          {
+            href: "/moderation",
+            label: "Messages & reports",
+            hint: "everything sent through the contact form",
+          },
+          {
+            href: `/events/${EVENTS[0]?.slug ?? ""}/tv`,
+            label: "Big screen",
+            hint: "open on the laptop plugged into the TV",
+            blank: true,
+          },
+          {
+            href: `/events/${EVENTS[0]?.slug ?? ""}/bracket`,
+            label: "Public bracket",
+            hint: "what anyone at home sees",
+            blank: true,
+          },
+          {
+            href: `/events/${EVENTS[0]?.slug ?? ""}`,
+            label: "Event page",
+            hint: "rules, times, address",
+            blank: true,
+          },
+        ].map((l) => (
+          <a
+            key={l.href}
+            href={l.href}
+            {...(l.blank ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+            className="group rounded-2xl border border-line bg-surface/60 px-4 py-3 transition-colors hover:border-kesri/60"
+          >
+            <span className="block text-sm font-semibold text-body group-hover:text-kesri">
+              {l.label}
+              {l.blank && <span aria-hidden className="ml-1 text-muted">↗</span>}
+            </span>
+            <span className="block text-xs text-muted">{l.hint}</span>
+          </a>
+        ))}
+      </nav>
 
       {/* ON THE DAY.
           First thing on the page, above the draw, because everything in it is a job with

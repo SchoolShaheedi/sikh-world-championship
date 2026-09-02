@@ -97,7 +97,8 @@ export default async function RegisterInterestPage({
             <>
               You&apos;re signed in as{" "}
               <span className="text-body">{me.displayName}</span>, so this attaches to your
-              existing profile — no second account.
+              existing profile — no second account, and your details are already filled in.
+              Check them, answer the questions about this event, and tick the consents.
             </>
           ) : (
             <>
@@ -164,18 +165,23 @@ export default async function RegisterInterestPage({
                draw. Testers and the closed preview only. */
             testFill={demo || tester}
             /**
-             * What carries over from an existing profile, and why it is so little.
+             * What carries over from an existing profile.
              *
-             * A profile deliberately holds almost nothing: a first name, an email, a date
-             * of birth, a region and an avatar. Not the full name, not the mobile, and
-             * nothing at all about a guardian — a guardian's details come from the
-             * registration record every time, which is invariant 3 and the reason the
-             * guardian notification means anything.
+             * Widened on 2026-09-02: entering a second event used to mean retyping
+             * twenty-odd fields, because a profile held only a first name, an email, a
+             * date of birth, a region and an avatar. It now also holds the full name, the
+             * mobile and — for an under-18 — the guardian's name, relationship, email and
+             * mobile, all written from a validated registration and never from a page
+             * anybody can edit.
              *
-             * So a second event asks again for the full name, the mobile, the guardian
-             * block, the medical answers and every consent. The first four because we do
-             * not keep them; the consents because a consent given for one event is not a
-             * consent for the next one.
+             * WHAT IS STILL NOT PREFILLED, on purpose:
+             *   - medical, allergies, accessibility. Per-event, purged 30 days after each
+             *     one, and a stale allergy shown as already-answered is worse than a
+             *     blank box.
+             *   - every consent. A consent given for October is not a consent for next
+             *     March, and the guardian is emailed again each time so the claim is
+             *     re-made rather than inherited.
+             *   - the event's own questions, which are the point of asking.
              */
             prefill={
               me
@@ -186,9 +192,13 @@ export default async function RegisterInterestPage({
                     // Their existing public name. Carried over so the bracket calls them
                     // the same thing at every event they enter.
                     handle: me.handle ?? "",
-                    // Added 2026-09-02: it never changes, and re-typing it was the most
-                    // obviously silly thing about entering a second event.
                     dob: me.dateOfBirth ?? "",
+                    fullName: me.fullName ?? "",
+                    mobile: me.mobile ?? "",
+                    guardianName: me.guardianName ?? "",
+                    guardianRelation: me.guardianRelation ?? "",
+                    guardianEmail: me.guardianEmail ?? "",
+                    guardianMobile: me.guardianMobile ?? "",
                   }
                 : undefined
             }

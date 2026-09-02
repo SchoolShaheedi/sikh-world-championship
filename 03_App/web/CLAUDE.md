@@ -129,6 +129,14 @@ before touching one.
   `04_Legal/RETENTION-POLICY.md` enforceable. Do not move them into `answers`. (`dietary`
   is one of those columns and is no longer collected; the purge still clears it, which is
   what you want for rows written before 2026-09-01.)
+- **A profile holds the reusable contact details** (migration 0010): full name, mobile,
+  and for an under-18 the guardian's name, relationship, email and mobile — so a second
+  event is a confirmation rather than a retype. Written ONLY from a validated registration,
+  never from an editable page, which is what keeps invariant 3 true. And bounded on the day
+  they were added: `purgeStaleProfileContact()` clears all six once the person has no
+  registration left. **Do not add a field to `players` that the registration purge deletes
+  without giving it a rule in that function** — an unbounded copy of a purgeable field
+  cancels the purge.
 - Three clocks run on one registration row and they are deliberately different lengths:
   the check-in token goes the day after the event, the medical fields at 30 days, and the
   **row itself at 12 months** (`purgeRegistrations()`). Anything you add to this table
@@ -206,7 +214,7 @@ saves nothing, in tester mode it saves a real child's details to the live databa
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 308 tests
+npm test                         # 318 tests
 npx tsc --noEmit
 npm run lint
 npm run build

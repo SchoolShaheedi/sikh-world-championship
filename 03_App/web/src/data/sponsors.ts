@@ -31,7 +31,9 @@ export const SPONSORS: Sponsor[] = [
     blurb: "Design and creative studio, and the first business to back the championship.",
     offer: {
       detail: "Day-exclusive SWC merch",
-      href: "https://vismaadcreatives.com/swc",
+      // Canonical form on purpose: the apex 301s to www and /swc 308s to /swc/, so
+      // the short version costs a player two redirects before the page paints.
+      href: "https://www.vismaadcreatives.com/swc/",
     },
   },
 ];

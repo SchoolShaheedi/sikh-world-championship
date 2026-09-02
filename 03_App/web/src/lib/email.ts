@@ -30,6 +30,46 @@ function mailFrom(): string {
   );
 }
 
+/**
+ * An address that actually receives mail, if one exists.
+ *
+ * WHY THIS IS HERE. We send from `no-reply@`, which has no mailbox behind it. Until
+ * 2026-09-02 the footer of every email said "reply to this email", so a parent who
+ * replied to a safeguarding notice got a bounce telling them our server was
+ * misconfigured — which is a terrible thing to tell somebody who was trying to say
+ * "this wasn't agreed with me".
+ *
+ * Two halves to fixing that, and this is the second one:
+ *
+ *  1. Stop inviting the reply, and say the mailbox is unattended. Done in the footer of
+ *     every email, HTML and plain text, and it needs no DNS.
+ *  2. Make a reply land somewhere anyway, because some people will reply regardless — to
+ *     the address at the top of their mail client, not the link in the footer. Set
+ *     `MAIL_REPLY_TO` to a real forwarding alias and every email carries it.
+ *
+ * Unset means no `Reply-To` header, which is the honest state: better to send nothing
+ * than to advertise a second address that also bounces.
+ */
+function mailReplyTo(): string | null {
+  const v = process.env.MAIL_REPLY_TO?.trim();
+  return v ? v : null;
+}
+
+/**
+ * Appended to the plain-text body of every email, so no template can forget it.
+ *
+ * The HTML version lives in `wrap()` in email-templates.ts. This is the text one, added
+ * here rather than in eight templates for the same reason: a footer that has to be
+ * remembered is a footer that goes missing from the one email that needed it.
+ */
+const TEXT_FOOTER = [
+  "",
+  "--",
+  "This address does not receive email — a reply to it will not reach us.",
+  "Tell us anything at https://sikhchampionships.com/support — no account needed,",
+  "you do not have to give your name, and we read every message.",
+].join("\n");
+
 export interface SendResult {
   ok: boolean;
   /** True when an identical send was already recorded, so nothing was sent again. */
@@ -117,6 +157,8 @@ export async function sendEmail(input: EmailInput): Promise<SendResult> {
     return { ok: false, error };
   }
 
+  const replyTo = mailReplyTo();
+
   try {
     const res = await fetch(RESEND_ENDPOINT, {
       method: "POST",
@@ -126,9 +168,10 @@ export async function sendEmail(input: EmailInput): Promise<SendResult> {
       },
       body: JSON.stringify({
         from: mailFrom(),
+        ...(replyTo ? { reply_to: [replyTo] } : {}),
         to: [input.to],
         subject: input.subject,
-        text: input.text,
+        text: input.text + TEXT_FOOTER,
         html: input.html,
       }),
     });

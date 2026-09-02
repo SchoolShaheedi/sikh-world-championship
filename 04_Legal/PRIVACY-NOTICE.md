@@ -218,9 +218,15 @@ after the event, safeguarding records for **6 years**, and medical notes deleted
 automatically, on a nightly job.
 
 **Your profile is kept until you or we delete it.** There is no automatic expiry — that
-changed on 1 September 2026. It holds a first name, the handle you chose, your email, your
-date of birth, your region and your avatar; nothing medical and no guardian contact
-details, which live on the registration and are deleted on the twelve-month clock above.
+changed on 1 September 2026. It holds a first name, the handle on the bracket, your email,
+your date of birth, your region and your avatar. Nothing medical, ever.
+
+**While you have a live entry it also holds your full name, your mobile and — if you are
+under 18 — your parent or guardian's name, relationship, email and mobile**, so entering a
+second event is checking details rather than typing them again. Those six are **deleted as
+soon as you have no entry left**, which is twelve months after the last event you entered.
+They are not kept for the life of the profile: they are the same details the twelve-month
+rule above deletes, and it would be no rule at all if a copy survived it.
 
 **If you want it gone, ask, and we will delete it** — you do not need a reason and you do
 not need an account. That request is the main protection here, so it is honoured properly:
