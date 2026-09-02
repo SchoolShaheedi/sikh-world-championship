@@ -54,11 +54,18 @@ export default function SponsorsPage() {
               {s.domain} →
             </a>
             {s.offer && (
-              <p className="mt-4 rounded-xl border border-kesri/40 bg-kesri/10 p-4 text-sm text-body">
+              <div className="mt-4 rounded-xl border border-kesri/40 bg-kesri/10 p-4 text-sm text-body">
                 <strong className="font-bold">{s.offer.detail}</strong> for Sikh World
-                Championships players — use code{" "}
-                <span className="font-mono text-kesri">{s.offer.code}</span>.
-              </p>
+                Championships players.
+                <a
+                  href={s.offer.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 block font-semibold text-kesri hover:underline"
+                >
+                  See the range →
+                </a>
+              </div>
             )}
           </div>
         ))}
@@ -74,7 +81,7 @@ export default function SponsorsPage() {
       <div className="mt-14 rounded-3xl border border-line bg-surface/60 p-8">
         <h2 className="font-display text-2xl text-kesri">Sponsor the championship</h2>
         <p className="mt-4 text-muted">
-          Sixty-four players aged 12 to 21, their families in the room with them, and a
+          Sixty-four players aged 12 to 25, their families in the room with them, and a
           free day out built by volunteers. It is the first event of its kind for Sikh
           youth in the UK, and the people in that hall are the ones you want to reach.
         </p>

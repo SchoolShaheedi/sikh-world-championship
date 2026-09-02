@@ -21,9 +21,24 @@ const NAV = [
   { href: "/support", label: "Contact" },
 ];
 
+/**
+ * Routes that get no site chrome at all.
+ *
+ * `/events/<slug>/tv` is the big screen in the hall. Navigation on a television is not
+ * navigation, it is a row of things somebody can click by accident in front of a room —
+ * and the footer would push the bracket up off the top of the screen. Hidden here rather
+ * than with a route group, because a route group means moving every other page in the app
+ * to keep one page's furniture off.
+ */
+function isBareRoute(pathname: string | null): boolean {
+  return !!pathname && pathname.endsWith("/tv");
+}
+
 export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  if (isBareRoute(pathname)) return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-linesoft bg-ink/80 backdrop-blur-xl">
@@ -94,6 +109,9 @@ export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {
 }
 
 export function SiteFooter({ logoSrc = null }: { logoSrc?: string | null }) {
+  const pathname = usePathname();
+  if (isBareRoute(pathname)) return null;
+
   return (
     <footer className="mt-24 border-t border-linesoft bg-surface/40">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-3">

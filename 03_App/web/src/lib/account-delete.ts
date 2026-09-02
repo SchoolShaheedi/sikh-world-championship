@@ -29,6 +29,24 @@ const CASCADE: { sql: string; params: (id: string) => unknown[] }[] = [
     sql: "DELETE FROM blocks WHERE blocker_id = ? OR blocked_id = ?",
     params: (id) => [id, id],
   },
+  /**
+   * Matches are EMPTIED, not deleted.
+   *
+   * A match row is a record of the competition — who played whom in the quarter-final and
+   * what the score was — rather than a record about a person, and deleting it would put a
+   * hole in the middle of a bracket that other people are also in. Nulling the id removes
+   * everything that identifies the deleted player: the row keeps a score and a shape, the
+   * screen renders an empty slot, and no name can come back because names are read live
+   * from `players` and never stored here.
+   */
+  {
+    sql: "UPDATE matches SET home_id = NULL WHERE home_id = ?",
+    params: (id) => [id],
+  },
+  {
+    sql: "UPDATE matches SET away_id = NULL WHERE away_id = ?",
+    params: (id) => [id],
+  },
 ];
 
 /**

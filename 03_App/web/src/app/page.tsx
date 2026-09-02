@@ -263,7 +263,7 @@ export default function HomePage() {
               </div>
 
               <p className="micro mt-8">
-                Free entry · Ages 12–21 · PlayStation 5
+                Free entry · Ages 12–25 · PlayStation 5
               </p>
             </div>
           </div>

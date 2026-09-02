@@ -7,45 +7,38 @@ The 21 questions in the previous version were answered at the planning meeting o
 **1 September 2026**. What follows is the short list of what is genuinely still open, then
 the record of what was decided. Nothing here blocks the build.
 
-**Event: Sikh FC 27 Championship · Leicester · Saturday 3 October 2026 · 64 places · ages 12–21**
+**Event: Sikh FC 27 Championship · Leicester · Saturday 3 October 2026 · 64 places · ages 12–25**
 Applications close **26 September**. Entries are **open to the public** as of 1 September.
 
 ---
 
 ## Still open
 
-1. **Is the event 12–21 or 12–25?** A live edit to the rules on 1 September said "ages 12
-   to 25". Everything else — the division the form actually enforces, the site copy, the
-   privacy notice, the DPIA — says 12 to 21, so it was left at 21 and flagged rather than
-   changed. **If 25 is meant, say so:** it is one number plus a copy sweep, but it also
-   puts unrelated 25-year-olds at a station with 12-year-olds all day, which is a
-   safeguarding decision and not a typo fix.
-
-2. **Write the safeguarding decision into `04_Legal/DPIA.md`.** The lead and deputy are
+1. **Write the safeguarding decision into `04_Legal/DPIA.md`.** The lead and deputy are
    named, the DBS list is confirmed, insurance is covered by the venue and the assessment
    is signed off — and none of that is written in the file. Entries were opened on the
    strength of it. **A safeguarding decision that exists only as a memory of a meeting is
    the first thing an insurer, an inspector or an upset parent will ask to see.**
 
-3. **Who owns the profile clean-up, and when do they do it?** Profiles are now kept
+2. **Who owns the profile clean-up, and when do they do it?** Profiles are now kept
    indefinitely and cleared by hand — one button on `/admin`, with a count of what is due.
    That is a fine position as long as somebody actually presses it. It needs a name and a
    date in a diary, not a policy.
 
-4. **Who does each job on the day?** The list is at the top of `/admin` so it is read on
+3. **Who does each job on the day?** The list is at the top of `/admin` so it is read on
    the morning rather than found in a document: the door at the end for under-16s, the
    photographers' briefing, reading the 64 public names, getting the medical notes to the
    first aider, deleting test entries. Each needs a name against it.
 
-5. **The WhatsApp community — is it happening?** The plan is a community whose joining link
+4. **The WhatsApp community — is it happening?** The plan is a community whose joining link
    goes out by email. Until it is decided, nothing on the site says anything about
    messaging, and it should stay that way: **email is the only channel we promise.**
 
-6. **Sponsors: who else do we ask?** Vismaad Creatives is in and live on the site. The
+5. **Sponsors: who else do we ask?** Vismaad Creatives is in and live on the site. The
    pitch and the six questions a business needs to answer are on `/sponsors`; enquiries
    arrive in `/moderation` under "I'd like to sponsor an event".
 
-7. **The day's running order.** Timings were discussed and 09:30–16:30 is on the site. When
+6. **The day's running order.** Timings were discussed and 09:30–16:30 is on the site. When
    the round-by-round order is fixed it goes on the reminder email and the day sheet, not
    on the website.
 
@@ -62,7 +55,12 @@ Applications close **26 September**. Entries are **open to the public** as of 1 
 - **Three prizes**: PlayStation 5 for the champion, EA Sports FC 27 for the runner-up, a
   PS5 controller for third. The Golden Boot, Clean Sheet, Fair Play and participation
   medals are gone.
-- **One open bracket**, 12–21, not split by age.
+- **Ages 12 to 25**, extended 2026-09-02 from 12–21. One open bracket, not split by age —
+  so the widest possible draw is a 12-year-old against a 25-year-old. The supervision
+  tiers do not stretch with it: 12–15 accompanied, 16–17 with permission, 18+ independent,
+  because that is where childhood stops. **The divisions question is now the largest open
+  design decision on the event and it has been declined twice** — worth ten minutes at the
+  next meeting rather than a third round of the same note.
 - **12–15 accompanied all day. 16 and 17 may attend alone with their guardian's
   permission. 18+ independent.**
 - **Venue: GNG FC — Riverside Football Ground**, 51 Braunstone Lane East, Braunstone Town,
@@ -111,13 +109,32 @@ Applications close **26 September**. Entries are **open to the public** as of 1 
   Uni Sikh Society. Choosing "Uni Sikh Society" now asks **which university**, and
   "Another organisation" asks **which one** — otherwise the outreach that worked is
   invisible.
-- **First sponsor: Vismaad Creatives** — 10% off with code `SWC26`, live on `/sponsors`
-  and on the profile benefits list.
+- **First sponsor: Vismaad Creatives** — day-exclusive SWC merch at
+  vismaadcreatives.com/swc, live on `/sponsors` and on the profile benefits list.
+
+**Built on 2026-09-02**
+
+- **The big screen.** `/events/sikh-fc-27/tv` — open it on the laptop plugged into the
+  television, full screen, and leave it. No navigation, no footer, nothing clickable. It
+  asks the server for the bracket every six seconds; the public bracket page does the same
+  every four, so somebody at home sees a result seconds after the room does.
+- **Score entry on `/admin`.** Matches that can be played are at the top with the boxes
+  open; everything else is folded away. A score typed wrong is fixed by typing the right
+  one — the rounds after it recompute, rather than leaving the loser standing.
+- **Polling, not websockets**, deliberately: it survives the venue wifi dropping and
+  recovers by doing nothing.
 
 **Simplified away**
 
 - **The About page** is gone, and its link with it. A first event does not need a mission
   statement it has to keep true.
+- **"Your player card" is gone from the sign-up form** (2026-09-02) — the handle box and
+  the avatar picker both. The name on the bracket is now first name plus last initial,
+  derived, and the avatar is the default. This removes an entire class of problem: nobody
+  types the string that goes on a projector, so an insult or somebody else's name cannot
+  arrive that way. The cost is that two players called Tegh Singh both read "Tegh S." —
+  a moderator fixes that on `/admin` → Names on the screen, which is the same list that
+  was already going to be read before the day.
 - **The support page is cut back to one box** and renamed "Contact us". It was asked to go
   entirely; what stopped that is that it is the only route for an erasure request, for the
   "this was not agreed with me" button in every guardian email, and for a photography

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { currentPlayer } from "@/lib/session";
 import { EVENTS } from "@/data/events";
 import { registrationsFor } from "@/lib/store";
@@ -10,6 +11,8 @@ import { EntryAdminPanel, type EntryRow } from "@/components/EntryAdminPanel";
 import { bracketNames } from "@/lib/players";
 import { dormancySnapshot, DORMANT_PROFILE_RETENTION_MONTHS } from "@/lib/retention";
 import { DormantSweepPanel } from "@/components/DormantSweepPanel";
+import { BracketAdminPanel, type BracketAdminData } from "@/components/BracketAdminPanel";
+import { storedBracket } from "@/lib/match-store";
 import { ON_THE_DAY } from "@/data/on-the-day";
 
 export const metadata: Metadata = { title: "Admin" };
@@ -42,8 +45,23 @@ export default async function AdminPage() {
         .bind(event.slug)
         .all<{ id: string; ran_at: string; seed: string; applicants: number; places: number }>();
 
+      /**
+       * The bracket, if one has been built. Null is the normal state until the draw has
+       * run and somebody presses the button — the panel says so rather than erroring.
+       */
+      const stored = await storedBracket(event.slug, event.divisions[0]?.name ?? "Open");
+      const bracketData: BracketAdminData | null = stored
+        ? {
+            rounds: stored.bracket.rounds,
+            matches: stored.bracket.matches,
+            names: stored.names,
+            placesFilled: Object.keys(stored.names).length,
+          }
+        : null;
+
       return {
         event,
+        bracketData,
         names: await bracketNames(event.slug),
         /**
          * Every entry, whatever its status, so a test entry can be deleted before the
@@ -93,6 +111,17 @@ export default async function AdminPage() {
         each event.
       </p>
 
+      {/* Messages are NOT here, and people kept looking for them here. Two pages, two
+          jobs: this one runs the competition, /moderation reads what people sent us. */}
+      <p className="mt-3 text-muted">
+        Looking for messages? Everything sent through the contact form — questions, safety
+        concerns, sponsor enquiries, erasure requests — is in{" "}
+        <Link href="/moderation" className="text-kesri hover:underline">
+          Moderation
+        </Link>
+        , not here.
+      </p>
+
       {/* ON THE DAY.
           First thing on the page, above the draw, because everything in it is a job with
           no code behind it. The app can tell you who may leave unaccompanied; it cannot
@@ -119,7 +148,7 @@ export default async function AdminPage() {
         </ul>
       </section>
 
-      {events.map(({ event, counts, draws, names, entries }) => (
+      {events.map(({ event, counts, draws, names, entries, bracketData }) => (
         <section
           key={event.slug}
           className="mt-10 rounded-3xl border border-line bg-surface/60 p-6"
@@ -165,6 +194,8 @@ export default async function AdminPage() {
           <PublicNamePanel names={names} />
 
           <EntryAdminPanel entries={entries} />
+
+          <BracketAdminPanel slug={event.slug} data={bracketData} />
 
           {draws.length > 0 && (
             <div className="mt-8">

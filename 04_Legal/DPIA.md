@@ -19,13 +19,13 @@
 
 ## 2. What we are doing
 
-Running an in-person esports competition (Sikh FC 27 Championship, 64 players, ages 12–21,
+Running an in-person esports competition (Sikh FC 27 Championship, 64 players, ages 12–25,
 Leicester, Saturday 3 October 2026) with an accompanying website that handles platform
 registration, expressions of interest in each event, a random draw for places, check-in and
 a live bracket. An online "Looking For Game" board for finding practice partners is built
 but switched off and is not in scope for this assessment.
 
-**Data subjects:** children aged 12–17, young adults 18–21, parents and guardians,
+**Data subjects:** children aged 12–17, adults 18–25, parents and guardians,
 volunteers.
 
 **Volume:** 64 players for event 1, of whom a substantial share will be children, plus
@@ -45,8 +45,17 @@ attended an event, which makes `RETENTION-POLICY.md` load-bearing rather than
 precautionary. The duration was decided in round 44 — **24 months of no activity** — and is
 enforced in code. See risks 13, 14 and 17.
 
-**Special category data:** health — medical conditions, allergies, dietary and
-accessibility needs.
+**Special category data:** health — medical conditions, allergies and accessibility needs.
+(The dietary question was dropped on 2026-09-01; the column is still purged on any older
+row.)
+
+**The live bracket** (added 2026-09-02) is a new store and deliberately a thin one: match
+shape, player ids and scores. **No names are stored in it** — the handles shown on the
+television are read from `players` at render time, which is what lets a moderator correct a
+name and what makes a deletion complete. `deleteAccount()` nulls the ids and keeps the row,
+because a quarter-final result is a record of the competition rather than a record about a
+person. The endpoint the television polls is public and returns exactly what the public
+bracket page already shows.
 
 ## 3. Why we need to do it
 
@@ -60,6 +69,13 @@ information they need before an incident rather than during one.
 school, year group, gender, ethnicity, photographs of the player as a profile default
 (avatars are the default), or an exact age shown publicly.
 
+**And what we stopped collecting** on 2026-09-01, having decided it was never needed: the
+PlayStation ID (the consoles are ours and the matches are played in the room — and an ID is
+a contact route for a child) and the dietary list (a parent is present for every under-16;
+anything a first aider needs is in the medical field). On 2026-09-02 the chosen-handle box
+and the avatar picker went too: the public name is now derived from the first name plus an
+initial, so a twelve-year-old no longer types the string that goes on a projector.
+
 **Data minimisation decisions already taken and recorded in DECISIONS.md:**
 
 - Player photo is optional; the default is an illustrated avatar (round 5, decision 18)
@@ -70,13 +86,13 @@ school, year group, gender, ethnicity, photographs of the player as a profile de
 - Emergency contact not duplicated for under-18s — the guardian record serves it (round 25)
 - **No messaging at all** (round 25), which removes an entire category of processing: there are
   no private messages between users, so there is nothing to filter, retain, or breach
-- **The public bracket shows a self-chosen tournament handle**, not the real name and not
-  the PlayStation ID (round 44). A PSN ID is a *contact route*: search it and you can send
-  a friend request to a twelve-year-old, which would undo the platform's strongest
-  protection — IDs are otherwise released only to two players who have both agreed to a
-  game. The handle is refused if it matches the entrant's own PSN ID or contains their
-  surname, and a moderator reads the list of names before the day, because the automatic
-  checks catch only what a machine can see
+- **The public bracket shows a handle, not the real name** (round 44). Since 2026-09-02 it
+  is not typed by anybody: the handle is derived as a first name plus a last initial, which
+  removes the whole category of risk that the free-text box created — an insult, a phone
+  number or somebody else's name reaching a projector. A moderator can still correct one
+  on `/admin`, and should, because two players called Tegh Singh now both read "Tegh S."
+  No PlayStation ID is collected at all any more, so there is nothing to leak: an ID is a
+  *contact route*, and search one and you can send a friend request to a twelve-year-old
 
 **Lawful bases:** contract for the registration itself; explicit consent for health data;
 legitimate interests for safeguarding measures; legal obligation where safeguarding law

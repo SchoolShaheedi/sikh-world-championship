@@ -5,6 +5,7 @@ import { EVENTS, getEvent } from "@/data/events";
 import { BracketView } from "@/components/BracketView";
 import { generateKnockout, advanceWinners, type Entrant } from "@/lib/bracket";
 import { showDemoData } from "@/lib/features";
+import { LiveBracket } from "@/components/LiveBracket";
 
 export function generateStaticParams() {
   return EVENTS.map((e) => ({ slug: e.slug }));
@@ -75,26 +76,21 @@ export default async function BracketPage({
         </Link>
       </div>
 
-      {showDemoData() ? (
-        <p className="mt-6 rounded-xl border border-kesri/40 bg-kesri/10 p-4 text-sm text-kesrisoft">
-          <strong>Demo data — not real players.</strong> Shown outside production only, so
-          the layout can be checked before anyone has registered.
+      {/* THE REAL BRACKET, when there is one.
+          Polls every four seconds, so this page follows the hall — somebody at home sees
+          a result within seconds of the room seeing it. When no bracket has been built it
+          renders its own holding message, so there is nothing to branch on here.
+
+          The demo below is a separate thing entirely and never appears in production. */}
+      <div className="mt-10">
+        <LiveBracket slug={event.slug} />
+      </div>
+
+      {showDemoData() && (
+        <p className="mt-8 rounded-xl border border-kesri/40 bg-kesri/10 p-4 text-sm text-kesrisoft">
+          <strong>Below: demo data — not real players.</strong> Shown outside production
+          only, so the layout can be checked before anyone has registered.
         </p>
-      ) : (
-        <div className="mt-10 rounded-3xl border border-line bg-surface/60 p-8">
-          <h2 className="font-display text-2xl text-kesri">The bracket goes live on the day</h2>
-          <p className="mt-4 text-muted">
-            Once places are drawn, the bracket appears here and updates as scores come
-            in — on the big screen in the hall, and on this page for anyone following from
-            home.
-          </p>
-          <Link
-            href={`/events/${event.slug}`}
-            className="mt-6 inline-block rounded-xl bg-kesri px-6 py-3 font-bold text-ink transition-colors hover:bg-kesrisoft"
-          >
-            Event details
-          </Link>
-        </div>
       )}
 
       {showDemoData() && (

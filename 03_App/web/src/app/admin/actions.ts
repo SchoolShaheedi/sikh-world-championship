@@ -14,6 +14,7 @@ import {
   deletionBlockers,
 } from "@/lib/account-delete";
 import { purgeDormantProfiles } from "@/lib/retention";
+import { generateBracket, clearBracket, recordScore } from "@/lib/match-store";
 
 /**
  * Every action re-checks moderator status.
@@ -212,4 +213,57 @@ export async function purgeDormantNow() {
         ? "Nothing was due — no profile has been inactive that long."
         : `Deleted ${rows} dormant profile${rows === 1 ? "" : "s"}.`,
   };
+}
+
+/**
+ * Build the bracket from the players who have places.
+ *
+ * Separate from the draw on purpose: the draw decides who is coming, this decides who
+ * plays whom, and on the day they happen hours apart. Refuses to overwrite a bracket that
+ * already has a score in it — see `generateBracket`.
+ */
+export async function buildBracket(formData: FormData) {
+  await gate();
+  const slug = String(formData.get("slug") ?? "");
+  const event = getEvent(slug);
+  if (!event) return { error: "Unknown event" };
+  const division = event.divisions[0];
+  if (!division) return { error: "That event has no divisions." };
+
+  const r = await generateBracket(slug, division.id, division.name);
+  if (!r.ok) return { error: r.error };
+  revalidatePath("/admin");
+  revalidatePath(`/events/${slug}/bracket`);
+  return { ok: true as const, message: `Bracket built — ${r.matches} matches.` };
+}
+
+/** Throw the bracket away. Deliberately its own action, never a side effect of building one. */
+export async function wipeBracket(formData: FormData) {
+  await gate();
+  const slug = String(formData.get("slug") ?? "");
+  const rows = await clearBracket(slug);
+  revalidatePath("/admin");
+  revalidatePath(`/events/${slug}/bracket`);
+  return { ok: true as const, message: `Cleared ${rows} matches.` };
+}
+
+/**
+ * Enter a score, which is also what moves the tournament forward.
+ *
+ * This is the one action that will be used under pressure, standing up, by somebody
+ * holding a clipboard — so it validates and returns a sentence rather than throwing, and
+ * a corrected score recomputes the whole board rather than patching the next match.
+ */
+export async function enterScore(formData: FormData) {
+  await gate();
+  const slug = String(formData.get("slug") ?? "");
+  const matchId = String(formData.get("matchId") ?? "");
+  const home = Number(formData.get("home"));
+  const away = Number(formData.get("away"));
+
+  const r = await recordScore(slug, matchId, home, away);
+  if (!r.ok) return { error: r.error };
+  revalidatePath("/admin");
+  revalidatePath(`/events/${slug}/bracket`);
+  return { ok: true as const, message: "Score recorded." };
 }

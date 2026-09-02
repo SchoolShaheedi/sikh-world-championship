@@ -2202,3 +2202,108 @@ lands somewhere a person can read it.
 
 It is gated on holding the test key, never on the form being live. With entries open,
 gating it on "can this browser submit" would show a fake-child button to the public.
+
+# Round 49 — the age range, a shorter form, and the screen in the hall
+
+## Twelve to twenty-five
+
+The rules edit from yesterday was meant. The division is now `minAge: 12, maxAge: 25`, and
+that line is the one the form enforces — every other mention of the range in the app and
+the paperwork now agrees with it.
+
+The consequence is recorded rather than assumed away: a single open bracket 12–25 means the
+widest possible draw is a twelve-year-old against a twenty-five-year-old, sitting at the
+same station for a match, with no parent of the older player present because there is no
+reason for one. The supervision tiers were deliberately NOT stretched to match — they stop
+at 18, because that is where childhood stops, and a 25-year-old is simply an adult entrant.
+
+The divisions question has now been declined twice, with the gap wider each time. It is
+noted in MEETING-QUESTIONS as the largest open design decision on the event rather than
+raised again as a note nobody asked for.
+
+## The player card fieldset is gone
+
+Asked for, and it turns out to be the best safeguarding change of the week by accident.
+
+The fieldset held two things: a free-text box for the name that goes on the projector, and
+an avatar picker. Removing it means the handle is now always derived — first name plus last
+initial — and the avatar is always the default.
+
+What that removes is the entire category of problem the handle box created. The form could
+refuse a surname and (once) a PSN ID; it could never refuse an insult, a phone number or
+somebody else's name, which is why a moderator reading 64 rows before the day was a job on
+the rota. Derived names cannot contain any of it. The name review is still worth doing, but
+for a different and much smaller reason: two players called Tegh Singh now both read
+"Tegh S.", and `/admin` → Names on the screen is where that gets fixed.
+
+`checkHandle`'s PSN-ID arm is kept rather than deleted. Nothing passes an ID to it now, but
+opening the Looking For Game board would mean collecting them again, and the check should
+be waiting when that happens rather than needing to be rediscovered.
+
+## Where the messages are
+
+They were never on `/admin`. Everything sent through the contact form has always gone to
+`/moderation` — questions, safety concerns, sponsor enquiries, erasure requests, in one
+queue with claim and assignment. Two pages, two jobs: `/admin` runs the competition,
+`/moderation` reads what people sent.
+
+The honest read is that this was a discoverability failure rather than a missing feature,
+so `/admin` now says where they are, in one line, at the top.
+
+## Why a second event asks for everything again
+
+Because a profile holds almost nothing, on purpose: a first name, an email, a date of
+birth, a region, an avatar. Not the full name, not the mobile, and nothing at all about a
+guardian — a guardian's details come from the registration record every time, which is
+invariant 3 and the entire reason the guardian notification means anything.
+
+So the answer is partly "it should not" and partly "it must". The date of birth is now
+prefilled, which was the obviously silly one. The full name and mobile are asked again
+because we do not keep them. The guardian block is asked again because carrying it over
+would mean trusting a stored copy of a claim about an adult, and the medical answers and
+every consent are asked again because they are per-event by design — a consent given for
+October is not a consent for next March, and a stale allergy shown as already-answered is
+worse than an empty box.
+
+Nobody has a profile yet, so this only bites from event two onward. Worth writing down now
+while the reasoning is fresh.
+
+## The big screen
+
+`matches` in D1 (migration 0009), `src/lib/match-store.ts`, built from whoever has places,
+scores entered on `/admin`, and `/events/<slug>/tv` on the television.
+
+**Polling, at four seconds on the web page and six on the television.** Websockets on
+Workers means Durable Objects, a connection to keep alive and a reconnection path to get
+right; the things that actually go wrong in a hall are the wifi dropping for ten seconds
+and a laptop lid closing, and polling survives both by doing nothing special.
+
+Four decisions inside it that are load-bearing rather than incidental:
+
+- **No names are stored on a match.** Player ids and scores only; handles are read live
+  from `players`. That is what lets a moderator correct a name and have the projector
+  follow, and what makes a deletion complete — there is no name in the bracket table to
+  come back. `deleteAccount()` nulls the ids and keeps the row, because a quarter-final is
+  a record of the competition rather than a record about a person, and deleting it would
+  put a hole in the middle of a bracket other people are also in.
+- **The version is a hash of what is rendered, not a timestamp.** The first attempt used
+  `max(updated_at)` and a test caught two bugs in it: two changes inside the same
+  millisecond produced the same version, and — worse — a name correction changed nothing
+  the television could notice, because names are not on the match rows. The projector
+  would have gone on showing the name that needed correcting.
+- **A failed poll keeps the last good bracket on the screen** and says it is reconnecting.
+  A hall staring at a spinner is worse than a hall staring at a bracket half a minute old.
+- **A corrected score recomputes the whole board** through `advanceWinners`, rather than
+  writing the winner forward. A score entered wrongly and fixed two minutes later is the
+  thing that will actually happen, and writing forward would leave the loser standing in
+  the next round — a failure that does not announce itself until a final between two people
+  who lost.
+
+The trophy cabinet is now unblocked and safe: it reads `matches` joined to `players`, both
+of which outlive the twelve-month registration purge. Reading `registrations` was the trap
+this was in the backlog to avoid.
+
+`node scripts/seed-local-bracket.mjs` puts eight invented players with places in the local
+database so the screen can be watched updating. It refuses `--remote`, always passes
+`--local` to wrangler, and prefixes every row it writes so `--clear` removes exactly what
+it made and nothing else.

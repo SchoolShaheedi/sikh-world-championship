@@ -3,9 +3,8 @@
 import { useMemo, useState } from "react";
 import type { ChampionshipEvent, FormField } from "@/lib/types";
 import { AVATARS } from "@/data/avatars";
-import { Avatar } from "./Avatar";
 import { REFERRAL_OPTIONS, REFERRAL_OTHER } from "@/data/referral-orgs";
-import { checkHandle, defaultHandle, HANDLE_MAX } from "@/lib/handle";
+import { checkHandle } from "@/lib/handle";
 import {
   guardianTier,
   TIER_EXPLANATION,
@@ -114,9 +113,15 @@ export function SignupForm({
   );
   // Checked against the real list: the server rejects an unknown avatar, so a stale id
   // on an old profile would break the form rather than just look wrong.
-  const [avatarId, setAvatarId] = useState<string>(() =>
-    AVATARS.some((a) => a.id === prefill?.avatarId) ? prefill!.avatarId : AVATARS[0].id,
-  );
+  /**
+   * The avatar. Not chosen here since 2026-09-02 — the picker went with the player card
+   * fieldset — so this is the one carried over from an existing profile, or the default.
+   * Still sent with the submission, because the server validates it against the real list
+   * and a missing value would render a broken card.
+   */
+  const avatarId = AVATARS.some((a) => a.id === prefill?.avatarId)
+    ? prefill!.avatarId
+    : AVATARS[0].id;
   const [submitting, setSubmitting] = useState(false);
   /**
    * A rejected submission. The form used to pass the response straight to `setResult`
@@ -176,12 +181,18 @@ export function SignupForm({
   /**
    * The public name, and what is wrong with it if anything.
    *
+   * NOBODY TYPES ONE ANY MORE (2026-09-02). The "Your player card" fieldset — a handle box
+   * and an avatar picker — was removed to shorten the form, so the handle is always
+   * derived from the full name ("Tegh S.") and the avatar is always the default. This
+   * check is kept because `resolveHandle` still runs server-side and a handle can still
+   * arrive from outside the browser; and because two players called Tegh Singh now both
+   * come out as "Tegh S.", which a moderator fixes on /admin → Names on the screen.
+   *
    * Checked live with the SAME function the server uses, so the two cannot disagree —
    * the point of the field is that it is not the surname, and finding that out after
    * pressing submit is a bad way to learn it. (It also refuses a PSN ID when one is
    * known; since 2026-09-01 we do not collect one, so that arm never fires here.)
    */
-  const handleFallback = defaultHandle((values.fullName as string) ?? "");
   const handleProblem =
     typeof values.handle === "string" && values.handle.trim() !== ""
       ? checkHandle(values.handle, {
@@ -390,7 +401,7 @@ export function SignupForm({
             {event.divisions.length === 1 ? (
               <>
                 <strong className="font-bold text-ok">You&apos;re eligible.</strong>{" "}
-                Everyone aged 12 to 21 competes in the same open bracket.
+                Everyone aged 12 to 25 competes in the same open bracket.
               </>
             ) : (
               <>
@@ -423,67 +434,11 @@ export function SignupForm({
         </div>
       </fieldset>
 
-      {/* 3. Player card */}
-      <fieldset className="rounded-3xl border border-line bg-surface/60 p-6">
-        <legend className="font-display px-2 text-lg text-kesri">
-          3. Your player card
-        </legend>
-        <p className="text-sm text-muted">
-          Pick an avatar for your card. A photo is optional — you can add one later from
-          your profile if you want to, and plenty of players never do.
-        </p>
-
-        {/* The public name.
-            Placed here rather than with "About you" on purpose: this fieldset is
-            everything other people see, and the question "what goes on the big screen?"
-            only makes sense next to the avatar. */}
-        <label className="mt-6 block">
-          <Label hint="Shown on the bracket, the big screen and your player card. Not your surname, and please not your PSN ID — anyone could then look you up on PlayStation.">
-            Name on the bracket
-          </Label>
-          <input
-            className={inputCx}
-            maxLength={HANDLE_MAX}
-            placeholder={handleFallback ? `${handleFallback} (leave blank for this)` : "e.g. Amrit S."}
-            value={(values.handle as string) ?? ""}
-            onChange={(e) => set("handle", e.target.value)}
-            aria-invalid={handleProblem ? true : undefined}
-          />
-          {handleProblem ? (
-            <span className="mt-2 block text-sm text-kesri">{handleProblem.message}</span>
-          ) : (
-            <span className="mt-2 block text-xs text-muted">
-              Leave it blank and we&apos;ll use{" "}
-              <span className="text-body">{handleFallback || "your first name"}</span>.
-            </span>
-          )}
-        </label>
-
-        <div className="mt-5 grid grid-cols-4 gap-3 sm:grid-cols-8">
-          {AVATARS.map((a) => (
-            <button
-              key={a.id}
-              type="button"
-              onClick={() => setAvatarId(a.id)}
-              aria-pressed={avatarId === a.id}
-              aria-label={a.label}
-              className={`rounded-2xl border-2 p-1 transition-colors ${
-                avatarId === a.id
-                  ? "border-kesri bg-kesri/10"
-                  : "border-line hover:border-muted"
-              }`}
-            >
-              <Avatar avatarId={a.id} size={56} alt={a.label} />
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
-      {/* 4. Guardian — under 18s only */}
+      {/* 3. Guardian — under 18s only */}
       {isMinor && (
         <fieldset className="rounded-3xl border border-kesri/40 bg-kesri/[0.06] p-6">
           <legend className="font-display px-2 text-lg text-kesri">
-            4. Parent or guardian
+            3. Parent or guardian
           </legend>
           <p className="text-sm text-muted">
             You&apos;re under 18, so we need a parent or guardian&apos;s details and their
@@ -597,7 +552,7 @@ export function SignupForm({
       {/* 5. On the day + consent */}
       <fieldset className="rounded-3xl border border-line bg-surface/60 p-6">
         <legend className="font-display px-2 text-lg text-kesri">
-          {isMinor ? "5." : "4."} On the day
+          {isMinor ? "4." : "3."} On the day
         </legend>
 
         {/* Referral. Its only use is draw order — referred applicants are drawn first.

@@ -14,8 +14,14 @@ export interface Sponsor {
   domain: string;
   /** One line on who they are. */
   blurb: string;
-  /** What a profile holder gets, or null for a supporter with no offer. */
-  offer: { detail: string; code: string } | null;
+  /**
+   * What players get, or null for a supporter with no offer.
+   *
+   * `href` is where it lives, and it is the full path rather than the sponsor's home page:
+   * an offer that lands somebody on a shop front and leaves them hunting is an offer
+   * nobody redeems. Opened in a new tab, so the bracket on screen behind it survives.
+   */
+  offer: { detail: string; href: string } | null;
 }
 
 export const SPONSORS: Sponsor[] = [
@@ -23,7 +29,10 @@ export const SPONSORS: Sponsor[] = [
     name: "Vismaad Creatives",
     domain: "vismaadcreatives.com",
     blurb: "Design and creative studio, and the first business to back the championship.",
-    offer: { detail: "10% off", code: "SWC26" },
+    offer: {
+      detail: "Day-exclusive SWC merch",
+      href: "https://vismaadcreatives.com/swc",
+    },
   },
 ];
 

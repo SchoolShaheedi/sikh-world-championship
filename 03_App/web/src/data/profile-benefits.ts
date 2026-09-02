@@ -40,7 +40,7 @@ export const PROFILE_BENEFITS: ProfileBenefit[] = [
   {
     title: "Sponsor offers",
     detail:
-      "Discounts from the businesses backing the championship. First one live: 10% off at Vismaad Creatives with code SWC26. More as they are agreed — profile holders get them first.",
+      "What the businesses backing the championship put up for players. Live now: day-exclusive SWC merch from Vismaad Creatives. More as they are agreed — profile holders hear first.",
     live: true,
   },
 ];

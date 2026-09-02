@@ -33,7 +33,7 @@ You can ask us to delete it sooner at any time.
 
 ## 4. Age
 
-Event 1 is open to ages 12 to 21. Under-18s need a parent or guardian's permission.
+Event 1 is open to ages 12 to 25. Under-18s need a parent or guardian's permission.
 Supervision requirements depend on age: under-16s need a parent or guardian at the venue
 for the whole event, and 16- and 17-year-olds may attend independently where their guardian
 has permitted it. See the registration form and the safeguarding policy.

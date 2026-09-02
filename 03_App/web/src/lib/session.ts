@@ -24,6 +24,12 @@ export interface SessionPlayer {
   email: string;
   displayName: string;
   ageBand: AgeBand;
+  /**
+   * Their own date of birth, shown only to them, and only to prefill the interest form
+   * for a second event. Never rendered anywhere another player can see — the public
+   * subset is an age BAND, which is the whole reason the band exists as a field.
+   */
+  dateOfBirth: string;
   region: string;
   avatarId: string;
   gamertag: string;
@@ -60,6 +66,7 @@ export async function currentPlayer(): Promise<SessionPlayer | null> {
     email: player.email,
     displayName: player.displayName,
     ageBand: player.ageBand,
+    dateOfBirth: player.dateOfBirth,
     region: player.region ?? "",
     avatarId: player.avatarId ?? "kesri-1",
     gamertag: player.gamertag ?? "",

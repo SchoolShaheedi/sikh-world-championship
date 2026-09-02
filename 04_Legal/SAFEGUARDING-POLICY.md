@@ -54,7 +54,7 @@ comment at the top of `src/data/org.ts` for why there is no published email anyw
   the tiers the code enforces — `GUARDIAN_PRESENCE_UNTIL` and `ADULT_FROM` in
   `src/lib/guardian-rules.ts`. If this list and that file ever disagree, one of them is a
   bug:
-  - **Under 12** — cannot register at all. Event 1 is 12–21.
+  - **Under 12** — cannot register at all. Event 1 is 12–25.
   - **12–15** — a parent or guardian remains at the venue for the whole event. Not a
     drop-off. They do not have to sit with their child.
   - **16–17** — may attend and leave independently where the guardian has recorded

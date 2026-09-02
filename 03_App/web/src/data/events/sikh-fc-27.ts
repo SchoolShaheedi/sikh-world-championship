@@ -17,7 +17,7 @@ export const sikhFc27: ChampionshipEvent = {
 
   tagline: "64 players. One bracket. One champion. PS5.",
   description:
-    "The first Sikh World Championships event. Sixty-four players aged 12 to 21, in one " +
+    "The first Sikh World Championships event. Sixty-four players aged 12 to 25, in one " +
     "hall in Leicester, on PS5 — straight knockout, win and you go through. One open " +
     "division, one champion. Free to enter, langar on the day, and a live bracket on the " +
     "big screen from first whistle to final.",
@@ -48,20 +48,28 @@ export const sikhFc27: ChampionshipEvent = {
 
   capacity: 64,
   /**
-   * ONE open division, ages 12 to 21, one champion.
+   * ONE open division, ages 12 to 25, one champion.
    *
-   * CONSIDERED AND DEFERRED (round 37): splitting into 12–17 and 18–21. The argument for
-   * it is that this event puts unrelated adults and children in the same bracket, seated
-   * together at a station for a match, with no parent present — and that a 12-year-old
-   * drawn against a 21-year-old is a poor game for both. The owner chose to keep it open
-   * for now with the reasoning recorded, so this is a decision to revisit rather than one
-   * nobody thought about.
+   * CONSIDERED AND DEFERRED TWICE (round 37, and again when the range went to 25 on
+   * 2026-09-02): splitting into 12–17 and 18+. The argument for it got stronger, not
+   * weaker. This event seats unrelated adults and children in the same bracket, at the
+   * same station, for a match with no parent present — and the widest possible draw is now
+   * a 12-year-old against a 25-year-old, which is a poor game for both and a supervision
+   * question for one of them. The owner chose to keep it open, twice, with the reasoning
+   * recorded — so this is a decision revisited rather than one nobody thought about.
+   *
+   * The supervision tiers do NOT stretch with the age range: they stop at 18, because
+   * that is where childhood stops. A 25-year-old is simply an adult entrant.
    *
    * If it is revisited, the app needs no new capability: the sign-up form derives division
    * from date of birth, so nobody can pick the easier bracket.
    */
   divisions: [
-    { id: "open", name: "Open", minAge: 12, maxAge: 21, capacity: 64 },
+    // 25, not 21 — extended 2026-09-02. This is the line the form enforces: change it and
+    // eligibility changes, whatever the rules text says. It widens the gap inside a single
+    // open bracket to thirteen years, so a 12-year-old can be drawn against a 25-year-old
+    // and sit at a station with them; the supervision tiers are unchanged and stop at 18.
+    { id: "open", name: "Open", minAge: 12, maxAge: 25, capacity: 64 },
   ],
 
   entryFee: 0,
@@ -72,7 +80,7 @@ export const sikhFc27: ChampionshipEvent = {
     "Kick-off mode only. No Ultimate Team, no custom squads.",
     "Teams must be equal star rating. Both players agree, or the referee assigns.",
     "3-minute halves. The final is played with 5-minute halves.",
-    "One open division — ages 12 to 21 compete in the same bracket.",
+    "One open division — ages 12 to 25 compete in the same bracket.",
     "Straight knockout from the first round. Win and you go through; lose and you are out.",
     "Knocked out early? Spare consoles are set up for friendly matches all day — nobody who came to play goes home after one game.",
     "Draws go to extra time, then penalties.",

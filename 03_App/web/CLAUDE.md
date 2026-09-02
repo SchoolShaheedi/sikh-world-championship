@@ -21,7 +21,8 @@ profile and then registers interest in each event. The routes follow that shape:
 | `/events/<slug>/register-interest` | The form. Creates the profile *and* records interest. |
 | `/signin` | Magic link, for anyone who already has a profile. |
 | `/profile` | Their own record. |
-| `/admin` | Counts and the draw. Moderators only. |
+| `/admin` | Counts, the draw, and running the bracket. Moderators only. |
+| `/events/<slug>/tv` | The big screen in the hall. No chrome, polls, not indexed. |
 | `/moderation` | Reports and the support queue. Moderators only. |
 
 `/events/<slug>/signup` is a permanent redirect to `register-interest`; it was the URL
@@ -133,9 +134,37 @@ before touching one.
   **row itself at 12 months** (`purgeRegistrations()`). Anything you add to this table
   inherits the 12-month clock unless you give it a column and a rule of its own.
 - Only event-specific answers (`skill`, `favouriteTeam`) belong in the `answers` column.
+- **`matches` holds the live bracket and NO names** (migration 0009). Player ids, scores
+  and shape only; the handles on the projector are read from `players` at render time by
+  `storedBracket()`. That is what makes a moderator's name correction reach the screen and
+  what makes a deleted account leave nothing behind — `deleteAccount()` nulls the ids and
+  keeps the row, because a quarter-final is a record of the competition rather than a
+  record about a person.
 - Widening a `CHECK` constraint means rebuilding the table — SQLite cannot alter one in
   place. See `migrations/0006_handles_and_dormancy.sql`, which carries the existing rows
   over because `retention_runs` is the evidence that deletions happened.
+
+## The live bracket
+
+`matches` in D1, `src/lib/match-store.ts`, `/admin` → The bracket to build it and enter
+scores, `/events/<slug>/tv` on the television.
+
+**Polling, not websockets** (decided 2026-09-01). `LiveBracket` fetches
+`/api/events/<slug>/bracket` every four seconds (six on the TV) and re-renders only when
+the `version` differs. Three things that are load-bearing rather than incidental:
+
+- **`version` is a hash of what is rendered**, matches *and* names — not a timestamp. The
+  first attempt used `max(updated_at)`, which missed two changes in the same millisecond
+  and missed name corrections entirely, because names are not stored on a match.
+- **A failed poll leaves the last good bracket on the screen** and says it is
+  reconnecting. A hall staring at a spinner is worse than a hall staring at a bracket that
+  is thirty seconds old.
+- **A corrected score recomputes the whole board** through `advanceWinners`, rather than
+  writing the winner into the next match. A score typed wrong and fixed two minutes later
+  is the thing that will actually happen.
+
+To see it working without real registrations: `node scripts/seed-local-bracket.mjs`
+(local database only, refuses `--remote`).
 
 ## Feature flags
 
@@ -177,7 +206,7 @@ saves nothing, in tester mode it saves a real child's details to the live databa
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 292 tests
+npm test                         # 308 tests
 npx tsc --noEmit
 npm run lint
 npm run build

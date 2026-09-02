@@ -35,22 +35,21 @@ Ordered by what it costs to leave undone.
 
 ## Before the event — 3 October 2026
 
-- [ ] **Wire the bracket to real registrations.** It renders 64 demo entrants outside
-      production and an honest placeholder inside it. The name to show is `publicName()` —
-      the player's chosen handle, never the real name.
-- [ ] **A viewer view for the TV, driven from the laptop.** Decided 2026-09-01: the big
-      screen shows the bracket and nothing else — no admin list, no names beyond the
-      handles. Score entry happens on `/admin` on a laptop and the TV follows.
-      **Recommendation: poll, do not use websockets.** A `setInterval` fetch every 3–5
-      seconds against a read-only endpoint is a few lines, survives the venue wifi
-      dropping, and reconnects by doing nothing. Durable Objects would be the websocket
-      answer on Workers and it is a lot of machinery for a screen that has to change 63
-      times in one day.
-- [ ] **Record results in their own table, not by reading `registrations`.** New in round
-      46 and easy to miss: registrations are deleted 12 months after the event, so a trophy
-      cabinet that derives from them empties itself in October 2027. Results should hold the
-      handle and the placing, and nothing else — which is also the only version of a results
-      table that is safe to keep indefinitely.
+- [x] **The bracket is wired to real players, and the TV view is built** (2026-09-02).
+      `matches` table, migration 0009. `/admin` → The bracket builds it from whoever has
+      places and takes scores; `/events/<slug>/tv` is the big screen, polling every six
+      seconds with no header or footer; the public bracket page polls every four. Names
+      are read live from `players`, never stored on a match — so a correction on /admin
+      reaches the projector, and a deleted account cannot leave a name on a screen.
+      **To try it:** `node scripts/seed-local-bracket.mjs` puts eight invented players in
+      the LOCAL database only, then build the bracket on /admin and watch the TV tab.
+- [ ] **Stations on the bracket.** The `matches` table has a `station` column and nothing
+      sets it. "Report to your station within 5 minutes of being called" is rule 9, and
+      the screen is where somebody would read which station. Small, and the difference
+      between a bracket and a running order.
+- [x] **Results have their own table** — `matches`, added 2026-09-02. Player ids and
+      scores, no names and nothing personal, so it is safe to keep indefinitely and the
+      trophy cabinet does not empty itself when registrations are purged.
 - [ ] **Record a photography objection against a registration.** New in round 47.
       Photography is now a condition of entering, so `photo_consent` is true on every row
       and the only useful list is the opposite one — the people who objected. There is
@@ -58,8 +57,8 @@ Ordered by what it costs to leave undone.
       toggle on `/admin` → Entries and a "do not film" list for the day. DPIA risk 18, and
       the thing that keeps the wording on the form honest.
 - [ ] **Check-in on the day.** The token is issued on selection and `checkIn()` exists;
-      there is no scanner UI.
-- [ ] **Score entry**, so the bracket advances during the event.
+      there is no scanner UI. This is now the biggest hole in the day: the bracket can run
+      and the screen can show it, but nobody can be marked present.
 - [ ] **Reminder email** with the venue address and what to bring. **Unblocked in round
       46** — the venue is confirmed, so `event.venue` is real and `detailsConfirmed` is
       true. Day timings can be filled in when they are settled; the address no longer has
@@ -69,7 +68,11 @@ Ordered by what it costs to leave undone.
 
 ## After the event
 
-- [ ] Trophy cabinet populated from real results (`/players` shows a placeholder).
+- [ ] Trophy cabinet populated from real results (`/players` shows a placeholder). The
+      results now exist and survive: `matches` holds player ids and scores, profiles are
+      kept indefinitely, and only the registration is deleted at twelve months. So the
+      cabinet reads `matches` joined to `players` — never `registrations`, which is the
+      trap it was in the backlog to avoid.
 - [ ] Sponsor offers for profile holders — described as "coming" on `/join` and `/profile`
       (`src/data/profile-benefits.ts`); nothing goes live until a sponsor has agreed one.
 - [ ] Move rate limiting into D1. `src/lib/rate-limit.ts` is in-memory, so it is

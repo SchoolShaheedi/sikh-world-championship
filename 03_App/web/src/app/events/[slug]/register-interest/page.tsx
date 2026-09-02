@@ -163,6 +163,20 @@ export default async function RegisterInterestPage({
                a fake child into a real form is a fast way to get a fake child into a real
                draw. Testers and the closed preview only. */
             testFill={demo || tester}
+            /**
+             * What carries over from an existing profile, and why it is so little.
+             *
+             * A profile deliberately holds almost nothing: a first name, an email, a date
+             * of birth, a region and an avatar. Not the full name, not the mobile, and
+             * nothing at all about a guardian — a guardian's details come from the
+             * registration record every time, which is invariant 3 and the reason the
+             * guardian notification means anything.
+             *
+             * So a second event asks again for the full name, the mobile, the guardian
+             * block, the medical answers and every consent. The first four because we do
+             * not keep them; the consents because a consent given for one event is not a
+             * consent for the next one.
+             */
             prefill={
               me
                 ? {
@@ -172,6 +186,9 @@ export default async function RegisterInterestPage({
                     // Their existing public name. Carried over so the bracket calls them
                     // the same thing at every event they enter.
                     handle: me.handle ?? "",
+                    // Added 2026-09-02: it never changes, and re-typing it was the most
+                    // obviously silly thing about entering a second event.
+                    dob: me.dateOfBirth ?? "",
                   }
                 : undefined
             }
