@@ -1,5 +1,5 @@
 /**
- * What a Sikh World Championship profile is for.
+ * What a Sikh World Championships profile is for.
  *
  * `live: true` means it works today. `live: false` renders as "coming" wherever this list
  * is shown, and that distinction is not decoration: the support page had to be rewritten
@@ -7,9 +7,10 @@
  * whether to hand over their child's details should be able to tell what they are actually
  * getting from what is planned.
  *
- * The sponsor perks are the owner's intent (round 42) and are real as a plan, but no
- * sponsor has yet agreed a discount — see 00_Docs/MEETING-QUESTIONS.md. Move one to
- * `live: true` only when there is an offer a profile holder can actually redeem.
+ * The sponsor perk went `live: true` on 2026-09-01, when the first sponsor agreed a real
+ * code. The rule that got it there stands for the next one: an offer goes live only when
+ * a profile holder can actually redeem it. The offers themselves live in
+ * `src/data/sponsors.ts`, so this file never has to be edited to add one.
  */
 export interface ProfileBenefit {
   title: string;
@@ -39,7 +40,7 @@ export const PROFILE_BENEFITS: ProfileBenefit[] = [
   {
     title: "Sponsor offers",
     detail:
-      "Discounts from the businesses backing the championship — the plan is things like money off game merchandise and pre-orders, and offers from Sikh businesses. Nothing is live yet; profile holders get them first when they are.",
-    live: false,
+      "Discounts from the businesses backing the championship. First one live: 10% off at Vismaad Creatives with code SWC26. More as they are agreed — profile holders get them first.",
+    live: true,
   },
 ];

@@ -11,11 +11,17 @@ Ordered by what it costs to leave undone.
 
 ## Now
 
-- [ ] **Do the rehearsal.** `/testing?key=…` opens real registration for one browser while
-      the public form stays closed. One entry end to end: form → guardian email → magic
-      link → `/admin` → draw → offer email → delete the entry. Roughly half an hour, and it
-      will find things. The link is in the Keychain as `swc-test-key`; runbook in
+- [ ] **Do the rehearsal.** Entries are open to the public now, so the form writes for
+      everyone — but the test key still matters: it is what shows the **"Fill with test
+      data"** button, which completes the whole form as a 13-year-old in one click (both
+      email boxes left blank on purpose, so type one you can read). One entry end to end:
+      form → guardian email → magic link → `/admin` → draw → offer email → delete the
+      entry. The link is in the Keychain as `swc-test-key`; runbook in
       `00_Docs/TESTING-REGISTRATION.md`.
+- [ ] **Watch the first real entries.** The form is public as of 1 September and
+      applications close on the 26th. Nobody has entered yet, so the first few are the
+      real test: check the guardian email arrived, the name on `/admin` reads sensibly,
+      and the referral answer is specific.
 - [ ] **Rotate the Cloudflare and Resend keys.** Both have been exposed in transcripts on
       disk. The mechanism that caused it is fixed (`00_Docs/SECRETS.md`); the keys
       themselves are still live. `./scripts/secrets-to-keychain.sh`, then
@@ -29,9 +35,17 @@ Ordered by what it costs to leave undone.
 
 ## Before the event — 3 October 2026
 
-- [ ] **Wire the bracket to real registrations.** It renders demo entrants outside
+- [ ] **Wire the bracket to real registrations.** It renders 64 demo entrants outside
       production and an honest placeholder inside it. The name to show is `publicName()` —
-      the player's chosen handle, never the real name and never the PSN ID.
+      the player's chosen handle, never the real name.
+- [ ] **A viewer view for the TV, driven from the laptop.** Decided 2026-09-01: the big
+      screen shows the bracket and nothing else — no admin list, no names beyond the
+      handles. Score entry happens on `/admin` on a laptop and the TV follows.
+      **Recommendation: poll, do not use websockets.** A `setInterval` fetch every 3–5
+      seconds against a read-only endpoint is a few lines, survives the venue wifi
+      dropping, and reconnects by doing nothing. Durable Objects would be the websocket
+      answer on Workers and it is a lot of machinery for a screen that has to change 63
+      times in one day.
 - [ ] **Record results in their own table, not by reading `registrations`.** New in round
       46 and easy to miss: registrations are deleted 12 months after the event, so a trophy
       cabinet that derives from them empties itself in October 2027. Results should hold the
@@ -43,11 +57,6 @@ Ordered by what it costs to leave undone.
       nowhere to write that down: it arrives as a support message. Needs a moderator
       toggle on `/admin` → Entries and a "do not film" list for the day. DPIA risk 18, and
       the thing that keeps the wording on the form honest.
-- [ ] **Record a WhatsApp opt-out — before anything is ever sent.** Registering now says
-      we will message people about future events. Nothing sends messages today, which is
-      the only reason there is no problem yet; the day someone exports a column of mobile
-      numbers there is one. A flag on the profile and a rule that the export reads it.
-      DPIA risk 19.
 - [ ] **Check-in on the day.** The token is issued on selection and `checkIn()` exists;
       there is no scanner UI.
 - [ ] **Score entry**, so the bracket advances during the event.
@@ -67,15 +76,20 @@ Ordered by what it costs to leave undone.
       per-instance and resets on deploy.
 - [ ] Delete `src/lib/play-seed.ts` if the board is ever launched with real players.
 
-## One flag, held by other people
+## The flag is open
 
-`SWC_REGISTRATION_OPEN` is off in production and opening it is a **safeguarding decision,
-not a technical one**. Everything the code owed is built: data is stored properly, the
-guardian notice sends, deletion runs nightly, an erasure request is a button, and a
-registration now has an end date. What is left is in `MEETING-QUESTIONS.md` — the named
-safeguarding lead and deputy, the DBS list for the day, insurance, and signing the DPIA.
+`SWC_REGISTRATION_OPEN` was set on 2026-09-01, after the meeting reported the safeguarding
+lead and deputy named, the DBS list confirmed, insurance covered by the venue and the DPIA
+signed off. **Real children can enter from any browser now.** That changes what a mistake
+in this repository costs: a bad deploy is no longer a broken preview, it is a form a parent
+is filling in.
 
-Nothing above is blocked on that flag. The rehearsal path exists precisely so it is not.
+One thing is owed back to that decision and is not a code task: **it is not written down**
+anywhere in `04_Legal/DPIA.md` — no names, no signature, no date. See
+`MEETING-QUESTIONS.md` item 2.
+
+`SWC_BOARD_OPEN` is still off and its own decision has not been taken. It also depends on
+a PlayStation ID, which is no longer collected — so opening it means asking for one again.
 
 ## Deliberately not being done
 

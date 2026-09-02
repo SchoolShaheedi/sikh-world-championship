@@ -25,7 +25,7 @@ export function BrandLockup({
   return (
     <Image
       src={src}
-      alt="Sikh World Championship"
+      alt="Sikh World Championships"
       width={width}
       // 3:2, matching the supplied artwork. next/image needs both dimensions for a
       // non-static import so it can reserve space and avoid layout shift.

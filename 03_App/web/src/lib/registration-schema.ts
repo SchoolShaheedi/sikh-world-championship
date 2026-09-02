@@ -23,7 +23,7 @@
 import { z } from "zod";
 import type { ChampionshipEvent, Division, FormField } from "./types";
 import { AVATARS } from "@/data/avatars";
-import { REFERRAL_OPTIONS } from "@/data/referral-orgs";
+import { REFERRAL_OPTIONS, REFERRAL_OTHER } from "@/data/referral-orgs";
 import {
   guardianTier,
   MEDICAL_CONDITIONS,
@@ -198,6 +198,7 @@ function guardianSchema(tier: GuardianTier) {
       guardianOnSite: optionalConsent,
       guardianIndependentConsent: optionalConsent,
       mayLeaveUnaccompanied: optionalConsent,
+      dietarySelfManaged: optionalConsent,
       guardianPhotoConsent: optionalConsent,
     });
   }
@@ -235,9 +236,11 @@ function guardianSchema(tier: GuardianTier) {
           "A parent or guardian must stay at the venue for a player under 16",
         ),
         // Not asked at this tier — a guardian who is present does the collecting, and
-        // an under-16 does not leave on their own.
+        // an under-16 does not leave on their own. Dietary needs are not asked either:
+        // the parent is in the building for the whole day and can say so at the counter.
         guardianIndependentConsent: optionalConsent,
         mayLeaveUnaccompanied: optionalConsent,
+        dietarySelfManaged: optionalConsent,
       });
 
 
@@ -250,6 +253,16 @@ function guardianSchema(tier: GuardianTier) {
         // The one tier where coming and going alone is a real choice the guardian makes.
         mayLeaveUnaccompanied: optionalConsent,
         guardianOnSite: optionalConsent,
+        /**
+         * The dietary question was dropped on 2026-09-01. For 12–15 a parent is in the
+         * building; for 18+ the entrant is an adult. This tier is the gap: a 16 or
+         * 17-year-old may be at the venue with no adult of their own, so the guardian
+         * acknowledges here that telling us on the day is the player's job. Required,
+         * because the point of it is that somebody has read it.
+         */
+        dietarySelfManaged: required(
+          "Please confirm your child will tell us about any dietary needs on the day",
+        ),
       });
   }
 }
@@ -275,9 +288,9 @@ function schemaFor(event: ChampionshipEvent, division: Division, age: number) {
 
     /**
      * The name that goes on the bracket and the projector. Optional here and defaulted
-     * from the full name when blank — see lib/handle.ts. Its two content rules (not the
-     * PSN ID, not the surname) need the rest of the form, so they run in the superRefine
-     * at the bottom of `schemaFor` rather than here.
+     * from the full name when blank — see lib/handle.ts. Its content rule (not the
+     * surname) needs the rest of the form, so it runs in the superRefine at the bottom of
+     * `schemaFor` rather than here.
      */
     handle: optional(text(HANDLE_MAX)),
 
@@ -292,7 +305,6 @@ function schemaFor(event: ChampionshipEvent, division: Division, age: number) {
       .max(MEDICAL_CONDITIONS.length)
       .optional(),
     medical: optional(notes(1000)),
-    dietary: optional(notes(500)),
     accessibility: optional(notes(500)),
 
     // Agreeing to the rules and to holding an account are both required of everyone.
@@ -309,6 +321,14 @@ function schemaFor(event: ChampionshipEvent, division: Division, age: number) {
     referralOrg: z.enum(REFERRAL_OPTIONS, {
       message: "Let us know how you heard about this",
     }),
+    /**
+     * Which university, or which organisation. Two of the referral options name a
+     * category rather than a body, and the draw counts both as referrals — so without
+     * this the outreach that worked is unknowable. Required only when one of those two
+     * is chosen; enforced in the superRefine below, not here, because it depends on
+     * another field.
+     */
+    referralDetail: optional(text(120)),
     // Set by validateRegistration, not by the form — see guardianPhotoConsent above.
     photoConsent: optionalConsent,
   });
@@ -328,23 +348,36 @@ function schemaFor(event: ChampionshipEvent, division: Division, age: number) {
     /**
      * The handle is checked LAST, against the whole submission.
      *
-     * It has to be: the two rules that matter are "not your PSN ID" and "not your
-     * surname", and neither is knowable from the handle alone. The browser form applies
-     * the same function live, but this is the check that holds — the form's version is a
-     * courtesy to the person typing.
+     * It has to be: the rule that matters is "not your surname", which is not knowable
+     * from the handle alone. The browser form applies the same function live, but this is
+     * the check that holds — the form's version is a courtesy to the person typing.
+     * `checkHandle` still refuses a PSN ID when one is passed; none is collected since
+     * 2026-09-01, so that arm is dormant rather than gone.
      */
     .superRefine((data, ctx) => {
       const raw = (data as Record<string, unknown>).handle;
       if (typeof raw !== "string" || raw.trim() === "") return;
       const problem = checkHandle(raw, {
         fullName: String((data as Record<string, unknown>).fullName ?? ""),
-        psnId:
-          typeof (data as Record<string, unknown>).psnId === "string"
-            ? ((data as Record<string, unknown>).psnId as string)
-            : undefined,
       });
       if (problem) {
         ctx.addIssue({ code: "custom", path: ["handle"], message: problem.message });
+      }
+    })
+    .superRefine((data, ctx) => {
+      const d = data as Record<string, unknown>;
+      const org = d.referralOrg;
+      if (org !== "Uni Sikh Society" && org !== REFERRAL_OTHER) return;
+      const detail = typeof d.referralDetail === "string" ? d.referralDetail.trim() : "";
+      if (detail === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["referralDetail"],
+          message:
+            org === "Uni Sikh Society"
+              ? "Which university's Sikh Society?"
+              : "Which organisation referred you?",
+        });
       }
     });
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { EVENTS, getEvent } from "@/data/events";
 import { SignupForm } from "@/components/SignupForm";
 import { registrationDemo, registrationOpen } from "@/lib/features";
-import { registrationLive } from "@/lib/testing-access";
+import { registrationLive, isTester } from "@/lib/testing-access";
 import { currentPlayer } from "@/lib/session";
 
 /**
@@ -51,7 +51,14 @@ export default async function RegisterInterestPage({
    */
   const live = await registrationLive();
   const demo = !live && registrationDemo();
-  const testing = live && !registrationOpen();
+  /**
+   * Does this browser hold the test key? Asked separately from `live`, because once
+   * registration is genuinely open `live` is true for everyone and would tell us nothing.
+   * This is what unlocks the one-click test-data button, so it must mean "a tester", not
+   * "the form works".
+   */
+  const tester = await isTester();
+  const testing = tester && !registrationOpen();
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
@@ -94,7 +101,7 @@ export default async function RegisterInterestPage({
             </>
           ) : (
             <>
-              This also creates your Sikh World Championship profile, which you keep for
+              This also creates your Sikh World Championships profile, which you keep for
               every future event.{" "}
               <Link href="/join" className="text-kesri hover:underline">
                 What a profile gives you
@@ -152,6 +159,10 @@ export default async function RegisterInterestPage({
           <SignupForm
             event={event}
             demo={demo}
+            /* One-click fill, for a rehearsal. Never for the public: a button that types
+               a fake child into a real form is a fast way to get a fake child into a real
+               draw. Testers and the closed preview only. */
+            testFill={demo || tester}
             prefill={
               me
                 ? {

@@ -36,7 +36,6 @@ function answers(over: Record<string, unknown> = {}) {
     referralOrg: "Basics of Sikhi",
     guardianName: "Harjit Kaur",
     guardianEmail: "parent@example.com",
-    psnId: "tegh_mcr",
     avatarId: "kesri-1",
     ...over,
   } as Record<string, string | boolean | string[]>;
@@ -59,7 +58,9 @@ describe("registering interest", () => {
     expect(player).not.toBeNull();
     expect(player!.displayName).toBe("Tegh");
     expect(player!.ageBand).toBe("U16");
-    expect(player!.gamertag).toBe("tegh_mcr");
+    // No PSN ID is collected since 2026-09-01, so there is nothing to hold here. The
+    // column stays for the switched-off board; the profile must not invent a value.
+    expect(player!.gamertag).toBeNull();
     // Neither is ever granted by filling in a form.
     expect(player!.isModerator).toBe(false);
     expect(player!.eventVerified).toBe(false);
@@ -69,15 +70,14 @@ describe("registering interest", () => {
     await registerInterest(event, division, answers());
 
     const player = await playerByEmail("tegh@example.com");
-    // First name plus last initial. NOT "tegh_mcr" — a PSN ID on a projector is a contact
-    // route, and NOT "Tegh Singh" — the surname is never public.
+    // First name plus last initial. NOT "Tegh Singh" — the surname is never public.
     expect(player!.handle).toBe("Tegh S.");
   });
 
-  it("never stores the PSN ID as the public name, even if it arrives as one", async () => {
+  it("never puts a surname on the bracket, even if one is typed into the handle", async () => {
     // The validator rejects this before it reaches here, so this asserts the last line:
-    // resolveHandle falls back rather than letting the ID through to the bracket.
-    await registerInterest(event, division, answers({ handle: "tegh_mcr" }));
+    // resolveHandle falls back rather than letting a surname through to the projector.
+    await registerInterest(event, division, answers({ handle: "Tegh Singh" }));
 
     const player = await playerByEmail("tegh@example.com");
     expect(player!.handle).toBe("Tegh S.");

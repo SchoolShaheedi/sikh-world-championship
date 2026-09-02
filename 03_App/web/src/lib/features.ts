@@ -8,13 +8,15 @@
  *     Cloudflare Workers has no writable filesystem — `fs.mkdir` throws
  *     "operation not permitted". Left on, every submission would be a 500 with no
  *     explanation. See 00_Docs/DEPLOYMENT.md.
- *  2. SAFEGUARDING. 04_Legal/DPIA.md concludes that real registrations must not open:
- *     guardian notification emails do not send, children's data is not stored securely,
- *     nothing is ever deleted, and DBS checks have not started.
+ *  2. SAFEGUARDING. Registration stayed shut until the paperwork existed — a named
+ *     safeguarding lead and deputy, a DBS list for the day, insurance, and a signed
+ *     DPIA. All four were settled at the 2026-09-01 meeting, and
+ *     `SWC_REGISTRATION_OPEN` was set in wrangler.jsonc the same day.
  *
- * The second reason outlives the first. Fixing the database does NOT make it correct to
- * switch registration on — that is a safeguarding decision, taken deliberately, and the
- * flag is where it gets recorded.
+ * The second reason outlived the first. Fixing the database did NOT make it correct to
+ * switch registration on — that was a safeguarding decision, taken deliberately, and this
+ * flag is where it is recorded. The board (`SWC_BOARD_OPEN`) is still shut, and its own
+ * decision has not been taken.
  *
  * Default OFF in production and ON in development, so local work is unaffected and a
  * deploy is safe by default. Turning something on in production takes an explicit

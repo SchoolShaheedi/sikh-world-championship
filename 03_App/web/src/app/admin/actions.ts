@@ -13,6 +13,7 @@ import {
   deleteRegistrationByReference,
   deletionBlockers,
 } from "@/lib/account-delete";
+import { purgeDormantProfiles } from "@/lib/retention";
 
 /**
  * Every action re-checks moderator status.
@@ -185,4 +186,30 @@ export async function deleteEntryOnly(formData: FormData) {
   if (!done) return { error: "No entry with that reference." };
   revalidatePath("/admin");
   return { ok: true as const, message: `Deleted entry ${reference}.` };
+}
+
+/**
+ * The manual dormant-profile sweep.
+ *
+ * The nightly job stopped doing this on 2026-09-01 — the team decided to keep profiles and
+ * clean them up when they choose to (DORMANT_PROFILE_AUTO_PURGE in src/lib/retention.ts).
+ * This is the "when they choose to": the same code, the same exemptions, run deliberately
+ * by a named moderator and recorded in `retention_runs` like every other deletion.
+ *
+ * It deletes profiles that have never attended an event and have had no activity for 24
+ * months. Moderators, attendees, and anyone named on a report or a support ticket are
+ * exempt — that list is inside `purgeDormantProfiles`, not here, so the manual sweep can
+ * never be more aggressive than the automatic one was.
+ */
+export async function purgeDormantNow() {
+  await gate();
+  const rows = await purgeDormantProfiles();
+  revalidatePath("/admin");
+  return {
+    ok: true as const,
+    message:
+      rows === 0
+        ? "Nothing was due — no profile has been inactive that long."
+        : `Deleted ${rows} dormant profile${rows === 1 ? "" : "s"}.`,
+  };
 }

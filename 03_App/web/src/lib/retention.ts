@@ -47,6 +47,27 @@ export const CHECK_IN_TOKEN_RETENTION_DAYS = 1;
 export const DORMANT_PROFILE_RETENTION_MONTHS = 24;
 
 /**
+ * Does the nightly job delete dormant profiles? NO, since 2026-09-01.
+ *
+ * The team decided at the 2026-09-01 meeting to keep profiles indefinitely and clean them
+ * up by hand, so the automatic sweep is switched off here rather than deleted: the code
+ * that does the deleting is the same code, and it now runs only when a moderator asks it
+ * to (`purgeDormantNow` in src/app/admin/actions.ts).
+ *
+ * SAY THE COST OUT LOUD, because it is the largest one in this file. A profile holds a
+ * child's first name, chosen handle, email, date of birth, region and avatar. With no
+ * automatic rule, "we will clean up when we need to" is the whole storage-limitation
+ * position under UK GDPR Art. 5(1)(e) — and it holds only for as long as somebody
+ * actually does it. The 24-month figure below is therefore no longer a deletion rule; it
+ * is the line that the admin page counts against, so the sweep can be run deliberately.
+ *
+ * The registration behind a profile is unaffected: that still goes automatically at
+ * 12 months from the event (`purgeRegistrations`), which is what deletes the name, date
+ * of birth, mobile and guardian contact. DPIA risks 13 and 17.
+ */
+export const DORMANT_PROFILE_AUTO_PURGE = false;
+
+/**
  * Months after the event before the registration itself is deleted.
  *
  * DECIDED 2026-08-31 (round 46), and the last duration in RETENTION-POLICY.md that was
@@ -376,23 +397,27 @@ export async function applyRetention(now: Date = new Date()): Promise<RetentionR
   }
 
   /**
-   * Not inside the event loop, and deliberately last.
+   * The dormant-profile sweep used to run here, once per job — the one rule with no event
+   * behind it. It is switched off (see DORMANT_PROFILE_AUTO_PURGE): profiles are kept and
+   * cleaned up by hand from /admin.
    *
-   * This is the one rule with no event behind it, so it runs once per job rather than once
-   * per event. Recorded even at zero rows, for the same reason as the token clear: proving
-   * the job ran is half the point of the audit trail.
+   * Left as a conditional rather than deleted so that turning it back on is one constant,
+   * not an archaeology exercise. If it is ever turned back on, the audit row must be
+   * written even at zero rows — proving the job ran is half the point of the trail.
    */
-  const dormant = await purgeDormantProfiles(now);
-  const a: RetentionAction = {
-    eventSlug: SCOPE,
-    action: "purge-dormant-profiles",
-    rowsAffected: dormant,
-    note:
-      `Profiles with no attended event and no activity for ` +
-      `${DORMANT_PROFILE_RETENTION_MONTHS} months.`,
-  };
-  actions.push(a);
-  await record(a, ranAt);
+  if (DORMANT_PROFILE_AUTO_PURGE) {
+    const dormant = await purgeDormantProfiles(now);
+    const a: RetentionAction = {
+      eventSlug: SCOPE,
+      action: "purge-dormant-profiles",
+      rowsAffected: dormant,
+      note:
+        `Profiles with no attended event and no activity for ` +
+        `${DORMANT_PROFILE_RETENTION_MONTHS} months.`,
+    };
+    actions.push(a);
+    await record(a, ranAt);
+  }
 
   return { ranAt, actions, skipped };
 }

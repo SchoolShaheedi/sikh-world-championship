@@ -58,7 +58,7 @@ export default async function GuardianPage({
     >
       {approval.status === "pending" && (
         <p className="text-muted">
-          {approval.childDisplayName} would like to use the Sikh World Championship
+          {approval.childDisplayName} would like to use the Sikh World Championships
           &ldquo;Find a game&rdquo; board, where young Sikh players arrange games with each
           other. Because they&apos;re under 16, we need your permission first.
         </p>

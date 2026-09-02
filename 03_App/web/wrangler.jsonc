@@ -5,13 +5,19 @@
   "compatibility_date": "2026-08-27",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "vars": {
-    // Preview for the planning team: the sign-up form renders and validates for real,
-    // but the write is skipped and every screen says so. NOT a substitute for opening
-    // entries — that needs SWC_REGISTRATION_OPEN and a safeguarding decision.
-    "SWC_REGISTRATION_DEMO": "true",
+    // ENTRIES ARE OPEN. Set 2026-09-01, on the team's decision at that meeting: the
+    // safeguarding lead and deputy are named, the DBS list is confirmed, insurance is
+    // covered by the venue, and the DPIA is signed off. Those four were the gate, and
+    // opening it is a safeguarding decision rather than a technical one — see
+    // 04_Legal/DPIA.md.
+    //
+    // Real children can now enter from any browser. The preview mode that used to stand
+    // in for this (SWC_REGISTRATION_DEMO) is removed: with entries genuinely open it is
+    // ignored anyway, and leaving it set would suggest the form still does not write.
+    "SWC_REGISTRATION_OPEN": "true",
     // Sender for every guardian notification. The domain is verified in Resend
     // (EU-West-1). Not a secret — the API key is, and that is set separately.
-    "MAIL_FROM": "Sikh World Championship <no-reply@sikhchampionships.com>"
+    "MAIL_FROM": "Sikh World Championships <no-reply@sikhchampionships.com>"
   },
   // Custom domains, not routes. A route only matches requests that already reach
   // Cloudflare; it does NOT create a DNS record — which is why the site returned

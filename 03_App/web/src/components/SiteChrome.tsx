@@ -12,11 +12,13 @@ import { upcomingEvents } from "@/data/events";
  * "Find a game" (/play) and "Players" (/players) are hidden for now — the routes, the
  * board, the guardian flow and their tests all still exist and work. Add the two lines
  * back here and in the footer to bring them out of hiding.
+ *
+ * /about went the same way on 2026-09-01, and its page with it: a first event does not
+ * need a mission statement it has to keep true. The story is the events list.
  */
 const NAV = [
   { href: "/events", label: "Events" },
-  { href: "/about", label: "About" },
-  { href: "/support", label: "Support" },
+  { href: "/support", label: "Contact" },
 ];
 
 export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {
@@ -120,8 +122,6 @@ export function SiteFooter({ logoSrc = null }: { logoSrc?: string | null }) {
         <div>
           <h3 className="text-xs font-bold tracking-[0.18em] text-muted">ORGANISATION</h3>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/about" className="text-body hover:text-kesri">About</Link></li>
-            <li><Link href="/support" className="text-body hover:text-kesri">Support &amp; report a problem</Link></li>
             <li><Link href="/sponsors" className="text-body hover:text-kesri">Sponsors</Link></li>
             {/* In the footer rather than the header: signing in is for the handful of
                 people who already have an account, and the header's one call to action

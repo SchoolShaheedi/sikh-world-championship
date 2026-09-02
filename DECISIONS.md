@@ -2048,3 +2048,157 @@ homepage promised "two minutes to apply", and the first thing a registrant read 
 draw was the confirmation email. The buttons now say "Register interest", the homepage
 says what the draw is, the form page states it in a panel above the first field, and the
 success heading reads "Interest registered" rather than "Application received".
+
+# Round 48 — the meeting, and a much smaller form
+
+Twenty-one open questions went to the planning meeting on 2026-09-01 and came back
+answered. Most of the answers make the project smaller, which is what was asked for: this
+is a first event run by volunteers, and the instruction was to choose the simplest way out
+of anything that could be simplified.
+
+## Entries are open
+
+`SWC_REGISTRATION_OPEN` is set. The four things `04_Legal/DPIA.md` said had to exist first
+were reported settled: a named safeguarding lead and deputy, a DBS list for the day,
+insurance (the venue's), and sign-off on the assessment.
+
+**None of it is written down.** The DPIA has no names, no signature and no date, and the
+form is open on the strength of a conversation. That is now the first item in
+MEETING-QUESTIONS and the first outstanding item in the DPIA, because it is the one thing
+an insurer, a local authority or an upset parent will ask to see, and "it was agreed at a
+meeting" is not an answer anybody accepts.
+
+What changes for the work: a bad deploy is no longer a broken preview. It is a form a
+parent is filling in.
+
+## Two questions stopped being asked
+
+**PlayStation IDs are not collected at all.** The consoles are ours and every match is
+played in the room, so an ID was never needed to run the day — it was on the form because
+the form was written before that was obvious. A PSN ID is also a contact route: hold one
+for a 12-year-old and you hold a way for a stranger to reach them. Three rounds of this
+project were spent making sure an ID never reached a projector; not having one is strictly
+better than protecting one. `gamertag` stays as a column, null for everyone, because the
+Looking For Game board would need IDs again and that is a decision with consequences
+rather than a switch.
+
+**The dietary list is gone.** I argued for keeping it — it is where an allergy gets
+declared, and dropping the question does not remove the allergy. The answer was better
+than my argument: a 12–15 has a parent in the building all day, an 18+ is an adult, and
+langar is served by people who can be asked at the counter. So the question went, and the
+one age group it left uncovered got a required tick instead: **a 16 or 17-year-old's
+guardian confirms the player will say so on the day.** The first-aider box is still there
+and still free text, which is where a serious allergy belonged in the first place.
+
+Both are recorded as reductions in the DPIA. It is the first round in this project's
+history where the honest summary is "we hold less about children than we did".
+
+## Photography stayed a condition; WhatsApp did not last a day
+
+Photography was confirmed: everyone agrees by entering, keep it simple. The wording was
+already in place from round 47 and it is unchanged.
+
+The WhatsApp messaging added in round 47 came straight back out. The plan is a community
+whose joining link is emailed — an invitation somebody accepts, not messages we send
+unasked — and it is not settled. So every mention of messaging was removed from the form,
+both emails, the privacy notice and the terms, and DPIA risk 19 is withdrawn with its
+original assessment kept underneath. **Email is the only channel the site promises.**
+
+The withdrawn assessment is kept deliberately: the risk returns the moment somebody
+exports a column of mobile numbers for any purpose at all, and it should be re-read then
+rather than re-derived from scratch.
+
+## Profiles are kept forever, and that is the weakest thing here
+
+The open question was how long a profile survives its owner attending an event. The answer
+went the other way: keep all of them, delete by hand when needed. So the nightly dormancy
+sweep — built in round 44, running for three rounds — is switched off
+(`DORMANT_PROFILE_AUTO_PURGE = false`), and no profile now has an end date.
+
+This is theirs to decide and it is decided. What it costs is worth stating plainly, because
+it reverses the only automatic protection on that store: under UK GDPR Art. 5(1)(e) the
+whole storage-limitation position for profiles is now "somebody will clean up", which holds
+exactly as long as somebody does.
+
+What makes it defensible rather than merely convenient:
+
+- A profile is the least sensitive store — first name, chosen handle, email, date of birth,
+  region, avatar. No health data, no guardian contact, no mobile, nothing public but the
+  handle.
+- The registration behind it still goes automatically at twelve months, and that is the row
+  holding the full name, the mobile and the guardian's details.
+- Erasure on request is a button and is honoured properly. That is now the main protection
+  rather than a backstop.
+- The clean-up is one click. `/admin` counts what could be cleared and clears it, using the
+  same code and the same exemptions the nightly job used — so the manual sweep can never be
+  more aggressive than the automatic one was.
+
+The code was switched off behind a constant rather than deleted, and there are now tests
+asserting the nightly job leaves profiles alone. A deletion rule that comes back by
+accident would look exactly like the feature working.
+
+**It needs a named owner and a date in a diary.** Not a policy — a name.
+
+## Straight knockout, and the thing that makes it bearable
+
+Three prizes: PS5, EA Sports FC 27, a controller. The Golden Boot, Clean Sheet, Fair Play
+award and participation medals are gone — every extra award is another thing to buy,
+engrave, judge and hand out on a day that already has 64 players in it.
+
+And the answer to the objection I raised last round: **spare consoles are set up for
+friendly matches all day.** That is on the event page and in the rules, not buried, because
+it is what a parent of a twelve-year-old needs to read before entering them into something
+half the field loses in one game.
+
+## One thing I did not do
+
+The rules were edited by hand to say **"ages 12 to 25"**. The division the form enforces,
+the site copy, the privacy notice and the DPIA all say 12 to 21, so a 22-year-old would
+have been invited by the rules and refused by the form. It is left at 21 and raised as a
+question.
+
+If 25 is meant it is one number and a copy sweep. But it also seats unrelated 25-year-olds
+at a station with 12-year-olds for a whole day, in a single open bracket, with no parent
+present for the older half — which is the divisions question from round 37 with a wider
+gap. That is a safeguarding decision, and a decision does not become a copy fix by
+arriving inside a string.
+
+## Simplified away
+
+The About page is gone. The support page is one box and called "Contact us".
+
+The support page was asked to go entirely, and it is the one instruction here I did not
+carry out. Three promises already made in writing point at it and nowhere else: "tell us
+and we will delete everything we hold about you" (Art. 17), the **This was not agreed with
+me** button in every guardian email, and "if you would rather not be filmed, tell us". No
+email address is published anywhere on the site — that was a deliberate decision in round
+40, on the grounds that a form is better than an address for a service used by children.
+Remove the form with no address to replace it and a parent has no way to reach anybody.
+
+So it was cut to the bone instead: the eight-question FAQ is gone, the heading is "Contact
+us", and what is left is the 999/NSPCC panel and one box. If it should still go, the
+replacement is a published email address, and that is a decision to take on purpose rather
+than a side effect of tidying up.
+
+## Sponsors
+
+Vismaad Creatives is in — 10% off with code `SWC26`, live on `/sponsors` and on the profile
+benefits list, which stops being a promise about the future for the first time.
+
+Enquiries reuse the machinery that already exists: a new "I'd like to sponsor an event"
+category on the contact form, landing in `/moderation` with the rest of the queue. No new
+table, no new form, no new admin screen — the simplest thing that answers the question.
+The six things a business needs to tell us are listed on the page, so a first reply is
+useful rather than a round trip.
+
+## Rehearsals in one click
+
+The rehearsal kept being the next thing on the list and never the thing that got done,
+because it means typing twenty-odd fields to find out whether an email arrives. There is
+now a **Fill with test data** button on the form: one click completes it as a 13-year-old —
+the longest path, so it exercises the guardian block and the guardian email — and leaves
+both email boxes blank on purpose, because a rehearsal is only worth doing if the mail
+lands somewhere a person can read it.
+
+It is gated on holding the test key, never on the form being live. With entries open,
+gating it on "can this browser submit" would show a fake-child button to the public.

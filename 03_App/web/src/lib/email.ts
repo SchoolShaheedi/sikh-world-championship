@@ -26,7 +26,7 @@ const RESEND_ENDPOINT = "https://api.resend.com/emails";
 function mailFrom(): string {
   return (
     process.env.MAIL_FROM ??
-    "Sikh World Championship <no-reply@sikhchampionships.com>"
+    "Sikh World Championships <no-reply@sikhchampionships.com>"
   );
 }
 

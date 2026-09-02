@@ -51,13 +51,12 @@ has permitted it. See the registration form and the safeguarding policy.
   registered entrant by email.
 - Bring your check-in code. Your place may be released if you do not arrive by
   `[TIME / the start of the first round]`.
-- **Registering also means two things that are not about the competition**, both stated on
-  the form and repeated in the email we send you. Photographs and video taken at the event
-  may be used on our website, our social media and in material promoting future events —
-  never sold and never in a sponsor's own advertising. And we may message you on WhatsApp
-  about future SWC events; if the player is under 18 those messages go to the parent or
-  guardian's number, not the player's. **You can stop either at any time, for no reason,
-  and it has no effect on your place.** See `PRIVACY-NOTICE.md`.
+- **Registering also means one thing that is not about the competition**, stated on the
+  form and repeated in the email we send you: photographs and video taken at the event may
+  be used on our website, our social media and in material promoting future events — never
+  sold and never in a sponsor's own advertising. **You can object at any time, for no
+  reason, and it has no effect on your place.** See `PRIVACY-NOTICE.md`.
+- **We contact you by email.** There is no texting and no messaging app.
 
 ## 6. Conduct
 

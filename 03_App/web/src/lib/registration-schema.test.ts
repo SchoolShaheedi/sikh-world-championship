@@ -23,7 +23,6 @@ function adult(over: Record<string, unknown> = {}) {
     mobile: "07700 900123",
     rulesAgreed: true,
     referralOrg: "Nobody — I found it myself",
-    psnId: "realuser",
     skill: "Casual player",
     // Round 25: required of every adult entrant.
     emergencyName: "A Friend",
@@ -59,6 +58,9 @@ function independent(over: Record<string, unknown> = {}) {
     dob: "2009-05-02",
     ...guardianContact,
     guardianIndependentConsent: true,
+    // Required of this tier only, since 2026-09-01: nobody else needs telling whose job
+    // the dietary question is.
+    dietarySelfManaged: true,
     skill: "First time competing",
     ...over,
   });
@@ -264,8 +266,85 @@ describe("event-specific fields", () => {
 
   it("requires a required event field", () => {
     const body = adult();
-    delete (body as Record<string, unknown>).psnId;
+    delete (body as Record<string, unknown>).skill;
     expect(validateRegistration(event, division, body).ok).toBe(false);
+  });
+
+  it("refuses a field the event does not ask for", () => {
+    // The PSN ID was a required event field until 2026-09-01. It is not asked any more,
+    // so it must be REJECTED rather than quietly stored — `.strict()` is what stops a
+    // dropped question living on in the answers of anyone who kept sending it.
+    const r = validateRegistration(event, division, adult({ psnId: "realuser" }));
+    expect(r.ok).toBe(false);
+  });
+});
+
+describe("which referral, exactly", () => {
+  it("demands the detail when the answer names a category, not a body", () => {
+    for (const org of ["Uni Sikh Society", "Another organisation"]) {
+      const r = validateRegistration(event, division, adult({ referralOrg: org }));
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.fieldErrors).toHaveProperty("referralDetail");
+    }
+  });
+
+  it("accepts it once given", () => {
+    const r = validateRegistration(
+      event,
+      division,
+      adult({ referralOrg: "Uni Sikh Society", referralDetail: "Leicester" }),
+    );
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.answers.referralDetail).toBe("Leicester");
+  });
+
+  it("does not ask a named organisation which one it is", () => {
+    expect(
+      validateRegistration(event, division, adult({ referralOrg: "Shaheedi Bunga" })).ok,
+    ).toBe(true);
+    // Nor somebody who found us themselves — the default fixture already proves that.
+  });
+
+  it("treats whitespace as no answer", () => {
+    const r = validateRegistration(
+      event,
+      division,
+      adult({ referralOrg: "Another organisation", referralDetail: "   " }),
+    );
+    expect(r.ok).toBe(false);
+  });
+});
+
+describe("the dietary acknowledgement", () => {
+  /**
+   * The dietary question was dropped on 2026-09-01. 12–15 have a parent in the building
+   * and 18+ are adults; a 16 or 17-year-old may be here alone, so their guardian has to
+   * have read who is responsible. It is the only tier that asks.
+   */
+  it("is required of a 16–17's guardian", () => {
+    const body = independent();
+    delete (body as Record<string, unknown>).dietarySelfManaged;
+    const r = validateRegistration(event, division, body);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.fieldErrors).toHaveProperty("dietarySelfManaged");
+  });
+
+  it("is not asked of a 12–15, whose parent is at the venue all day", () => {
+    expect(validateRegistration(event, division, onSite()).ok).toBe(true);
+  });
+
+  it("is not asked of an adult", () => {
+    expect(validateRegistration(event, division, adult()).ok).toBe(true);
+  });
+
+  it("no longer accepts a dietary needs field at all", () => {
+    // Dropped, therefore refused: a question we do not ask must not be storable.
+    expect(validateRegistration(event, division, adult({ dietary: "No peanuts" })).ok).toBe(
+      false,
+    );
   });
 });
 
@@ -276,7 +355,7 @@ describe("untouched optional fields", () => {
     const r = validateRegistration(
       event,
       division,
-      adult({ region: "", medical: "", dietary: "", accessibility: "", favouriteTeam: "" }),
+      adult({ region: "", medical: "", accessibility: "", favouriteTeam: "" }),
     );
     expect(r.ok).toBe(true);
   });
@@ -448,16 +527,6 @@ describe("the public tournament handle", () => {
     if (r.ok) expect(r.answers.handle).toBeUndefined();
   });
 
-  it("REJECTS the entrant's own PSN ID, because that is a contact route on a screen", () => {
-    const r = validateRegistration(
-      event,
-      division,
-      adult({ psnId: "realuser", handle: "realuser" }),
-    );
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.fieldErrors?.handle).toMatch(/PlayStation/);
-  });
-
   it("REJECTS the surname", () => {
     const r = validateRegistration(
       event,
@@ -472,9 +541,9 @@ describe("the public tournament handle", () => {
     const r = validateRegistration(
       event,
       division,
-      onSite({ psnId: "kiddo2013", handle: "kiddo2013" }),
+      onSite({ fullName: "Kiran Sandhu", handle: "Sandhu2013" }),
     );
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.fieldErrors?.handle).toMatch(/PlayStation/);
+    if (!r.ok) expect(r.fieldErrors?.handle).toMatch(/surname/i);
   });
 });

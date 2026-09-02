@@ -44,6 +44,12 @@ export const SUPPORT_CATEGORIES = [
     urgent: false,
   },
   {
+    id: "sponsor",
+    label: "I'd like to sponsor an event",
+    help: "What you do, what you would like to give, and anything you need from us. See /sponsors for what a sponsor gets.",
+    urgent: false,
+  },
+  {
     id: "other",
     label: "Something else",
     help: "Anything that doesn't fit above, including feedback and suggestions.",

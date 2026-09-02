@@ -1,5 +1,5 @@
 /**
- * Sikh World Championship — core domain types.
+ * Sikh World Championships — core domain types.
  *
  * Design rule: an EVENT IS DATA, NOT CODE. Adding "Sikh Chess Championship 2027"
  * must be one new file in src/data/events/ and nothing else. Every type here is

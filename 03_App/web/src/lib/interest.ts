@@ -56,16 +56,15 @@ export async function registerInterest(
     dateOfBirth: String(answers.dob),
     region: typeof answers.region === "string" ? answers.region : null,
     avatarId: typeof answers.avatarId === "string" ? answers.avatarId : null,
-    gamertag: typeof answers.psnId === "string" ? answers.psnId : null,
+    // PSN IDs stopped being collected on 2026-09-01, so there is nothing to store. The
+    // column stays for the Looking For Game board, which is switched off and would need
+    // its own asking before it could be switched on.
+    gamertag: null,
     /**
      * The public name. Resolved here rather than in the form so a submission made outside
      * the browser still gets one — the bracket must never fall back to a full name.
      */
-    handle: resolveHandle(
-      answers.handle,
-      fullName,
-      typeof answers.psnId === "string" ? answers.psnId : undefined,
-    ),
+    handle: resolveHandle(answers.handle, fullName),
     // From this record and nowhere else — never a field a child can fill in about
     // themselves later.
     guardianEmail:

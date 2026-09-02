@@ -23,7 +23,7 @@ export default function PlayersPage() {
     <div className="mx-auto max-w-6xl px-4 py-14">
       <h1 className="font-display text-4xl">Players</h1>
       <p className="mt-3 max-w-2xl text-muted">
-        Every player who enters an event gets a Sikh World Championship profile — a player
+        Every player who enters an event gets a Sikh World Championships profile — a player
         card, and a trophy cabinet that follows them across every sport and every year.
       </p>
 

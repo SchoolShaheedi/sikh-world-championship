@@ -17,7 +17,7 @@ export const sikhFc27: ChampionshipEvent = {
 
   tagline: "64 players. One bracket. One champion. PS5.",
   description:
-    "The first Sikh World Championship event. Sixty-four players aged 12 to 21, in one " +
+    "The first Sikh World Championships event. Sixty-four players aged 12 to 21, in one " +
     "hall in Leicester, on PS5 — straight knockout, win and you go through. One open " +
     "division, one champion. Free to enter, langar on the day, and a live bracket on the " +
     "big screen from first whistle to final.",
@@ -68,50 +68,35 @@ export const sikhFc27: ChampionshipEvent = {
   currency: "GBP",
 
   rules: [
-    "Played on PS5. Consoles, screens and controllers are provided — bring your own controller if you prefer, it must be a standard PS5 pad.",
+    "Played on PS5 — consoles, screens and controllers are provided. Bring your own controller if you prefer; it must be a standard PS5 pad.",
     "Kick-off mode only. No Ultimate Team, no custom squads.",
     "Teams must be equal star rating. Both players agree, or the referee assigns.",
-    "6-minute halves. The final is played with 8-minute halves.",
+    "3-minute halves. The final is played with 5-minute halves.",
     "One open division — ages 12 to 21 compete in the same bracket.",
     "Straight knockout from the first round. Win and you go through; lose and you are out.",
+    "Knocked out early? Spare consoles are set up for friendly matches all day — nobody who came to play goes home after one game.",
     "Draws go to extra time, then penalties.",
     "Default game settings. Legacy defending off. No custom tactics carried in on a USB.",
     "Report to your station within 5 minutes of being called, or the match is forfeited.",
-    "Disconnects before the 10th minute are replayed. After that, the score stands.",
     "One warning for abusive language or controller throwing. Second time, you're out.",
     "Code of conduct applies all day, to players and to anyone who came with them.",
   ],
 
   prizes: [
-    "Champion trophy",
-    "Runner-up and semi-finalist trophies",
-    "Medal for every player who competes",
-    "Golden Boot — most goals scored across the day",
-    "Clean Sheet award — fewest goals conceded",
-    "Fair Play award — chosen by the volunteer team",
+    "Champion — PlayStation 5",
+    "Runner-up — EA Sports FC 27",
+    "Third place — PS5 controller",
   ],
 
   awardTiers: [
-    { id: "champion",    label: "Champion",      tier: "gold" },
-    { id: "runner-up",   label: "Runner-up",     tier: "silver" },
-    { id: "semi",        label: "Semi-finalist", tier: "bronze" },
-    { id: "participant", label: "Competitor",    tier: "participant" },
-    { id: "golden-boot", label: "Golden Boot",   tier: "special" },
-    { id: "clean-sheet", label: "Clean Sheet",   tier: "special" },
-    { id: "fair-play",   label: "Fair Play",     tier: "special" },
+    { id: "champion",  label: "Champion",  tier: "gold" },
+    { id: "runner-up", label: "Runner-up", tier: "silver" },
+    { id: "third",     label: "Third",     tier: "bronze" },
   ],
 
   // Sport-specific sign-up questions. A chess event would ask for a FIDE rating here
   // instead, with no code change anywhere else.
   formFields: [
-    {
-      name: "psnId",
-      label: "PSN ID",
-      type: "text",
-      required: true,
-      placeholder: "your PlayStation username",
-      help: "This goes on your player card and is how we find you on the day.",
-    },
     {
       name: "skill",
       label: "How would you rate yourself?",

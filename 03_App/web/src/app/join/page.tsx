@@ -10,7 +10,7 @@ import { venueLocality } from "@/lib/format";
 export const metadata: Metadata = {
   title: "Create your profile",
   description:
-    "One Sikh World Championship profile, every event. Register interest in an event and your profile is created with it.",
+    "One Sikh World Championships profile, every event. Register interest in an event and your profile is created with it.",
 };
 
 /**
@@ -47,7 +47,7 @@ export default async function JoinPage() {
         </p>
       ) : (
         <p className="mt-4 text-lg text-muted">
-          One profile, every Sikh World Championship event. Make it once — after that,
+          One profile, every Sikh World Championships event. Make it once — after that,
           entering a new event is just registering your interest, not filling this in again.
         </p>
       )}

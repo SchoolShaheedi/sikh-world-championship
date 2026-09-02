@@ -101,26 +101,33 @@ of these describe the system as it stands today, not as we would like it to be.
 | 10 | Photographs of children used without consent | Medium | Medium | **Superseded by #18 in round 47.** Photography was opt-in and guardian-given for under-18s; it is now a stated condition of registering, so this risk is no longer about a consent that might be ignored but about a consent that is no longer asked for. Read #18 instead. | See #18 |
 | 11 | Volunteer with no DBS check has unsupervised access to children | Low | High | Volunteers are DBS-checked and the records are held by the parent charity. `[NEEDS: confirm the checked list covers everyone who will be on the floor on 3 October 2026, including anyone added late.]` | `[Low once the list is confirmed]` |
 | 12 | A child sees something distressing in a report they filed | Low | Medium | Reports are visible only to moderators, never to the reported person; block is deliberately silent to avoid retaliation. | Low |
-| 13 | **An account is held for a child who never attended an event** | High | Low–Medium | **Mitigated (round 44).** Introduced deliberately in round 42 (see section 2). A profile holds first name, public handle, email, age band, date of birth, region and avatar — no health data, which lives on the registration and is purged separately. **Retention duration now decided: deleted after 24 months of no activity**, enforced by `purgeDormantProfiles()` on the nightly cron and surfaced on `/admin` so a job that stops running is visible rather than silent. Moderators, anyone who attended, and anyone named on a report or a support ticket are exempt. **Honestly stated: deleting the profile does NOT delete the registration behind it**, which holds the applicant's name, date of birth and email. See risk 14. | Low |
+| 13 | **An account is held for a child who never attended an event** | High | Medium | **MITIGATION WITHDRAWN 2026-09-01 — see #17.** The 24-month automatic deletion below was built and ran nightly for three rounds; the team then decided profiles are kept and cleaned up by hand, and the sweep was switched off. Everything about the profile's *contents* below is still true, and the manual sweep uses exactly this rule and these exemptions. What is no longer true is that anything happens on its own. Original assessment (round 44): Introduced deliberately in round 42 (see section 2). A profile holds first name, public handle, email, age band, date of birth, region and avatar — no health data, which lives on the registration and is purged separately. **Retention duration now decided: deleted after 24 months of no activity**, enforced by `purgeDormantProfiles()` on the nightly cron and surfaced on `/admin` so a job that stops running is visible rather than silent. Moderators, anyone who attended, and anyone named on a report or a support ticket are exempt. **Honestly stated: deleting the profile does NOT delete the registration behind it**, which holds the applicant's name, date of birth and email. See risk 14. | Low |
 | 14 | **A registration is kept indefinitely** | High | Medium | **Mitigated (round 46).** The duration was the blocker, not the code: `RETENTION-POLICY.md` said 12 months and the brackets never came off, so nothing deleted a registration and the name, date of birth, email and mobile of every applicant — most of them children — were held with no end date. **Confirmed at 12 months from the event date on 2026-08-31** and enforced by `purgeRegistrations()` on the nightly cron: a whole-row delete, recorded in `retention_runs`, scoped to one event at a time and anchored to the event date rather than to "now". Registrations whose applicant is named on a report or a safety support ticket are kept — six years, the same exemption every other rule here applies. | Low |
 | 15 | **The registration form is opened to the public in order to test it** | High | Medium | **Mitigated (round 45).** Testing anything after the submit button — the database write, the guardian email, the magic link, the draw, the check-in token — used to require `SWC_REGISTRATION_OPEN=true` on the live site, which would let a real parent enter a real child during a rehearsal. A per-browser test key (`SWC_TEST_KEY`, `/testing?key=…`, 8-hour cookie holding the key itself, constant-time comparison, 24 characters minimum, 404 for a wrong or unset key) now opens the real form for one browser while the public form stays closed. The page says **Testing mode — this saves a real record** in place of the preview banner. Test entries are real rows and must be deleted the same day; `/admin` → Entries does that. | Low |
 | 16 | **An erasure request cannot be honoured without hand-written SQL** | Medium | Medium | **Mitigated (round 45).** UK GDPR Art. 17 applies whether or not the code exists. `/admin` → Entries deletes a profile, its entry and everything keyed to either, through the same cascade the retention job uses (`deleteAccount()`); it is shut by default and requires the reference to be typed. It refuses, with a reason, for a moderator or anyone named on a report or support ticket — a legitimate Art. 17(3) refusal, since a safeguarding record about a deleted person cannot be acted on. Every deletion is recorded in `retention_runs` with who did it and why. | Low |
-| 17 | **A profile that attended an event is kept with no end date** | Medium | Medium | **Not mitigated — needs a number, not code.** The 24-month dormancy rule (risk 13) exempts anyone who attended, because when it was written there was no event-anchored rule to hand them over to. Risk 14 created one, but it deletes the *registration*, not the profile — so twelve months after the event the platform still holds that person's first name, chosen handle, email, date of birth, region and avatar, indefinitely. It is the least sensitive of the stores (no health data, no guardian contact, no mobile) and it is now the only unbounded one. `[NEEDS: a duration. The cheapest answer uses no new figure — stop treating attendance as a permanent exemption and let the same 24 months of inactivity run from the event.]` | `[Medium until the duration is set]` |
+| 17 | **A profile is kept with no end date — now every profile, not only an attendee's** | High | Low–Medium | **DECIDED AND ACCEPTED 2026-09-01, and it went the other way.** The question was how long to keep a profile after somebody attends. The answer was to keep *all* profiles indefinitely and clean up by hand, so the nightly dormancy sweep from risk 13 is switched off (`DORMANT_PROFILE_AUTO_PURGE = false`) and there is now no automatic expiry on any profile. **This is the weakest storage-limitation position in the project and it should be reviewed at a fixed interval rather than when somebody remembers.** What limits it: a profile is the least sensitive store — first name, chosen handle, email, date of birth, region, avatar; no health data, no guardian contact, no mobile, and nothing public but the handle. The registration behind it still goes automatically at twelve months, which is what deletes the name, mobile and guardian details. Erasure on request is a button, and the same 24-month figure now drives a "these could be cleared" count and a one-click sweep on `/admin`, so cleaning up is a minute's work rather than a project. `[NEEDS: a named owner and a review date — "we will clean up when we need to" is only true while somebody actually does.]` | `[Medium — accepted, contingent on the manual sweep actually being run]`
+| ~~17a~~ | *(superseded)* The original wording of #17 — how long a profile survives its owner attending an event — is answered by the row above: indefinitely, by decision. The 24-month dormancy rule (risk 13) exempts anyone who attended, because when it was written there was no event-anchored rule to hand them over to. Risk 14 created one, but it deletes the *registration*, not the profile — so twelve months after the event the platform still holds that person's first name, chosen handle, email, date of birth, region and avatar, indefinitely. It is the least sensitive of the stores (no health data, no guardian contact, no mobile) and it is now the only unbounded one. `[NEEDS: a duration. The cheapest answer uses no new figure — stop treating attendance as a permanent exemption and let the same 24 months of inactivity run from the event.]` | `[Medium until the duration is set]` |
 | 18 | **Photography is now a condition of entry rather than a consent** | High | Medium | **Accepted by the team (round 47), not mitigated by code.** The photo tick box was removed from the sign-up form on the team's instruction; registering now means agreeing that photos and video of the entrant may be used to promote future events, and `validateRegistration()` records agreement for every submission. **This is a real reduction in a child's control over their own image and it must not be described as consent** — agreement that cannot be declined while still entering is not freely given, so the lawful basis is legitimate interests with an Art. 21 right to object. What keeps it defensible: the statement is on the form, in the applicant's confirmation email, and repeated in full in the email the guardian receives before the day; objecting is free, reasonless, and has no effect on a place. What is missing: **nothing in the app records an objection.** It arrives as a support message, and the "do not film" list for 3 October is currently a person's memory. `[NEEDS: a way to flag a registration as objecting, and the wristband-and-briefing process in PHOTOGRAPHY-CONSENT.md.]` | `[Medium until the objection can be recorded]` |
-| 19 | **Registering signs you up to WhatsApp messages about future events** | Medium | Medium | **Accepted by the team (round 47), partially mitigated.** A new purpose for a number collected to reach someone on the day: direct marketing of future events. Bundled into registration, so — like #18 — it is not consent; it runs on legitimate interests with a right to object, and PECR's soft opt-in is a thin argument for a free event with no prior purchase. Three things reduce it. **Under-18s are never messaged directly** — the messages go to the parent or guardian's number, which also avoids sending WhatsApp traffic to a 12-year-old who is below WhatsApp's own minimum age. The scope is narrow and stated: our own events, a few times a year, nobody else's advertising. And every statement of it names the way out (reply STOP, or the support form). `[NEEDS: an opt-out that is recorded somewhere before the first message is sent — today there is no WhatsApp sending at all, so the promise is currently kept by there being nothing to unsubscribe from. That stops being true the day someone exports a list of numbers.]` | `[Medium until the opt-out is recorded]` |
+| 19 | ~~Registering signs you up to WhatsApp messages about future events~~ | — | — | **WITHDRAWN 2026-09-01, one day after it was raised. The team's plan changed to a WhatsApp community whose joining link is emailed — an invitation somebody accepts, not messages we send unasked — and it is not settled, so every mention of messaging came back off the form, both emails, the privacy notice and the terms. Email is the only channel. The original assessment is kept below because the risk returns the moment a column of mobile numbers is exported for any purpose, and it should be re-read then rather than re-derived.** Original: accepted by the team (round 47), partially mitigated. A new purpose for a number collected to reach someone on the day: direct marketing of future events. Bundled into registration, so — like #18 — it is not consent; it runs on legitimate interests with a right to object, and PECR's soft opt-in is a thin argument for a free event with no prior purchase. Three things reduce it. **Under-18s are never messaged directly** — the messages go to the parent or guardian's number, which also avoids sending WhatsApp traffic to a 12-year-old who is below WhatsApp's own minimum age. The scope is narrow and stated: our own events, a few times a year, nobody else's advertising. And every statement of it names the way out (reply STOP, or the support form). `[NEEDS: an opt-out that is recorded somewhere before the first message is sent — today there is no WhatsApp sending at all, so the promise is currently kept by there being nothing to unsubscribe from. That stops being true the day someone exports a list of numbers.]` | `[Medium until the opt-out is recorded]` |
 
 ## 6. Conclusion — can we proceed?
 
-Updated round 47 (2026-09-01). Every storage-limitation risk in the register is either
-enforced in code or reduced to a single agreed number.
+Updated round 48 (2026-09-01, after the planning meeting).
 
-**Round 47 added two risks rather than closing any.** On the team's instruction,
-photography and WhatsApp event news became conditions of registering instead of choices
-(#18, #19). Both are defensible and both are stated plainly to the person and to their
-parent — but they are the first changes in this project's history that *reduce* what a
-child and their guardian control, and a DPIA that recorded only improvements would be a
-sales document. They are written up as accepted risks with named gaps, and the gaps are
-small pieces of work rather than decisions.
+**Registration was opened to the public on 2026-09-01.** The four things this document
+said had to exist first were reported settled at that meeting: a named safeguarding lead
+and deputy, a DBS-checked list for the day, insurance (covered by the venue), and sign-off
+on this assessment. `SWC_REGISTRATION_OPEN` was set the same day. **The signature block in
+section 7 is still blank and the named people are still not written in here** — those are
+the team's to fill in, and until they are, this document does not evidence the decision it
+records. That gap is the first item on the outstanding list below.
+
+**The direction of travel changed at that meeting, and it should be read honestly.** Two
+risks were reduced: WhatsApp marketing was withdrawn before it shipped (#19), and the
+PlayStation ID and the dietary list were dropped from the form altogether — less data
+collected about children than at any point in this project. One was accepted in the other
+direction: profiles are now kept indefinitely with manual clean-up (#17, #13). A DPIA that
+recorded only improvements would be a sales document, so both are here.
 
 **Built since this was last assessed:**
 
@@ -134,32 +141,30 @@ small pieces of work rather than decisions.
 | #14 nothing deletes a registration | 12 months from the event date, enforced nightly (round 46) |
 | #16 erasure needs hand-written SQL | A delete button on /admin, one shared cascade, every deletion recorded |
 | #10 photography consent might be ignored on the day | Superseded: photography is now a stated condition, and the honest version of the risk is #18 |
+| #9 residual: no DMARC record | Live, `p=none`, with Resend DKIM and a `send.` Return-Path so guardian mail aligns on both |
+| Data collected that was never needed | PlayStation ID and the dietary list both dropped from the form (2026-09-01) |
 
-**Still outstanding before real registrations open:**
+**Still outstanding, with the form now open:**
 
-1. **#7 — the moderation rota.** The tooling exists; the staffing does not. Confirm the
-   charity's named safeguarding lead and deputy accept covering SWC events and the
-   platform, and that they are on call for 3 October 2026.
-2. **#11 — confirm the DBS-checked list covers everyone who will be on the floor**,
-   including anyone added in the last week.
-3. **#9 residual — set the DMARC record.** One TXT record. Without it a guardian notice is
-   far more likely to be filed as spam.
-4. **#17 — how long a profile is kept after the person attends.** New, and the last
-   unbounded store. #14 was closed in round 46 at 12 months from the event date, which
-   deletes the registration but not the profile behind it. The cheapest fix needs no new
-   figure: let the existing 24 months of inactivity run from the event instead of exempting
-   attendance forever. Blocked on agreeing that, not on code.
-5. **#2 residual — the sign-out procedure at the desk.** The app records who may leave
-   unaccompanied; nothing enforces it at the door.
-6. **#18 — a way to record a photography objection**, so the "do not film" list on the day
+1. **Write the decision down here.** The named safeguarding lead and deputy (#7), the
+   confirmation that the DBS list covers everyone on the floor including late additions
+   (#11), and a signature and date in section 7. All four were settled verbally on
+   2026-09-01 and the form was opened on that basis; none of it is in this file. **A
+   safeguarding decision that exists only in somebody's memory of a meeting is the one
+   thing an inspector, an insurer or a parent will ask to see.** Nothing else on this list
+   comes close to it in importance.
+2. **#17 — a named owner and a review date for the manual profile clean-up.** The sweep is
+   one click on `/admin`; what it needs is somebody whose job it is and a date in a diary.
+3. **#2 residual — the sign-out procedure at the desk.** The app records who may leave
+   unaccompanied; nothing enforces it at the door. Now item one of the "On the day"
+   checklist at the top of `/admin`, which is a prompt rather than a control.
+4. **#18 — a way to record a photography objection**, so the "do not film" list on the day
    comes out of the system rather than somebody's memory. Small; in the build backlog.
-7. **#19 — a recorded WhatsApp opt-out**, before the first message is sent to anyone.
-   Nothing sends WhatsApp messages today, which is the only reason this is not already a
-   problem.
 
-**This document has never been signed.** Items 1–7 above should be settled and written in
-before it is signed the first time, rather than signed now and amended later. Development
-and testing with fake data may continue meanwhile; `SWC_REGISTRATION_OPEN` stays off.
+**Closed since the last version:** #9 residual (DMARC is live, with Resend DKIM and SPF
+aligned), #19 (withdrawn — no messaging is promised anywhere), and #15/#16, which stay
+mitigated. The test key from #15 is still the right way to rehearse even with the form
+open, because it is what unlocks the one-click test-data button.
 
 ## 7. Sign-off
 

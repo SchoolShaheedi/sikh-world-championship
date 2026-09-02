@@ -30,11 +30,12 @@ data, we do not show you anyone else's advertising, and we do not use it to prof
 Most of it is deleted within a year of the event. If you are under 18, a parent or
 guardian has to give permission, and they can withdraw it at any time.
 
-**Two things happen because you registered, and you can stop either at any time with no
-effect on your place.** Photographs and video are taken at the event and used to promote
-future ones. And we message you on WhatsApp about future events — a few times a year, our
-own events only. **If the player is under 18 those messages go to the parent or guardian's
-number, never the player's.**
+**One thing happens because you registered, and you can stop it at any time with no
+effect on your place:** photographs and video are taken at the event and used to promote
+future ones. If you would rather not be in them, tell us and our photographers are told.
+
+**We contact you by email and nothing else.** Your confirmation, the result of the draw
+and news about future events all come by email. We do not text or message you.
 
 There is **no messaging on our platform**, for anyone, at any age — so there are no private
 messages for us to hold.
@@ -50,15 +51,14 @@ messages for us to hold.
 | Full name | To identify you at the check-in desk and on the bracket | Contract |
 | Date of birth | To check you meet the age limit and to decide what supervision rules apply. **We never publish it** — profiles show an age band only | Legal obligation / legitimate interests (child safety) |
 | Email address | To send your confirmation, your check-in code, and event updates | Contract |
-| Mobile number | So a volunteer can reach you on the day, and — for an adult entrant — to send you WhatsApp messages about future SWC events. **For an under-18 the WhatsApp messages go to the guardian's number instead, never the player's** | Contract (running the event); legitimate interests (event news), with a right to object |
+| Mobile number | So a volunteer can reach you on the day. Used for nothing else — we do not text or message you | Contract |
 | Region (e.g. "Birmingham") | Shown on your player card. **Never a postcode or street address** | Contract |
-| A name for the bracket | The name shown on the bracket, the big screen and your player card. You choose it; leave it blank and we use your first name and last initial. **It is not your surname and it must not be your PlayStation ID** — anyone reading the bracket could then look you up on PlayStation | Contract |
+| A name for the bracket | The name shown on the bracket, the big screen and your player card. You choose it; leave it blank and we use your first name and last initial. **It is never your surname** | Contract |
 | Chosen avatar | Shown on your player card | Contract |
 | Medical conditions, and any detail you add | So our first aider knows before the day rather than discovering it during an incident | **Explicit consent** (special category data — see below) |
-| Dietary needs | Langar is served; allergies matter | Explicit consent |
 | Accessibility needs | So we can actually accommodate you | Explicit consent |
 | Emergency contact: name, relationship, phone | Someone to call if you are hurt or unwell. Required of every adult entrant; for under-18s the parent or guardian below serves this purpose | Legitimate interests (vital interests in an emergency) |
-| Game-specific answers (PlayStation ID, self-rating, favourite team, whether you bring a controller) | To seed the bracket and find you on the day. **Your PlayStation ID is never shown publicly** — not on the bracket, not on the big screen | Contract |
+| Game-specific answers (self-rating, favourite team, whether you bring a controller) | To seed the draw and print your player card. **We stopped asking for a PlayStation ID on 1 September 2026** — the consoles are ours and the matches are played in the room, so it was never needed, and an ID is a way of contacting someone off-platform | Contract |
 | Your agreement to the rules and to us creating an SWC profile | To show you agreed | Contract |
 | That photos and video may include you | Taking part at an event that is photographed. Used on our site, our social media and in material promoting future events — never sold, never in a sponsor's own advertising | Legitimate interests, with a right to object at any time |
 
@@ -71,6 +71,7 @@ messages for us to hold.
 | Their permission for the player to take part | Without it the entry is refused |
 | The supervision arrangement for that age: a parent or guardian staying at the venue throughout (12–15), or permission to attend independently (16–17) | So we know who is responsible for the child at every point of the day |
 | Whether the child may leave unaccompanied | So we do not let a child leave when they should not |
+| For a 16 or 17-year-old: that the player will tell us about any dietary needs themselves | We stopped keeping a dietary list. A 12–15's parent is at the venue all day and an 18+ is an adult; this is the one age group who may be here alone, so their guardian confirms whose job it is |
 | That photos and video may include their child | Recorded against the registration and stated in full in the email we send the guardian before the day. It is theirs to object to, at any time, and objecting has no effect on the child's place |
 
 **We never take a guardian's email from a field the child fills in.** It comes from the
@@ -78,6 +79,11 @@ registration record. If a child could type it, the whole permission system would
 theatre.
 
 ### If you use the "Looking For Game" board
+
+**The board is switched off, and this section describes it as designed rather than as
+running.** It also depends on a PlayStation ID, which we stopped collecting on 1 September
+2026 — so opening the board would mean asking for one again, and that is a decision with
+its own consequences rather than a switch.
 
 Display name, age band, region, chosen avatar, the game and platform you picked, when you
 are free, one note chosen from a fixed list, and whether you have attended an SWC event.
@@ -106,7 +112,7 @@ a cookie banner will be required. There are none today.]`
 
 ## Special category data — medical and health
 
-Medical, allergy, dietary and accessibility information is "special category" data under
+Medical, allergy and accessibility information is "special category" data under
 UK GDPR and gets extra protection. We rely on your **explicit consent**, given by filling
 in those fields. You do not have to. Leaving them blank never affects your place — the only
 consequence is that our first aider will not know in advance.
@@ -121,13 +127,14 @@ withdrawal, and withdrawal mid-event is awkward. Please advise.]`
 
 Most of our players are children. Under the ICO's Age Appropriate Design Code we:
 
-- collect the minimum we need, and no more
+- collect the minimum we need, and no more — and give things up when they turn out not to
+  be needed: the PlayStation ID and the dietary list were both dropped on 1 September 2026
 - default to the most private setting everywhere the choice is ours to make
-- **do not message a child directly.** Event news on WhatsApp goes to the parent or
-  guardian's number for every player under 18
+- **do not message a child.** There is no texting and no messaging app; everything is
+  email, and for an under-18 the guardian is emailed too
 - never show a child's surname, school, home address or exact age publicly
-- never show a child's PlayStation ID publicly, because it is a way of contacting them —
-  the bracket shows a handle they chose instead
+- never show a child's PlayStation ID publicly — and since 1 September 2026 we do not hold
+  one at all. The bracket shows a handle they chose
 - keep under-16s and over-16s completely separate online, enforced in how data is stored
 - require a parent or guardian's permission before an under-16 can use the board at all,
   and let them withdraw it instantly
@@ -139,12 +146,21 @@ We do not profile children, show them anyone else's advertising, use nudge techn
 keep them online, or use their data to train anything.
 
 **Where we are honest about falling short of the ideal:** photography is no longer a tick
-box — taking part at an event that is photographed is a condition of entering, and news
-about our own future events is sent on the strength of having registered rather than a
+box. Taking part at an event that is photographed is a condition of entering, and news
+about our own future events is emailed on the strength of having registered rather than a
 separate opt-in. Both are set out plainly on the form, in the confirmation email and in
 the email the guardian gets before the day, and either can be stopped at any time with no
 effect on a place. A parent who would rather their child were not filmed says so and we
 tell the photographers.
+
+**And the one we like least:** a profile is now kept until somebody deletes it. There is
+no automatic expiry — that was decided on 1 September 2026, and it is a deliberate choice
+to clean up by hand rather than on a timer. What a profile holds is the least sensitive
+thing we store: a first name, a chosen handle, an email, a date of birth, a region and an
+avatar. The registration behind it — the full name, the mobile, the guardian's contact
+details and anything medical — is still deleted automatically, twelve months after the
+event. **You can ask us to delete a profile at any time and we will**; that is the route
+that matters most now that no clock runs on its own.
 
 ### For players — the short version
 
@@ -159,7 +175,7 @@ tell the photographers.
 >
 > **Who can see it?** Only the small team running the event. Other players see the name you
 > picked for the bracket, your avatar, your region and your age group — never your surname,
-> your school, your address, your exact age or your PlayStation ID.
+> your school, your address or your exact age.
 >
 > **There's no messaging here.** Nobody can send you a message. You pick from lists instead, so
 > nobody can type anything at you.
@@ -169,10 +185,11 @@ tell the photographers.
 > in them, tell us — or get your mum, dad or carer to tell us — and we'll let the
 > photographers know. It makes no difference to your place.
 >
-> **Messages about the next event** go to your parent or carer's phone, not yours.
+> **We only ever email.** No texts, no messaging apps. If you're under 18 we email your
+> mum, dad or carer too, so they always know what's going on.
 >
 > **You can ask us to delete everything** about you, at any time, and we will. You don't
-> need a reason. Email `[privacy@sikhworldchampionship.com]` or use the Support page.
+> need a reason. Use the Contact page — you don't need an account.
 
 ---
 
@@ -195,13 +212,19 @@ transfer safeguard is needed here.]`
 
 ## How long we keep it
 
-See `RETENTION-POLICY.md` for the full table. In short: registrations for `[12]` months
-after the event, safeguarding records for `[6]` years, and medical notes deleted within
-`[30]` days of the event because their only purpose is that day.
+See `RETENTION-POLICY.md` for the full table. In short: registrations for **12 months**
+after the event, safeguarding records for **6 years**, and medical notes deleted within
+**30 days** of the event because their only purpose is that day. All three happen
+automatically, on a nightly job.
 
-**Your profile**, if you never came to an event: deleted after **24 months** with no
-activity — no sign-in and no new registration. You do not have to do anything; if you want
-it gone sooner, ask and we will delete it.
+**Your profile is kept until you or we delete it.** There is no automatic expiry — that
+changed on 1 September 2026. It holds a first name, the handle you chose, your email, your
+date of birth, your region and your avatar; nothing medical and no guardian contact
+details, which live on the registration and are deleted on the twelve-month clock above.
+
+**If you want it gone, ask, and we will delete it** — you do not need a reason and you do
+not need an account. That request is the main protection here, so it is honoured properly:
+one button, one cascade, every deletion recorded.
 
 ## Your rights
 

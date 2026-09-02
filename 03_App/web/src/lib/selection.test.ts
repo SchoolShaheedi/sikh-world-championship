@@ -36,7 +36,6 @@ async function applied(over: Record<string, unknown> = {}) {
       region: "Leicester",
       referralOrg: "Basics of Sikhi",
       guardianEmail: "parent@example.com",
-      psnId: "tegh_mcr",
       ...over,
     },
   });
@@ -52,7 +51,8 @@ describe("confirming a selection", () => {
     expect(player).not.toBeNull();
     expect(player!.displayName).toBe("Tegh");
     expect(player!.ageBand).toBe("U16");
-    expect(player!.gamertag).toBe("tegh_mcr");
+    // Not collected since 2026-09-01 — see lib/selection.ts.
+    expect(player!.gamertag).toBeNull();
     // Never granted by being selected.
     expect(player!.isModerator).toBe(false);
     expect(player!.eventVerified).toBe(false);

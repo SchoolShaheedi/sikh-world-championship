@@ -12,7 +12,7 @@ export default function EventsPage() {
     <div className="mx-auto max-w-6xl px-4 py-14">
       <h1 className="display-xl text-[clamp(2.2rem,5vw,3.6rem)]">Events</h1>
       <p className="mt-3 max-w-2xl text-muted">
-        Every Sikh World Championship event, past and upcoming. Each one is open to Sikh
+        Every Sikh World Championships event, past and upcoming. Each one is open to Sikh
         players of all levels — you don&apos;t need to be the best, you just need to turn up.
       </p>
 

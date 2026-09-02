@@ -19,8 +19,13 @@ import { apply } from "./store";
 
 vi.mock("@/data/events", () => ({ get EVENTS() { return []; } }));
 
-const { purgeDormantProfiles, dormancySnapshot, DORMANT_PROFILE_RETENTION_MONTHS } =
-  await import("./retention");
+const {
+  purgeDormantProfiles,
+  dormancySnapshot,
+  applyRetention,
+  DORMANT_PROFILE_RETENTION_MONTHS,
+  DORMANT_PROFILE_AUTO_PURGE,
+} = await import("./retention");
 
 beforeAll(useTempDataDir);
 beforeEach(clearDataDir);
@@ -239,6 +244,39 @@ describe("the admin snapshot", () => {
     const snap = await dormancySnapshot(NOW);
     expect(snap.deletedAllTime).toBe(7);
     expect(snap.lastRunAt).toBe("2026-08-30T03:15:00.000Z");
+  });
+});
+
+/**
+ * Changed at the 2026-09-01 meeting: profiles are KEPT and cleaned up by hand. The rule
+ * above still works and is still tested — it is what the manual sweep runs — but the
+ * nightly job must not call it. These tests are the guard against it being switched back
+ * on by accident, because the failure is silent: children's profiles quietly disappearing
+ * would look exactly like the feature working.
+ */
+describe("the nightly job leaves profiles alone", () => {
+  it("is switched off", () => {
+    expect(DORMANT_PROFILE_AUTO_PURGE).toBe(false);
+  });
+
+  it("does not delete a long-dormant profile", async () => {
+    await profile("forgotten@example.com");
+
+    await applyRetention(NOW);
+
+    expect(await playerByEmail("forgotten@example.com")).not.toBeNull();
+  });
+
+  it("records no dormant-profile action in the audit trail", async () => {
+    const report = await applyRetention(NOW);
+    expect(report.actions.map((a) => a.action)).not.toContain("purge-dormant-profiles");
+  });
+
+  it("still deletes when a moderator asks for it by hand", async () => {
+    await profile("sweep@example.com");
+
+    expect(await purgeDormantProfiles(NOW)).toBe(1);
+    expect(await playerByEmail("sweep@example.com")).toBeNull();
   });
 });
 

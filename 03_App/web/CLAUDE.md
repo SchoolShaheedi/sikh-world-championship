@@ -60,19 +60,22 @@ medical notes. That single fact drives most of the rules below.
 7. **Nothing invented is ever rendered in production.** `showDemoData()` in
    `src/lib/features.ts` has no environment-variable override, deliberately: a bracket of
    plausible invented names is not a broken page, it is a convincing lie on a projector.
-8. **A PlayStation ID is never public, and never goes on a screen.** It is a *contact
-   route*, not a label: search one and you can message a child. The bracket, the projector
-   and the player card show the tournament handle from `src/lib/handle.ts` via
-   `publicName()` — never `gamertag`, and never the full name. The handle is refused if it
-   equals the entrant's own PSN ID or contains their surname, in the browser and again in
-   `validateRegistration`.
-9. **A retention duration is decided before the code that enforces it is written.** Every
-   rule in `src/lib/retention.ts` matches a figure in `04_Legal/RETENTION-POLICY.md` with
-   the brackets taken off. A purge running to a guessed number is worse than no purge —
-   which is why the registration rule waited for a number rather than being written to a
-   plausible one. It has one now: **12 months from the event date** (round 46, DPIA risk
-   14). The one duration still missing is how long a profile lives after its owner attends
-   an event — risk 17, and nothing may be written to enforce it until it is agreed.
+8. **A PlayStation ID is not collected at all** (2026-09-01), and was never public before
+   that. It is a *contact route*, not a label: search one and you can message a child. The
+   bracket, the projector and the player card show the tournament handle from
+   `src/lib/handle.ts` via `publicName()` — never the full name. The handle is still
+   refused if it contains the entrant's surname, in the browser and again in
+   `validateRegistration`. `checkHandle` also refuses a PSN ID when one is passed; nothing
+   passes one now, and that arm is kept rather than deleted because opening the Looking
+   For Game board would need IDs again.
+9. **A retention duration is decided before the code that enforces it is written**, and
+   only the team decides it. Every rule in `src/lib/retention.ts` matches a figure in
+   `04_Legal/RETENTION-POLICY.md` with the brackets taken off. What runs automatically:
+   medical fields at 30 days, check-in tokens the day after, and the whole registration at
+   **12 months from the event date**. What does NOT: **profiles are kept indefinitely**
+   (2026-09-01) — `DORMANT_PROFILE_AUTO_PURGE = false`, and the same code now runs only
+   from a moderator's button on `/admin`. Do not switch that back on; it is a decision, not
+   an oversight, and there are tests asserting the nightly job leaves profiles alone.
 10. **One place knows every table keyed to a player.** `ACCOUNT` deletion goes through
     `deleteAccount()` in `src/lib/account-delete.ts` — the retention job and the admin
     delete button both use it, and they differ only in `deleteRegistrations`. Adding a
@@ -82,14 +85,17 @@ medical notes. That single fact drives most of the rules below.
 11. **User-supplied text is escaped before it reaches email HTML.** `esc()` in
     `src/lib/email-templates.ts`. A "name" containing an anchor tag would otherwise put an
     attacker's link inside a safeguarding email sent from our verified domain to a parent.
-12. **A condition of entry is stated, never disguised as a choice.** Round 47 turned
-    photography and WhatsApp event news into conditions of registering, on the team's
-    instruction. That is theirs to decide; how it is presented is not. There is no tick
-    box that cannot be unticked, no pre-checked box, and no wording calling it consent —
-    the form states it, the confirmation email states it, the guardian email states it in
-    full before the day, and each statement names the way out. `validateRegistration()`
-    sets `photoConsent` itself rather than trusting a client, so an omitted field cannot
-    quietly become a refusal on the photographers' list. DPIA risks 18 and 19.
+12. **A condition of entry is stated, never disguised as a choice.** Photography is a
+    condition of registering (round 47, the team's instruction). That is theirs to decide;
+    how it is presented is not. There is no tick box that cannot be unticked, no
+    pre-checked box, and no wording calling it consent — the form states it, the
+    confirmation email states it, the guardian email states it in full before the day, and
+    each statement names the way out. `validateRegistration()` sets `photoConsent` itself
+    rather than trusting a client, so an omitted field cannot quietly become a refusal on
+    the photographers' list. DPIA risk 18. **Nothing on the site promises messaging of any
+    kind** — WhatsApp event news was added in round 47 and withdrawn the next day; email is
+    the only channel, and adding another means the privacy notice and both emails change
+    with it.
 13. **No secret is ever a literal in a file in this tree.** API keys live in the macOS
     Keychain and are loaded by `.envrc.local`, which contains lookups and no values —
     `scripts/secrets-to-keychain.sh` writes it. Two leaks came from that file being read
@@ -117,25 +123,29 @@ before touching one.
 
 - Add a column with a new numbered file in `migrations/`, then
   `npx wrangler d1 migrations apply swc-production --local` (and `--remote` to deploy it).
-- Medical, dietary and accessibility live in their **own columns**, not in the `answers`
-  JSON, so `purgeMedical()` can delete them while keeping the registration — that is what
-  makes `04_Legal/RETENTION-POLICY.md` enforceable. Do not move them into `answers`.
+- Medical and accessibility live in their **own columns**, not in the `answers` JSON, so
+  `purgeMedical()` can delete them while keeping the registration — that is what makes
+  `04_Legal/RETENTION-POLICY.md` enforceable. Do not move them into `answers`. (`dietary`
+  is one of those columns and is no longer collected; the purge still clears it, which is
+  what you want for rows written before 2026-09-01.)
 - Three clocks run on one registration row and they are deliberately different lengths:
   the check-in token goes the day after the event, the medical fields at 30 days, and the
   **row itself at 12 months** (`purgeRegistrations()`). Anything you add to this table
   inherits the 12-month clock unless you give it a column and a rule of its own.
-- Only event-specific answers (`psnId`, `skill`) belong in the `answers` column.
+- Only event-specific answers (`skill`, `favouriteTeam`) belong in the `answers` column.
 - Widening a `CHECK` constraint means rebuilding the table — SQLite cannot alter one in
   place. See `migrations/0006_handles_and_dormancy.sql`, which carries the existing rows
   over because `retention_runs` is the evidence that deletions happened.
 
 ## Feature flags
 
-`src/lib/features.ts`. `SWC_REGISTRATION_OPEN` and `SWC_BOARD_OPEN` default **off in
-production, on in development**. Turning registration on **for the public** is a
-**safeguarding decision**, not a technical one — read `04_Legal/DPIA.md` first.
-`SWC_REGISTRATION_DEMO` renders the real form and skips only the write, for showing
-people the flow.
+`src/lib/features.ts`. **`SWC_REGISTRATION_OPEN` is set to `"true"` in `wrangler.jsonc`
+as of 2026-09-01: entries are open to the public and the form writes real children's
+records.** That was a safeguarding decision taken at a meeting, not a technical one — read
+`04_Legal/DPIA.md` before touching it. `SWC_BOARD_OPEN` is still off and its decision has
+not been taken. `SWC_REGISTRATION_DEMO` renders the real form and skips only the write; it
+is no longer set anywhere, because it is ignored while entries are open and leaving it set
+would imply the form does not save.
 
 **Three states, not two.** Ask `registrationLive()` from `src/lib/testing-access.ts`, never
 `registrationOpen()`, at any gate:
@@ -145,6 +155,13 @@ people the flow.
 | open | everyone | real write, real emails |
 | tester | a browser holding the `SWC_TEST_KEY` cookie | real write, real emails |
 | demo | everyone else, when `SWC_REGISTRATION_DEMO` | validates, writes nothing |
+
+The tester state now also carries the **one-click "Fill with test data" button** on the
+sign-up form, which completes the whole thing as a 13-year-old (the longest path: guardian
+block, on-site supervision, guardian email) and leaves both email boxes blank so a real
+inbox gets used. It is gated on `isTester()`, never on `registrationLive()` — with entries
+open, that would show it to the public, and a button that types a fake child into a real
+form is a fast way to get a fake child into a real draw.
 
 The tester state exists because nothing after the form — the D1 write, the guardian email,
 the magic link, the draw, the check-in token — can be tested without a real submission,
@@ -160,7 +177,7 @@ saves nothing, in tester mode it saves a real child's details to the live databa
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 280 tests
+npm test                         # 292 tests
 npx tsc --noEmit
 npm run lint
 npm run build

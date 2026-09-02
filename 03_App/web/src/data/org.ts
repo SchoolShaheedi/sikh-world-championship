@@ -12,11 +12,11 @@
  * named people.
  */
 export const ORG = {
-  name: "Sikh World Championship",
+  name: "Sikh World Championships",
   short: "SWC",
   tagline: "One community. Every arena.",
   intro:
-    "Sikh World Championship brings Sikhs together through competition — esports, sport, and mind games. We run events where players meet, compete, and build something that lasts beyond the final whistle.",
+    "Sikh World Championships brings Sikhs together through competition — esports, sport, and mind games. We run events where players meet, compete, and build something that lasts beyond the final whistle.",
 
   socials: {
     // Only what actually exists. An empty or "TBC" social link is worse than none — it

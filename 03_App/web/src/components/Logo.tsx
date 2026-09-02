@@ -45,7 +45,7 @@ export function Logo({
       height={size}
       viewBox="0 0 48 48"
       role="img"
-      aria-label="Sikh World Championship"
+      aria-label="Sikh World Championships"
       className="shrink-0"
     >
       <defs>
@@ -78,7 +78,7 @@ export function Wordmark({ src = null }: { src?: string | null }) {
       <span className="font-display leading-none">
         <span className="block text-[15px] tracking-tight">Sikh World</span>
         <span className="block text-[11px] font-semibold tracking-[0.22em] text-kesri">
-          CHAMPIONSHIP
+          CHAMPIONSHIPS
         </span>
       </span>
     </span>

@@ -45,12 +45,9 @@ export async function confirmSelection(
     dateOfBirth: String(a.dob),
     region: typeof a.region === "string" ? a.region : null,
     avatarId: typeof a.avatarId === "string" ? a.avatarId : null,
-    gamertag: typeof a.psnId === "string" ? a.psnId : null,
-    handle: resolveHandle(
-      a.handle,
-      String(a.fullName ?? ""),
-      typeof a.psnId === "string" ? a.psnId : undefined,
-    ),
+    // No PSN ID is collected since 2026-09-01 — see lib/interest.ts.
+    gamertag: null,
+    handle: resolveHandle(a.handle, String(a.fullName ?? "")),
     // From this record and nowhere else — never a field a child can fill in.
     guardianEmail:
       age < 18 && typeof a.guardianEmail === "string" ? a.guardianEmail : null,

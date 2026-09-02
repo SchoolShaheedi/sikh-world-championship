@@ -9,6 +9,8 @@ import { PublicNamePanel } from "@/components/PublicNamePanel";
 import { EntryAdminPanel, type EntryRow } from "@/components/EntryAdminPanel";
 import { bracketNames } from "@/lib/players";
 import { dormancySnapshot, DORMANT_PROFILE_RETENTION_MONTHS } from "@/lib/retention";
+import { DormantSweepPanel } from "@/components/DormantSweepPanel";
+import { ON_THE_DAY } from "@/data/on-the-day";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -90,6 +92,32 @@ export default async function AdminPage() {
         Applications and the draw. Everything here is recorded — see the draw history under
         each event.
       </p>
+
+      {/* ON THE DAY.
+          First thing on the page, above the draw, because everything in it is a job with
+          no code behind it. The app can tell you who may leave unaccompanied; it cannot
+          stop them walking out of a door nobody is standing at. A checklist somebody
+          reads on the morning is the whole mechanism. */}
+      <section className="mt-8 rounded-3xl border-2 border-kesri/50 bg-kesri/[0.07] p-6">
+        <h2 className="font-display text-2xl text-kesri">On the day</h2>
+        <p className="mt-2 text-sm text-muted">
+          Nothing here is automatic. These are the jobs a person has to do, and each one
+          has somebody&apos;s name against it or it does not happen.
+        </p>
+        <ul className="mt-5 space-y-4">
+          {ON_THE_DAY.map((item) => (
+            <li key={item.title} className="border-l-2 border-kesri/40 pl-4">
+              <p className="font-semibold text-body">{item.title}</p>
+              <p className="mt-1 text-sm text-muted">{item.detail}</p>
+              {item.appHelps && (
+                <p className="mt-1 text-xs text-kesrisoft">
+                  In the app: {item.appHelps}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {events.map(({ event, counts, draws, names, entries }) => (
         <section
@@ -177,10 +205,15 @@ export default async function AdminPage() {
       <section className="mt-16 border-t border-line pt-8 text-sm">
         <h2 className="font-display text-lg text-muted">Retention</h2>
         <p className="mt-2 max-w-2xl text-muted">
-          A profile that never attended an event is deleted after{" "}
-          {DORMANT_PROFILE_RETENTION_MONTHS} months of no activity — no sign-in and no new
-          registration. Moderators, anyone who attended, and anyone named on a report or a
-          support ticket are exempt. Runs nightly at 03:15.
+          <span className="text-body">Profiles are kept.</span> Nothing deletes one
+          automatically — decided 2026-09-01. The{" "}
+          {DORMANT_PROFILE_RETENTION_MONTHS}-month line below is only what the count is
+          measured against, so a clean-up can be run on purpose.
+        </p>
+        <p className="mt-2 max-w-2xl text-muted">
+          What still runs nightly at 03:15: medical notes are cleared 30 days after an
+          event, check-in tokens the day after, and a whole registration 12 months after
+          the event it was for.
         </p>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-4">
@@ -197,18 +230,10 @@ export default async function AdminPage() {
           ))}
         </div>
 
-        {dormancy.dueNow > 0 && (
-          /* Non-zero here means the nightly job has not run since these accounts passed
-             the line. Worth saying out loud rather than leaving in a column. */
-          <p className="mt-4 rounded-xl border border-kesri/40 bg-kesri/[0.06] p-3 text-body">
-            {dormancy.dueNow} profile{dormancy.dueNow === 1 ? "" : "s"} past the{" "}
-            {DORMANT_PROFILE_RETENTION_MONTHS}-month line and not yet deleted. The nightly
-            job should clear these — if this number persists, it has stopped running.
-          </p>
-        )}
+        <DormantSweepPanel dueNow={dormancy.dueNow} />
 
         <p className="mt-4 text-muted">
-          Last dormant-profile run:{" "}
+          Last clean-up:{" "}
           {dormancy.lastRunAt
             ? new Date(dormancy.lastRunAt).toLocaleString("en-GB")
             : "never"}
@@ -230,8 +255,9 @@ export default async function AdminPage() {
         {/* Stated plainly because it would otherwise read as more than it is. */}
         <p className="mt-4 max-w-2xl text-xs text-muted">
           Deleting a profile does not delete the registration behind it — that holds the
-          applicant&apos;s name, date of birth and email, and has its own retention period
-          measured from the event. That rule is written down but not yet enforced in code.
+          applicant&apos;s name, date of birth, mobile and guardian contact. That row is
+          deleted automatically 12 months after the event, so the two clocks are separate
+          and only one of them runs on its own.
         </p>
       </section>
     </div>

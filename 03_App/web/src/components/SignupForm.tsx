@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import type { ChampionshipEvent, FormField } from "@/lib/types";
 import { AVATARS } from "@/data/avatars";
 import { Avatar } from "./Avatar";
-import { REFERRAL_OPTIONS } from "@/data/referral-orgs";
+import { REFERRAL_OPTIONS, REFERRAL_OTHER } from "@/data/referral-orgs";
 import { checkHandle, defaultHandle, HANDLE_MAX } from "@/lib/handle";
 import {
   guardianTier,
@@ -25,7 +25,6 @@ const FIELD_LABELS: Record<string, string> = {
   region: "Region",
   medicalConditions: "Medical conditions",
   medical: "Medical detail",
-  dietary: "Dietary needs",
   accessibility: "Accessibility needs",
   avatarId: "Avatar",
   handle: "Name on the bracket",
@@ -37,12 +36,13 @@ const FIELD_LABELS: Record<string, string> = {
   guardianOnSite: "Staying at the venue",
   guardianIndependentConsent: "Permission to attend independently",
   mayLeaveUnaccompanied: "Leaving unaccompanied",
+  dietarySelfManaged: "Dietary needs on the day",
   emergencyName: "Emergency contact name",
   emergencyRelation: "Emergency contact relationship",
   emergencyPhone: "Emergency contact phone",
   rulesAgreed: "Rules and code of conduct",
   referralOrg: "How you heard about this",
-  psnId: "PSN ID",
+  referralDetail: "Which one",
   skill: "Self-rating",
   favouriteTeam: "Favourite team",
   ownController: "Own controller",
@@ -79,17 +79,27 @@ const inputCx =
 export function SignupForm({
   event,
   demo = false,
+  testFill = false,
   prefill,
 }: {
   event: ChampionshipEvent;
   /** Preview mode: the form works, the submission is discarded. See lib/features.ts. */
   demo?: boolean;
   /**
+   * Show the one-click "fill with test data" button.
+   *
+   * Only ever true in the closed preview or for a browser holding the test key — see the
+   * register-interest page. A rehearsal means filling in twenty-odd fields, and doing that
+   * by hand is why rehearsals get skipped; doing it in front of the public is why a fake
+   * child ends up in a real draw.
+   */
+  testFill?: boolean;
+  /**
    * Values carried over from an existing profile, for a signed-in player registering
    * interest in a second event.
    *
-   * Only identity fields that do not change between events. Medical, dietary and
-   * accessibility are deliberately NOT prefilled: they are purged after each event
+   * Only identity fields that do not change between events. Medical and accessibility
+   * are deliberately NOT prefilled: they are purged after each event
    * (04_Legal/RETENTION-POLICY.md), they genuinely change, and a stale allergy shown as
    * already-answered is worse than an empty box. Consents are never prefilled either —
    * a consent has to be given for this event, not inherited from the last one.
@@ -167,20 +177,67 @@ export function SignupForm({
    * The public name, and what is wrong with it if anything.
    *
    * Checked live with the SAME function the server uses, so the two cannot disagree —
-   * the point of the field is that it is neither the surname nor the PSN ID, and finding
-   * that out after pressing submit is a bad way to learn it.
+   * the point of the field is that it is not the surname, and finding that out after
+   * pressing submit is a bad way to learn it. (It also refuses a PSN ID when one is
+   * known; since 2026-09-01 we do not collect one, so that arm never fires here.)
    */
   const handleFallback = defaultHandle((values.fullName as string) ?? "");
   const handleProblem =
     typeof values.handle === "string" && values.handle.trim() !== ""
       ? checkHandle(values.handle, {
           fullName: (values.fullName as string) ?? "",
-          psnId: typeof values.psnId === "string" ? values.psnId : undefined,
         })
       : null;
 
   const tooYoung =
     age !== null && age < Math.min(...event.divisions.map((d) => d.minAge));
+
+  /**
+   * The follow-up question to "how did you hear about this?", or null when the answer is
+   * already specific. Two of the options name a category rather than an organisation.
+   */
+  const referralDetailLabel =
+    values.referralOrg === "Uni Sikh Society"
+      ? "Which university?"
+      : values.referralOrg === REFERRAL_OTHER
+        ? "Which organisation?"
+        : null;
+
+  /**
+   * Fill the whole form with made-up details, for a rehearsal.
+   *
+   * A 13-year-old on purpose: that is the longest path through the form — guardian block,
+   * on-site supervision, the guardian email — so one click exercises the parts most likely
+   * to be broken. The two email boxes are deliberately left alone: a rehearsal is only
+   * worth doing if the emails arrive somewhere a person can read them.
+   *
+   * Nothing here is a real person. The names are invented and the numbers are Ofcom's
+   * reserved 07700 900xxx drama range, which cannot ring anybody.
+   */
+  function fillWithTestData() {
+    setValues((v) => ({
+      ...v,
+      fullName: "Test Entrant",
+      dob: "2013-05-02",
+      mobile: "07700 900123",
+      region: "Leicester",
+      handle: "",
+      medicalConditions: [MEDICAL_NONE],
+      medical: "",
+      accessibility: "",
+      referralOrg: "Uni Sikh Society",
+      referralDetail: "Leicester",
+      guardianName: "Test Guardian",
+      guardianRelation: "Mother",
+      guardianMobile: "07700 900124",
+      guardianConsent: true,
+      guardianOnSite: true,
+      rulesAgreed: true,
+      skill: "Casual player",
+      favouriteTeam: "Test FC",
+      ownController: false,
+    }));
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -254,7 +311,7 @@ export function SignupForm({
         {!result.demo && (
           <p className="mx-auto mt-6 max-w-md text-sm text-muted">
             We&apos;ve emailed you a copy{isMinor && " and told your parent or guardian"}.
-            Your Sikh World Championship profile is set up with this email address — you
+            Your Sikh World Championships profile is set up with this email address — you
             can sign in any time, and it carries over to every future event. If you get a
             place we&apos;ll send a check-in code for the day.
           </p>
@@ -519,6 +576,17 @@ export function SignupForm({
                   label="They may leave the venue unaccompanied at the end of the day."
                   hint="Optional. If you leave this, we'll expect them to be collected."
                 />
+                {/* The form no longer asks for dietary needs. For 12–15 a parent is in
+                    the building all day; 18+ are adults. A 16 or 17-year-old may be here
+                    on their own, so this is the one tier where somebody has to be told
+                    whose job it is. Required for that reason. */}
+                <Check
+                  required
+                  checked={!!values.dietarySelfManaged}
+                  onChange={(v) => set("dietarySelfManaged", v)}
+                  label="They'll tell the team about any dietary needs when they arrive."
+                  hint="Langar is served on the day. We don't hold a dietary list, so anything that matters — an allergy especially — needs saying at the counter. Put anything a first aider would need in the medical box below as well."
+                />
               </>
             )}
 
@@ -553,6 +621,24 @@ export function SignupForm({
             ))}
           </select>
         </label>
+
+        {/* Which one. "Uni Sikh Society" and "Another organisation" are both whole
+            categories, and the draw treats them as referrals — so without this the
+            outreach that actually worked is invisible. Free text, one line, and it is
+            not used for anything but knowing who to thank. */}
+        {referralDetailLabel && (
+          <label className="mb-6 block">
+            <Label hint="Just the name — it tells us which outreach is working.">
+              {referralDetailLabel}
+            </Label>
+            <input
+              required
+              className={inputCx}
+              value={(values.referralDetail as string) ?? ""}
+              onChange={(e) => set("referralDetail", e.target.value)}
+            />
+          </label>
+        )}
 
         {/* Emergency contact — adults only.
             Every participant has one on record: for an under-18 it is the parent or
@@ -607,12 +693,16 @@ export function SignupForm({
           </p>
         )}
 
-        {/* Medical, dietary and accessibility together: they are the three things a
-            volunteer or first aider needs on the day, and they are asked of everyone.
-            Round 24 moved the medical questions here from the under-18 guardian section —
-            an adult with epilepsy or a severe allergy needs the first aider to know just
-            as much as a child does, and dietary allergies were already collected from
-            everyone, so asking only minors was inconsistent. Every field stays optional. */}
+        {/* Medical and accessibility together: what a volunteer or first aider needs on
+            the day, asked of everyone. Round 24 moved the medical questions here from the
+            under-18 guardian section — an adult with epilepsy or a severe allergy needs
+            the first aider to know just as much as a child does. Every field is optional.
+
+            The separate "dietary needs" box was dropped on 2026-09-01: langar is served,
+            a parent is at the venue for every under-16, and a food allergy is a medical
+            fact that belongs in the first-aider box above rather than in a second field
+            that only the kitchen reads. 16- and 17-year-olds acknowledge in the guardian
+            section that telling us on the day is theirs to do. */}
             <div>
             <Label hint="Tick anything that applies. Our first aider reads this, so 'None' is a real answer we need.">
               Medical conditions
@@ -651,28 +741,16 @@ export function SignupForm({
             />
           </label>
 
-        <div className="mt-5 grid gap-5 sm:grid-cols-2">
-          <label className="block">
-            <Label hint="Wheelchair access, quiet space, anything else — just ask.">
-              Accessibility needs
-            </Label>
-            <input
-              className={inputCx}
-              value={(values.accessibility as string) ?? ""}
-              onChange={(e) => set("accessibility", e.target.value)}
-            />
-          </label>
-          <label className="block">
-            <Label hint="Langar is served. Tell us about allergies.">
-              Dietary needs
-            </Label>
-            <input
-              className={inputCx}
-              value={(values.dietary as string) ?? ""}
-              onChange={(e) => set("dietary", e.target.value)}
-            />
-          </label>
-        </div>
+        <label className="mt-5 block">
+          <Label hint="Wheelchair access, quiet space, anything else — just ask.">
+            Accessibility needs
+          </Label>
+          <input
+            className={inputCx}
+            value={(values.accessibility as string) ?? ""}
+            onChange={(e) => set("accessibility", e.target.value)}
+          />
+        </label>
 
         <div className="mt-5 space-y-4">
           <Check
@@ -686,9 +764,9 @@ export function SignupForm({
               offering a tick box would be offering a choice that does not exist. That is
               a deliberate decision (round 47, team feedback) and it has a legal cost:
               agreement bundled into entry is not "consent" under UK GDPR, so the basis
-              for the photography and the WhatsApp messages is legitimate interests with
-              a right to object — which is why each one names the way out.
-              See 04_Legal/PHOTOGRAPHY-CONSENT.md and DPIA risks 18 and 19. */}
+              for the photography is legitimate interests with a right to object — which
+              is why it names the way out.
+              See 04_Legal/PHOTOGRAPHY-CONSENT.md and DPIA risk 18. */}
           <div className="space-y-3 rounded-xl border border-line bg-ink/20 p-4 text-sm text-muted">
             <p className="font-semibold text-body">What registering means</p>
             <p>
@@ -720,22 +798,16 @@ export function SignupForm({
               the day and our photographers are told.
             </p>
             <p>
-              <span className="text-body">
-                We&apos;ll message you on WhatsApp about future events.
-              </span>{" "}
-              {isMinor
-                ? "To the parent or guardian mobile above, never to the player's — an under-18 is not messaged directly."
-                : "To the mobile above."}{" "}
-              Event news only, never anyone else&apos;s advertising, and never more than
-              a few times a year. Reply STOP, or ask us, and it ends.
+              <span className="text-body">We contact you by email.</span> Your
+              confirmation, the result of the draw, and news about future events all come
+              by email — there is nothing else to sign up to.
             </p>
             <p className="text-xs">
-              Either of the last two can be stopped at any time — before the day or after
-              it — at{" "}
+              Anything here can be stopped at any time — before the day or after it — at{" "}
               <a href="/support" className="text-kesri hover:underline">
                 sikhchampionships.com/support
               </a>
-              . Neither has any effect on your place.
+              , with no effect on your place.
             </p>
           </div>
         </div>
@@ -763,6 +835,28 @@ export function SignupForm({
           <p className="mt-3 text-sm text-muted">
             Nothing has been submitted yet. Fix the above and press the button again.
           </p>
+        </div>
+      )}
+
+      {testFill && (
+        <div className="rounded-2xl border border-dashed border-kesri/60 bg-kesri/[0.06] p-5">
+          <p className="font-display text-kesri">Rehearsal shortcut</p>
+          <p className="mt-1 text-sm text-muted">
+            Fills every box with made-up details for a 13-year-old — the longest path
+            through the form, so it exercises the guardian section and the guardian email.
+            <span className="text-body">
+              {" "}
+              Your own email address is left blank on purpose
+            </span>{" "}
+            — type one you can actually read, in both boxes, or the emails go nowhere.
+          </p>
+          <button
+            type="button"
+            onClick={fillWithTestData}
+            className="mt-4 rounded-xl border border-kesri bg-kesri/20 px-5 py-2.5 text-sm font-bold text-kesri transition-colors hover:bg-kesri/30"
+          >
+            Fill with test data
+          </button>
         </div>
       )}
 
