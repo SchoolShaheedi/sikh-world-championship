@@ -24,6 +24,8 @@ import {
   checkInByScan,
   checkInByReference,
   undoCheckIn,
+  setDobVerified,
+  deskCounts,
 } from "./check-in";
 
 const EVENT_DATE = "2026-10-03";
@@ -421,5 +423,112 @@ describe("the slips to print", () => {
     const s = await selected();
     await scan(checkInPayload(s.token));
     expect(await checkInSlips("e1")).toHaveLength(1);
+  });
+});
+
+/**
+ * Proof of date of birth (2026-09-03).
+ *
+ * Every player must bring something showing their date of birth. The reason is age, not
+ * identity: one bracket runs 12 to 25 and every supervision rule hangs off a date typed
+ * into a form. src/data/id-check.ts holds the policy.
+ *
+ * The two properties worth testing are both about what this must NOT do. It must not gate
+ * the door — a register that refuses to admit somebody standing in the hall is simply
+ * wrong — and it must not accumulate anything about the document.
+ */
+describe("proof of date of birth", () => {
+  it("records that it was seen, when, and by which moderator", async () => {
+    const s = await selected();
+    expect(await setDobVerified("e1", s.reference, DESK, true)).toEqual({ ok: true });
+
+    const db = await getDb();
+    const row = await db
+      .prepare("SELECT dob_verified_at, dob_verified_by FROM registrations WHERE reference = ?")
+      .bind(s.reference)
+      .first<{ dob_verified_at: string; dob_verified_by: string }>();
+    expect(row!.dob_verified_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(row!.dob_verified_by).toBe(DESK);
+  });
+
+  it("stores NOTHING about the document — there is no column that could", async () => {
+    /**
+     * A structural test, guarding the promise made in the copy and in
+     * migrations/0013_dob_verified.sql: we look at it, hand it back, and write down
+     * nothing from it. The failure this catches is a well-meaning future migration adding
+     * `id_type` or `id_number` — "passport" against a child's name is a nationality
+     * signal we have no use for, and the copy in four places would silently become a lie.
+     */
+    const db = await getDb();
+    const { results } = await db.prepare("PRAGMA table_info(registrations)").all<{ name: string }>();
+    const names = results.map((r) => r.name);
+    expect(names).toContain("dob_verified_at");
+    expect(names).toContain("dob_verified_by");
+    for (const n of names) {
+      expect(n).not.toMatch(/document|id_type|id_number|passport|id_image|id_seen_type/);
+    }
+  });
+
+  it("can be taken back, because somebody will tap the wrong row", async () => {
+    const s = await selected();
+    await setDobVerified("e1", s.reference, DESK, true);
+    await setDobVerified("e1", s.reference, DESK, false);
+
+    const [row] = await checkInRoster("e1", EVENT_DATE);
+    expect(row.dobVerifiedAt).toBeNull();
+  });
+
+  it("works BEFORE they are checked in as well as after", async () => {
+    // A parent usually has the passport out while the volunteer is still finding the slip.
+    // Refusing to record it until the scan has happened would mean asking them twice.
+    const s = await selected();
+    await setDobVerified("e1", s.reference, DESK, true);
+
+    const r = await scan(checkInPayload(s.token));
+    expect(r.kind).toBe("checked-in");
+    if (r.kind !== "checked-in") throw new Error("unreachable");
+    expect(r.entry.dobVerifiedAt).not.toBeNull();
+  });
+
+  it("does NOT gate the door — no document still means checked in", async () => {
+    // The whole shape of the feature. Who is in the building is a safeguarding fact and
+    // must be right even while the ID question is unresolved.
+    const s = await selected();
+    const r = await scan(checkInPayload(s.token));
+    expect(r.kind).toBe("checked-in");
+    if (r.kind !== "checked-in") throw new Error("unreachable");
+    expect(r.entry.dobVerifiedAt).toBeNull();
+    expect((await deskCounts("e1")).arrived).toBe(1);
+  });
+
+  it("is cleared by undoing a check-in", async () => {
+    // The wrong tap that checks in the wrong person is the same wrong tap that confirmed
+    // their date of birth. A false "we checked" is worse than an extra tap.
+    const s = await selected();
+    await scan(checkInPayload(s.token));
+    await setDobVerified("e1", s.reference, DESK, true);
+
+    await undoCheckIn("e1", s.reference);
+
+    const [row] = await checkInRoster("e1", EVENT_DATE);
+    expect(row.dobVerifiedAt).toBeNull();
+  });
+
+  it("refuses a reference from another event, and an unknown one", async () => {
+    const other = await selected({ slug: "e2", token: "tok-e2", email: "b@example.com" });
+    expect((await setDobVerified("e1", other.reference, DESK, true)).error).toMatch(/another event/i);
+    expect((await setDobVerified("e1", "SWC-XXX-XXX", DESK, true)).error).toMatch(/No entry/i);
+  });
+
+  it("counts arrivals and checks separately, because they are separate facts", async () => {
+    const a = await selected({ fullName: "Aaa One", email: "1@example.com", token: "t1" });
+    const b = await selected({ fullName: "Bbb Two", email: "2@example.com", token: "t2" });
+    await selected({ fullName: "Ccc Three", email: "3@example.com", token: "t3" });
+
+    await scan(checkInPayload(a.token));
+    await scan(checkInPayload(b.token));
+    await setDobVerified("e1", a.reference, DESK, true);
+
+    expect(await deskCounts("e1")).toEqual({ expected: 3, arrived: 2, dobChecked: 1 });
   });
 });

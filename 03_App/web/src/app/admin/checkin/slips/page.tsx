@@ -16,8 +16,14 @@ export const dynamic = "force-dynamic";
  *
  * WHAT THIS PAGE IS. Sixty-four cards, three across and six down on A4, each with one
  * player's public name, their reference and their check-in QR code. Print, cut along the
- * lines, lay out on a table in name order. Everybody picks up their own and holds it to
- * the camera at the desk.
+ * lines, keep in name order, and HAND EACH ONE OVER at the desk rather than laying the
+ * pile out for people to help themselves.
+ *
+ * That changed on 2026-09-03 with the date-of-birth requirement, and it is a better shape
+ * for two reasons that have nothing to do with each other. The ID has to be looked at
+ * anyway, so handing the slip over makes it one conversation instead of two. And the
+ * handover is itself a check against our own list, which is a stronger thing than a
+ * document: the wrong person cannot pick up a slip that a volunteer is holding.
  *
  * WHY PAPER AND NOT AN EMAIL WITH A CODE IN IT. Half the entrants are twelve to fifteen.
  * A plan that depends on a child having a charged phone, having found the right email, and
@@ -73,8 +79,11 @@ export default async function SlipsPage() {
               a shrunk page shrinks the codes and they stop scanning across a desk.
             </p>
             <p>
-              Cut along the grey lines, then lay them on a table by the door in the order
-              they print, which is first-name order. Each person finds their own.
+              Cut along the grey lines and keep them in the order they print, which is
+              first-name order. <strong>Hand each one over</strong> — do not lay the pile
+              out for people to help themselves. You are checking their date of birth at
+              the same moment, so it is one conversation, and handing it over means the
+              wrong person cannot pick up somebody else&rsquo;s slip.
             </p>
             <p className="warn">
               <strong>These are the passes.</strong> A slip is what marks somebody present,

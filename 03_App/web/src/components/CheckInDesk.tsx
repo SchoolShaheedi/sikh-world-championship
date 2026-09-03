@@ -5,10 +5,12 @@ import {
   scanPass,
   checkInManually,
   undoOne,
+  markDobSeen,
   refreshRoster,
   type DeskResponse,
 } from "@/app/admin/checkin/actions";
 import type { RosterEntry, CheckInResult } from "@/lib/check-in";
+import { ID_ACCEPTED, ID_NO_DOCUMENT_RULE } from "@/data/id-check";
 
 /**
  * The arrival desk, as one screen.
@@ -31,12 +33,20 @@ import type { RosterEntry, CheckInResult } from "@/lib/check-in";
  *   4. THE SAME CODE TWICE IS IGNORED FOR A FEW SECONDS. The decode loop runs ten times a
  *      second and a slip is held up for two, so without this one arrival fires twenty
  *      writes and the screen flickers through twenty identical answers.
- *   5. THE COUNT COMES FROM THE SERVER, EVERY TIME. Each action returns the whole list, so
+ *   5. THE DATE-OF-BIRTH CHECK NEVER BLOCKS THE DOOR. Everyone must bring something showing
+ *      their date of birth (src/data/id-check.ts, decided 2026-09-03), and some will not.
+ *      So the scan checks them in regardless and the ID prompt appears next to the result as
+ *      a separate one-tap step. Who is in the building is a safeguarding fact and has to be
+ *      right even while the ID question is unresolved; a desk that refuses to admit somebody
+ *      standing in the hall produces a register that is simply wrong. Unchecked rows get
+ *      their own filter so the lead can work through them, which is what
+ *      `ID_NO_DOCUMENT_RULE` asks for.
+ *   6. THE COUNT COMES FROM THE SERVER, EVERY TIME. Each action returns the whole list, so
  *      "31 of 64 arrived" is a fact and not this tab's opinion — which matters the moment
  *      two volunteers are working two devices.
  */
 
-type Filter = "all" | "waiting" | "arrived";
+type Filter = "all" | "waiting" | "arrived" | "no-id";
 
 /** What the big card says, and what colour it is. */
 function describe(r: CheckInResult): {
@@ -141,6 +151,11 @@ export function CheckInDesk({
   const inFlight = useRef(false);
 
   const arrived = roster.filter((r) => r.status === "checked-in").length;
+  const dobChecked = roster.filter((r) => r.dobVerifiedAt).length;
+  /** Arrived, but nobody has confirmed a date of birth. The list the lead works through. */
+  const arrivedNoId = roster.filter(
+    (r) => r.status === "checked-in" && !r.dobVerifiedAt,
+  ).length;
 
   const absorb = useCallback((r: DeskResponse) => {
     setRoster(r.roster);
@@ -261,6 +276,7 @@ export function CheckInDesk({
   const visible = roster.filter((r) => {
     if (filter === "waiting" && r.status === "checked-in") return false;
     if (filter === "arrived" && r.status !== "checked-in") return false;
+    if (filter === "no-id" && (r.status !== "checked-in" || r.dobVerifiedAt)) return false;
     if (!q) return true;
     return (
       r.fullName.toLowerCase().includes(q) ||
@@ -278,15 +294,23 @@ export function CheckInDesk({
           <h1 className="font-display text-4xl">Arrivals</h1>
           <p className="mt-1 text-muted">{eventTitle}</p>
         </div>
-        <p className="font-display text-3xl text-kesri">
-          {arrived}
-          <span className="text-lg text-muted"> of {roster.length} arrived</span>
+        <div className="text-right">
+          <p className="font-display text-3xl text-kesri">
+            {arrived}
+            <span className="text-lg text-muted"> of {roster.length} arrived</span>
+          </p>
+          <p className="text-sm text-muted">
+            {dobChecked} date{dobChecked === 1 ? "" : "s"} of birth checked
+            {arrivedNoId > 0 && (
+              <span className="text-amber-300"> · {arrivedNoId} here without one</span>
+            )}
+          </p>
           {roster.length !== capacity && (
-            <span className="block text-xs font-normal text-muted">
+            <p className="text-xs text-muted">
               {capacity} places · {roster.length} with a place
-            </span>
+            </p>
           )}
-        </p>
+        </div>
       </div>
 
       {/* THE RESULT. Above the camera, not below it: the volunteer's eyes come up from the
@@ -307,14 +331,42 @@ export function CheckInDesk({
             {card.name && <p className="font-display text-4xl leading-tight">{card.name}</p>}
             <p className="font-display mt-1 text-2xl">{card.heading}</p>
             <p className="mt-1 text-sm opacity-80">{card.detail}</p>
-            {result &&
-              "entry" in result &&
-              result.entry.under18 &&
-              result.entry.leaving && (
-                <p className="mt-3 inline-block rounded-lg border border-current/40 px-3 py-1.5 text-sm">
-                  Under 18 · {result.entry.leaving}
-                </p>
-              )}
+            {result && "entry" in result && result.entry.under18 && result.entry.leaving && (
+              <p className="mt-3 inline-block rounded-lg border border-current/40 px-3 py-1.5 text-sm">
+                Under 18 · {result.entry.leaving}
+              </p>
+            )}
+
+            {/* THE ID STEP, next to the result rather than in front of it (rule 5).
+                They are already checked in by the time this appears — this only records
+                that a date of birth was seen, and the person with no document still gets
+                through the door. */}
+            {result?.kind === "checked-in" &&
+              (result.entry.dobVerifiedAt ? (
+                <p className="mt-4 text-sm">✓ Date of birth checked</p>
+              ) : (
+                <div className="mt-4 rounded-2xl border border-current/40 bg-ink/30 p-4">
+                  <p className="font-display text-lg">Now check their date of birth</p>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => run(() => markDobSeen(slug, result.entry.reference, true))}
+                    className="mt-2 rounded-xl bg-kesri px-5 py-3 text-sm font-bold text-ink transition-colors hover:bg-kesrisoft disabled:opacity-40"
+                  >
+                    I have seen their date of birth
+                  </button>
+                  <details className="mt-3 text-sm">
+                    <summary className="cursor-pointer opacity-80">
+                      They have not got anything
+                    </summary>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-left opacity-80">
+                      {ID_NO_DOCUMENT_RULE.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </details>
+                </div>
+              ))}
           </>
         ) : (
           <p className="font-display text-2xl">Ready</p>
@@ -396,6 +448,7 @@ export function CheckInDesk({
               [
                 ["waiting", `Still to arrive (${roster.length - arrived})`],
                 ["arrived", `Arrived (${arrived})`],
+                ["no-id", `No date of birth (${arrivedNoId})`],
                 ["all", "Everyone"],
               ] as [Filter, string][]
             ).map(([id, label]) => (
@@ -435,6 +488,30 @@ export function CheckInDesk({
                 {r.leaving && <p className="text-xs text-muted">{r.leaving}</p>}
               </div>
 
+              {/* The date-of-birth step, per row, so it can be done before somebody is
+                  scanned in as well as after — a parent usually has the passport out
+                  while the volunteer is still finding the slip. */}
+              {r.dobVerifiedAt ? (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => run(() => markDobSeen(slug, r.reference, false))}
+                  title="Recorded in error? This clears it."
+                  className="rounded-lg border border-emerald-400/40 px-3 py-1.5 text-xs text-emerald-300 disabled:opacity-40"
+                >
+                  ✓ DOB
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => run(() => markDobSeen(slug, r.reference, true))}
+                  className="rounded-lg border border-amber-400/50 px-3 py-1.5 text-xs text-amber-200 hover:bg-amber-500/10 disabled:opacity-40"
+                >
+                  DOB seen
+                </button>
+              )}
+
               {r.status === "checked-in" ? (
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-emerald-300">
@@ -467,6 +544,32 @@ export function CheckInDesk({
             </li>
           ))}
         </ul>
+
+        <details className="mt-6 rounded-2xl border border-line p-4 text-sm">
+          <summary className="cursor-pointer font-semibold text-body">
+            What counts as proof of date of birth
+          </summary>
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-muted">
+            {ID_ACCEPTED.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </ul>
+          <p className="mt-3 text-muted">
+            <span className="text-body">A photo of any of these on a phone is fine.</span>{" "}
+            Look at it, hand it straight back, and record nothing from it — we keep only
+            that a date of birth was seen.
+          </p>
+
+          {/* The rule for somebody with nothing, HERE as well as on the result card.
+              The card only exists after a scan, and the volunteer who needs this is often
+              talking to a parent before the slip has even been found. */}
+          <p className="mt-4 font-semibold text-body">If they have not got anything</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-muted">
+            {ID_NO_DOCUMENT_RULE.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </details>
 
         <button
           type="button"

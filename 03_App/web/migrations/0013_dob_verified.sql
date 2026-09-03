@@ -1,0 +1,33 @@
+-- Proof of date of birth, seen at the door.
+--
+-- WHY (2026-09-03, team decision): every player must bring identification showing their
+-- date of birth to check in. The reason is age, not identity — one open bracket runs 12 to
+-- 25 and every supervision rule hangs off a date typed into a form by whoever was at the
+-- keyboard. See src/data/id-check.ts for the policy, the accepted documents and the rule
+-- for somebody who arrives without one.
+--
+-- WHAT THESE TWO COLUMNS HOLD: that a date of birth was seen, when, and which moderator
+-- saw it. That is all, and the absence of anything else is the point of this comment.
+--
+-- WHAT THERE IS DELIBERATELY NO COLUMN FOR, AND WILL NOT BE:
+--   * the type of document — "passport" against a child's name is a nationality signal we
+--     have no use for and no business holding
+--   * a document number, or any part of one
+--   * an image, scan or photograph of anything
+--   * the date of birth read off it. We already hold the one they registered with; a
+--     second copy from a different source would only create a discrepancy to adjudicate,
+--     and if the two disagree that is a conversation, not a column.
+-- The document is looked at and handed straight back. If a future change wants any of the
+-- above, it needs a DPIA amendment first, not a migration.
+--
+-- ATTENDANCE IS NOT GATED ON THIS, on purpose. `checked_in_at` records who is in the
+-- building and must be right even when the ID question is unresolved — a register that
+-- refuses to admit somebody is standing in the hall is worse than no register. The two
+-- facts are recorded separately and the desk shows both counts.
+--
+-- RETENTION: with the registration, deleted 12 months after the event by
+-- `purgeRegistrations()`. No clock of its own, for the same reason as 0012 — it is
+-- evidence about the day, so it must outlive the day and must not outlive the record of
+-- who was there.
+ALTER TABLE registrations ADD COLUMN dob_verified_at TEXT;
+ALTER TABLE registrations ADD COLUMN dob_verified_by TEXT;

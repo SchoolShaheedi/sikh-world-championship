@@ -140,6 +140,9 @@ confirmSelection() issues check_in_token
         └──> /admin/checkin         camera decodes (jsQR) ──> scanPass() ──> checkInByScan()
                                     manual list          ──> checkInManually() ──> checkInByReference()
                                                              both land in the same mark()
+                                             │
+                                             └──> markDobSeen() ──> setDobVerified()
+                                                  separate step, never a gate
 ```
 
 * `src/lib/qr.ts` **encodes** (qrcode-generator, server-side SVG); jsQR **decodes** in the
@@ -161,6 +164,20 @@ confirmSelection() issues check_in_token
 * `checkInRoster()` **never returns a token**: it feeds a client component whose props are
   serialised into a page left open on a desk all day. `checkInSlips()` is the only thing
   that reads tokens, and only the print page calls it.
+* **Proof of date of birth is required of every player** (2026-09-03) and is a *separate*
+  one-tap step, never a gate. `checked_in_at` and `dob_verified_at` are different columns
+  because who is in the building must be right even while the ID question is not — a
+  register that refuses to admit somebody standing in the hall is simply wrong. There is a
+  test asserting a check-in succeeds with nothing verified. `src/data/id-check.ts` is the
+  single source of truth for the accepted documents and for `ID_NO_DOCUMENT_RULE` (nobody
+  is turned away by a volunteer; the safeguarding lead decides), and the form, the event
+  page, both emails and the desk all read it.
+* **Nothing about the document is stored, ever.** Not its type, its number, an image, or the
+  date read off it — only that a moderator saw one, when, and which moderator.
+  `migrations/0013_dob_verified.sql` states it and `check-in.test.ts` walks
+  `PRAGMA table_info(registrations)` asserting no such column exists. "Passport" against a
+  child's name is a nationality signal with no use here. Adding any of it needs a DPIA
+  amendment, not a migration.
 * No contact details on the desk list, deliberately. A guardian's mobile is exactly what
   you want if a child arrives alone and exactly what should not be on a screen facing a
   queue. `under18` and a one-line `leaving` note are decision support with no contact route
@@ -263,7 +280,7 @@ saves nothing, in tester mode it saves a real child's details to the live databa
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 357 tests
+npm test                         # 365 tests
 npx tsc --noEmit
 npm run lint
 npm run build

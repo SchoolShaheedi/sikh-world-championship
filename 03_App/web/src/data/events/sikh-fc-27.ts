@@ -81,6 +81,10 @@ export const sikhFc27: ChampionshipEvent = {
     "Teams must be equal star rating. Both players agree, or the referee assigns.",
     "3-minute halves. The final is played with 5-minute halves.",
     "One open division — ages 12 to 25 compete in the same bracket.",
+    // A rule and not a footnote: it is checked at the door for every single player, and the
+    // accepted documents live in src/data/id-check.ts so the form, both emails and the desk
+    // all read the same list. Added 2026-09-03 on the team's decision.
+    "Bring something showing your date of birth to check in — a birth certificate, passport, NHS card, or a school letter or card that shows it. A photo of it on a phone is fine. We look at it, hand it back, and keep nothing from it.",
     "Straight knockout from the first round. Win and you go through; lose and you are out.",
     "Knocked out early? Spare consoles are set up for friendly matches all day — nobody who came to play goes home after one game.",
     "Draws go to extra time, then penalties.",

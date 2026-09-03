@@ -76,8 +76,9 @@ export default async function CheckInPage() {
             <h2 className="font-display text-xl text-kesri">Before the day: print the slips</h2>
             <p className="mt-2 max-w-2xl text-sm text-muted">
               One slip per player, with their code and their reference. Print them, cut them
-              along the lines, and lay them out on a table by the door in name order —
-              everybody picks up their own and holds it to the camera.
+              along the lines and keep them in name order. Hand each one over at the desk —
+              you are checking their date of birth in the same breath — and they hold it to
+              the camera.
             </p>
             <Link
               href="/admin/checkin/slips"

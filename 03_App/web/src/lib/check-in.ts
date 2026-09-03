@@ -53,6 +53,15 @@ export interface RosterEntry {
   publicName: string;
   status: RegistrationStatus;
   checkedInAt: string | null;
+  /**
+   * When a moderator confirmed they had seen something showing this person's date of
+   * birth. Null means not checked yet — which is the normal state until they arrive, and
+   * an unresolved one afterwards. See src/data/id-check.ts.
+   *
+   * Deliberately separate from `checkedInAt`: attendance must be right even when the ID
+   * question is not, so the two facts never gate each other.
+   */
+  dobVerifiedAt: string | null;
   /** Under 18 on the day of the event. A boolean, never the date of birth. */
   under18: boolean;
   /**
@@ -82,6 +91,7 @@ type Row = {
   dob: string;
   status: RegistrationStatus;
   checked_in_at: string | null;
+  dob_verified_at: string | null;
   handle: string | null;
   display_name: string | null;
   guardian_on_site: number | null;
@@ -111,13 +121,15 @@ function toEntry(row: Row, eventDate: string | null): RosterEntry {
       : defaultHandle(row.full_name),
     status: row.status,
     checkedInAt: row.checked_in_at,
+    dobVerifiedAt: row.dob_verified_at,
     under18,
     leaving: leavingNote(row, under18),
   };
 }
 
 const SELECT = `
-  SELECT r.reference, r.full_name, r.dob, r.status, r.checked_in_at, r.event_slug,
+  SELECT r.reference, r.full_name, r.dob, r.status, r.checked_in_at, r.dob_verified_at,
+         r.event_slug,
          r.guardian_on_site, r.may_leave_unaccompanied, r.check_in_token, r.player_id,
          p.handle, p.display_name
     FROM registrations r
@@ -308,8 +320,11 @@ export async function checkInByReference(
  * to be a way back, and it has to be in reach of the person who made the mistake rather
  * than an SQL statement someone runs later.
  *
- * Returns to `selected`, clears both columns, and does not touch the profile badge — see
- * `mark()`.
+ * Returns to `selected` and clears all four columns — the arrival time, who recorded it,
+ * and the date-of-birth confirmation with it. The last one is deliberate: the wrong tap
+ * that checks in the wrong person is the same wrong tap that confirmed their date of
+ * birth, and a false "we checked" is worse than an extra tap. It does not touch the
+ * profile badge — see `mark()`.
  */
 export async function undoCheckIn(
   eventSlug: string,
@@ -324,10 +339,71 @@ export async function undoCheckIn(
   await db
     .prepare(
       `UPDATE registrations
-          SET status = 'selected', checked_in_at = NULL, checked_in_by = NULL
+          SET status = 'selected', checked_in_at = NULL, checked_in_by = NULL,
+              dob_verified_at = NULL, dob_verified_by = NULL
         WHERE reference = ?`,
     )
     .bind(row.reference)
     .run();
   return { ok: true };
+}
+
+/**
+ * Record that a moderator saw something showing this person's date of birth — or take it
+ * back, for the inevitable wrong tap.
+ *
+ * WHAT IS WRITTEN: a timestamp and the moderator's player id. Not the document, not its
+ * type, not its number, not the date read off it. There is no column for any of those and
+ * migrations/0013_dob_verified.sql says why.
+ *
+ * NOT A GATE ON ANYTHING. It does not check somebody in, it cannot prevent a check-in, and
+ * a person with no document still gets through the door — `ID_NO_DOCUMENT_RULE` in
+ * src/data/id-check.ts is the rule, and it is a rule for the safeguarding lead rather than
+ * for this function. All this does is stop "did we check?" being answered from memory.
+ *
+ * Works before arrival as well as after. Somebody will show a passport while the volunteer
+ * is still hunting for their slip, and refusing to record it until the scan has happened
+ * would mean asking a parent to get it out twice.
+ */
+export async function setDobVerified(
+  eventSlug: string,
+  reference: string,
+  byPlayerId: string,
+  seen: boolean,
+): Promise<{ ok: boolean; error?: string }> {
+  const db = await getDb();
+  const row = await findBy("reference", reference.trim().toUpperCase());
+  if (!row) return { ok: false, error: "No entry with that reference." };
+  if (row.event_slug !== eventSlug) {
+    return { ok: false, error: "That entry is for another event." };
+  }
+  await db
+    .prepare(
+      `UPDATE registrations SET dob_verified_at = ?, dob_verified_by = ? WHERE reference = ?`,
+    )
+    .bind(seen ? new Date().toISOString() : null, seen ? byPlayerId : null, row.reference)
+    .run();
+  return { ok: true };
+}
+
+/** Arrived, and how many of those have had a date of birth confirmed. */
+export async function deskCounts(
+  eventSlug: string,
+): Promise<{ expected: number; arrived: number; dobChecked: number }> {
+  const db = await getDb();
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS expected,
+              SUM(CASE WHEN status = 'checked-in' THEN 1 ELSE 0 END) AS arrived,
+              SUM(CASE WHEN dob_verified_at IS NOT NULL THEN 1 ELSE 0 END) AS dob
+         FROM registrations
+        WHERE event_slug = ? AND status IN ('selected','checked-in')`,
+    )
+    .bind(eventSlug)
+    .first<{ expected: number | null; arrived: number | null; dob: number | null }>();
+  return {
+    expected: row?.expected ?? 0,
+    arrived: row?.arrived ?? 0,
+    dobChecked: row?.dob ?? 0,
+  };
 }

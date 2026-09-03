@@ -20,8 +20,14 @@ export const ON_THE_DAY: OnTheDayItem[] = [
   {
     title: "Print and cut the check-in slips, and try the camera, the night before",
     detail:
-      "Sixty-four slips, 18 to a sheet, cut along the lines and laid out on a table by the door in name order. Then open Arrivals on the actual laptop that will be on the desk and scan one, because the browser asks for camera permission the first time and a refused prompt is a locked camera. Do both the night before: a printer with no toner at nine in the morning is a queue of parents.",
+      "Sixty-four slips, 18 to a sheet, cut along the lines and kept in name order. Hand each one over rather than laying the pile out for people to help themselves — the date of birth is checked at the same moment, so the two jobs are one conversation. Then open Arrivals on the actual laptop that will be on the desk and scan one, because the browser asks for camera permission the first time and a refused prompt is a locked camera. Do both the night before: a printer with no toner at nine in the morning is a queue of parents.",
     appHelps: "Arrivals → Open the print sheet",
+  },
+  {
+    title: "Brief the desk on what counts as proof of date of birth",
+    detail:
+      "Every player must bring something showing their date of birth (decided 2026-09-03), and the reason is age rather than identity — one bracket runs 12 to 25 and every supervision rule hangs off a date somebody typed into a form. Read the accepted list to whoever is on the desk before the doors open, including that a photo on a phone counts. Two things they must not have to work out on the spot: nobody is turned away by a volunteer, and the safeguarding lead — not the person on the door — decides about anyone who arrives with nothing. It matters most for anyone near the 12 or 25 line and for a 16–17-year-old due to leave on their own. The document is looked at and handed straight back; nothing is copied, photographed or written down.",
+    appHelps: "Arrivals → “What counts as proof of date of birth”, and a “No date of birth” filter",
   },
   {
     title: "Nobody under 16 leaves without the adult who brought them",

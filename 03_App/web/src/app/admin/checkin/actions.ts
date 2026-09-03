@@ -6,6 +6,7 @@ import {
   checkInByScan,
   checkInByReference,
   undoCheckIn,
+  setDobVerified,
   checkInRoster,
   type CheckInResult,
   type RosterEntry,
@@ -79,6 +80,24 @@ export async function checkInManually(slug: string, reference: string): Promise<
 export async function undoOne(slug: string, reference: string): Promise<DeskResponse> {
   await gate();
   const r = await undoCheckIn(slug, reference);
+  return respond(slug, null, r.ok ? undefined : r.error);
+}
+
+/**
+ * Record — or unrecord — that somebody's date of birth was seen.
+ *
+ * Its own action rather than a flag on `scanPass`, because the two happen at different
+ * moments and in either order: a parent often has the passport out before the volunteer
+ * has found the slip. Writes a timestamp and the moderator's id and nothing about the
+ * document — see src/data/id-check.ts and migrations/0013_dob_verified.sql.
+ */
+export async function markDobSeen(
+  slug: string,
+  reference: string,
+  seen: boolean,
+): Promise<DeskResponse> {
+  const me = await gate();
+  const r = await setDobVerified(slug, reference, me.id, seen);
   return respond(slug, null, r.ok ? undefined : r.error);
 }
 

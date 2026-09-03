@@ -2613,3 +2613,101 @@ on one table with somebody beside it, and bin the leftovers. `RETENTION-POLICY.m
 printed slips as a store with a destruction time, which is the first physical one it has had.
 
 357 tests (was 318).
+
+## Round 52 — 2026-09-03 — Proof of date of birth, and the door it must not close
+
+**The team's decision:** every player must bring identification showing their date of
+birth to check in.
+
+I pushed back once before building, on the grounds that most twelve- to fifteen-year-olds
+in this country hold no photo ID at all, and it was reaffirmed as a must. So it is built,
+and the exclusion risk is written into the DPIA as accepted rather than mitigated away
+(risk 21) because that is what it is.
+
+### The "with DOB" part changed what this is
+
+The first framing was ID to collect a badge, which is identity verification — and identity
+verification of a thirteen-year-old by a volunteer who has never met them is not
+achievable, with or without a document. **Date of birth is a different and much more
+defensible aim: it is age.** One open bracket runs 12 to 25, every supervision tier hangs
+off the date of birth, and until now that date was whatever was typed into a form by
+whoever was at the keyboard. A wrong year is not a clerical error — it puts a
+twenty-seven-year-old in a children's bracket, or lets a fifteen-year-old leave alone on a
+permission written for a sixteen-year-old. That is worth checking.
+
+### The barrier, and the four things that manage it
+
+What actually shows a date of birth? Not a school card (name and photo, almost never a
+DOB). Not a library card, not a bank card. For a twelve-year-old it means a **passport or a
+birth certificate** — documents that live in a drawer and that no parent wants a child
+carrying across Leicester. Left alone, this excludes exactly the families the event exists
+to reach, and the discovery point is a volunteer refusing a child at a door with a parent
+standing there.
+
+1. **A photo on a phone counts.** This is the single line that makes the requirement
+   survivable — a parent photographs the passport page at home and the document never
+   leaves the house. It is stated everywhere the requirement is stated, never separately.
+2. **The accepted list is enumerated, not left as "any ID".** `src/data/id-check.ts` is one
+   source of truth read by the form, the event page, the confirmation email, the guardian
+   email, the selection email and the desk. It is ordered by how likely a twelve-year-old
+   is to have one, so it starts with a birth certificate and an NHS card rather than a
+   driving licence. "Any ID" said vaguely becomes an argument about a library card with a
+   queue behind it; the answer at the door should be reading, not deciding.
+3. **`ID_NO_DOCUMENT_RULE`, in code.** Nobody is turned away by a volunteer. Check them in
+   as normal, leave the row marked unchecked, and the **safeguarding lead** decides before
+   they play — not the person on the door. It matters most for anyone near the 12 or 25 line
+   and for a 16–17-year-old due to leave on their own. A requirement with no written answer
+   for the exception is a requirement enforced by whoever is most confident at the time.
+4. **It is said at registration**, not only in the selection email, so a family knows before
+   they invest in applying rather than after they have been drawn.
+
+### It must never gate the door
+
+`checked_in_at` and `dob_verified_at` are separate columns and neither waits for the other.
+
+Who is in the building is a safeguarding fact and has to be right even while the ID
+question is unresolved — **a register that refuses to admit somebody standing in the hall
+is not a cautious register, it is a wrong one.** So a scan checks them in and the ID prompt
+appears *beside* the result as a one-tap step, with "they have not got anything" expanding
+to the rule. There is a test asserting a check-in succeeds with nothing verified, and
+another asserting the two counts are reported separately. The desk shows "31 of 64 arrived
+· 28 dates of birth checked · 3 here without one" and has a filter for that last list,
+which is what the lead works through.
+
+It can also be recorded **before** the scan, because a parent usually has the passport out
+while the volunteer is still finding the slip and asking them twice is a small rudeness
+that adds up sixty-four times.
+
+### What is recorded: a timestamp, a moderator id, and nothing else
+
+No document type, no number, no image, and **not the date read off it**. That last one is
+the least obvious and the most important: we already hold the date they registered with, so
+a second copy from a different source would only create a discrepancy to adjudicate — and
+if the two disagree that is a conversation, not a column.
+
+Migration 0013 says all of this in its header, and `check-in.test.ts` walks
+`PRAGMA table_info(registrations)` asserting no column matches `document|id_type|id_number|
+passport|id_image`. A structural test rather than a comment, because the failure it guards
+is a well-meaning future migration adding `id_type` — at which point "passport" sits
+against a child's name as a nationality signal we have no use for, and the promise made in
+four places quietly becomes a lie.
+
+### An unrelated improvement that fell out of it
+
+The slips are no longer laid out on a table for people to help themselves. A volunteer
+holds them in name order and hands each one over, because the date of birth has to be
+looked at anyway and the two are one conversation rather than two.
+
+That is also **strictly better than the ID check at the thing the ID check was originally
+asked for.** The handover is a check against our own list; the wrong person cannot pick up
+a slip that a volunteer is holding. DPIA risk 20 drops from Low–Medium to Low as a result.
+
+### Also
+
+Moderator granted to `media@shaheedibunga.com` in production for testing. Worth recording
+that check-in being behind the moderator gate has a staffing cost: everybody on the desk
+needs an account, moderator is a database grant with no button, and it also grants
+safeguarding reports and applicants' details. Two or three accounts, decided on purpose,
+before the day.
+
+365 tests (was 357).

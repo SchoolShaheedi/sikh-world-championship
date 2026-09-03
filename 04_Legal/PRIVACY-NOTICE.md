@@ -55,6 +55,7 @@ messages for us to hold.
 | Region (e.g. "Birmingham") | Shown on your player card. **Never a postcode or street address** | Contract |
 | A name for the bracket | The name shown on the bracket, the big screen, your player card and the slip you pick up at the door. Since 2 September 2026 there is no box for this — we build it from your name, so it is your first name and last initial. **It is never your surname** | Contract |
 | Chosen avatar | Shown on your player card | Contract |
+| That we saw something showing your date of birth, when, and which volunteer saw it | Everyone playing must bring proof of their date of birth. Age decides the bracket and the supervision rules, and until now it rested on a date typed into a form. **We never record the document** — not what it was, not its number, not a photo or photocopy of it, and not the date printed on it. We look at it, hand it straight back, and note only that we saw one | Legal obligation / legitimate interests (child safety) |
 | Whether you arrived, at what time, and which volunteer checked you in | So we know who is in the building. If a child is missing, "were they ever here?" is the first question, and a register nobody can trust is worse than no register | Legitimate interests (child safety) |
 | Medical conditions, and any detail you add | So our first aider knows before the day rather than discovering it during an incident | **Explicit consent** (special category data — see below) |
 | Accessibility needs | So we can actually accommodate you | Explicit consent |

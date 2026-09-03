@@ -765,6 +765,20 @@ export function SignupForm({
               the day and our photographers are told.
             </p>
             <p>
+              <span className="text-body">
+                {isMinor ? "They must bring" : "You must bring"} proof of{" "}
+                {isMinor ? "their" : "your"} date of birth on the day.
+              </span>{" "}
+              Anything that shows it — a birth certificate, a passport, an NHS card, a
+              school or college letter or card that carries the date of birth.{" "}
+              <span className="text-body">A photo of it on a phone is fine</span>, so
+              nothing has to leave the house. It is checked at the door to collect{" "}
+              {isMinor ? "their" : "your"} slip, then handed straight back: we write down
+              nothing from it, only that we saw a date of birth. Age decides the bracket
+              and the supervision rules, so this is the one thing we check rather than
+              take on trust.
+            </p>
+            <p>
               <span className="text-body">We contact you by email.</span> Your
               confirmation, the result of the draw, and news about future events all come
               by email — there is nothing else to sign up to.

@@ -343,9 +343,26 @@ export function applicationOutcome(n: {
       ``,
       `Your reference is ${n.reference}. Keep it; you will need it at the desk.`,
       ``,
-      `ARRIVING. There is nothing to bring and nothing to print. Your name will be on a`,
-      `card on a table by the door — find yours, hold it up to the camera at the desk, and`,
-      `you are checked in. If you cannot find it, just give your name.`,
+      `ARRIVING. Nothing to print. Your name will be on a card at the desk — you hold it up`,
+      `to the camera and you are checked in. If it cannot be found, just give your name.`,
+      ``,
+      `BRING PROOF OF YOUR DATE OF BIRTH. This is the one thing you must not forget.`,
+      `Anything that shows it counts:`,
+      `  - a birth certificate`,
+      `  - a passport, from any country`,
+      `  - an NHS medical card`,
+      `  - a school or college card or letter that shows the date of birth`,
+      `  - a GP or hospital letter or appointment card showing the date of birth`,
+      `  - a UK driving licence, full or provisional`,
+      `  - a PASS card such as CitizenCard or Young Scot`,
+      `A photo of any of these on a phone is fine, so nothing has to leave the house. We`,
+      `look at it, hand it straight back, and record only that we saw a date of birth — no`,
+      `photocopy, no photograph, nothing written down from it. Age decides the bracket and`,
+      `the supervision rules, so it is the one thing we check rather than take on trust.`,
+      ``,
+      `Genuinely cannot find anything? Tell us before the day at`,
+      `https://sikhchampionships.com/support and we will sort it out then rather than at`,
+      `the door.`,
       ``,
       `Your SWC profile keeps your results and trophies across every event you play in.`,
       `Sign in at any time at https://sikhchampionships.com/signin using this email`,
@@ -368,10 +385,34 @@ export function applicationOutcome(n: {
          Keep it; you will need it at the desk.
        </p>
        <p style="margin:0 0 14px;">
-         <strong>Arriving.</strong> Nothing to bring, nothing to print. Your name will be on
-         a card on a table by the door — find yours, hold it up to the camera at the desk,
-         and you are checked in. If you cannot find it, just give your name.
+         <strong>Arriving.</strong> Nothing to print. Your name will be on a card at the
+         desk — you hold it up to the camera and you are checked in. If it cannot be found,
+         just give your name.
        </p>
+       <div style="margin:0 0 14px;padding:12px 14px;background:#fdf6e7;border-radius:8px;">
+         <p style="margin:0 0 8px;"><strong>Bring proof of your date of birth.</strong>
+           This is the one thing not to forget. Anything that shows it counts:</p>
+         <ul style="margin:0 0 8px;padding-left:20px;font-size:14px;color:#55554f;">
+           <li>a birth certificate</li>
+           <li>a passport, from any country</li>
+           <li>an NHS medical card</li>
+           <li>a school or college card or letter that shows the date of birth</li>
+           <li>a GP or hospital letter or appointment card showing the date of birth</li>
+           <li>a UK driving licence, full or provisional</li>
+           <li>a PASS card such as CitizenCard or Young Scot</li>
+         </ul>
+         <p style="margin:0 0 8px;font-size:14px;color:#55554f;">
+           <strong>A photo of any of these on a phone is fine</strong>, so nothing has to
+           leave the house. We look at it, hand it straight back, and record only that we
+           saw a date of birth — no photocopy, no photograph, nothing written down from it.
+           Age decides the bracket and the supervision rules, so it is the one thing we
+           check rather than take on trust.
+         </p>
+         <p style="margin:0;font-size:14px;color:#55554f;">
+           Genuinely cannot find anything? Tell us before the day at
+           sikhchampionships.com/support and we will sort it out then rather than at the door.
+         </p>
+       </div>
        <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
          Your SWC profile keeps your results and trophies across every event you play in.
          Sign in any time with this email address — no password.
@@ -460,6 +501,13 @@ export function interestReceived(n: {
     `future event — sign in any time at https://sikhchampionships.com/signin. There is no`,
     `password; we email you a link.`,
     ``,
+    `BRING PROOF OF YOUR DATE OF BIRTH IF YOU GET A PLACE. Anything that shows it — a`,
+    `birth certificate, a passport, an NHS card, or a school or college letter or card`,
+    `carrying the date of birth. A PHOTO OF IT ON A PHONE IS FINE, so nothing has to leave`,
+    `the house. It is checked at the door, handed straight back, and we write down nothing`,
+    `from it. Age decides the bracket and the supervision rules, so it is the one thing we`,
+    `check rather than take on trust.`,
+    ``,
     `WHAT YOU AGREED TO BY REGISTERING: photos and video are taken at the event and may`,
     `be used on our website, our social media, and in material promoting future events.`,
     `Not sold, and not used in sponsors' own advertising. If you would rather not be`,
@@ -489,6 +537,14 @@ export function interestReceived(n: {
        future event — no password, we email you a link.
      </p>
      ${button("https://sikhchampionships.com/signin", "Sign in to your profile")}
+     <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+       <strong>If you get a place, bring proof of your date of birth.</strong> Anything
+       that shows it — a birth certificate, a passport, an NHS card, or a school or college
+       letter or card that carries it. <strong>A photo of it on a phone is fine</strong>, so
+       nothing has to leave the house. It is checked at the door, handed straight back, and
+       we write down nothing from it. Age decides the bracket and the supervision rules, so
+       it is the one thing we check rather than take on trust.
+     </p>
      <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
        <strong>What you agreed to by registering:</strong> photos and video are taken at
        the event and may be used on our website, our social media and in material
@@ -543,6 +599,17 @@ export function guardianInterestNotice(n: {
     ``,
     `Reference ${n.reference}.`,
     ``,
+    `IF THEY GET A PLACE, THEY MUST BRING PROOF OF THEIR DATE OF BIRTH. This is asked of`,
+    `every player. Anything showing it counts - a birth certificate, a passport, an NHS`,
+    `card, or a school or college letter or card carrying the date of birth - and A PHOTO`,
+    `OF IT ON A PHONE IS FINE, so the document does not have to leave your house. It is`,
+    `looked at, handed straight back, and nothing from it is written down: we record only`,
+    `that we saw a date of birth. We ask because age decides both the bracket and the`,
+    `supervision above, and until now that has rested on a date typed into a form.`,
+    ``,
+    `If you cannot find anything at all, tell us before the day at`,
+    `https://sikhchampionships.com/support rather than at the door.`,
+    ``,
     `ONE MORE THING THE REGISTRATION COVERS, so you know before the day. Photos and`,
     `video are taken at the event, and may be used on our website, our social media, and`,
     `in material promoting future events. They are not sold and not used in sponsors'`,
@@ -572,6 +639,17 @@ export function guardianInterestNotice(n: {
        This is not a place yet — places are decided by a random draw, and we will email
        again either way. Reference
        <strong style="font-family:monospace;">${esc(n.reference)}</strong>.
+     </p>
+     <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+       <strong>If they get a place, they must bring proof of their date of birth.</strong>
+       This is asked of every player. Anything showing it counts — a birth certificate, a
+       passport, an NHS card, or a school or college letter or card carrying the date of
+       birth — and <strong>a photo of it on a phone is fine</strong>, so the document does
+       not have to leave your house. It is looked at, handed straight back, and nothing
+       from it is written down: we record only that we saw a date of birth. We ask because
+       age decides both the bracket and the supervision above, and until now that has
+       rested on a date typed into a form. If you cannot find anything at all, tell us
+       before the day rather than at the door.
      </p>
      <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
        <strong>One more thing the registration covers, so you know before the day.</strong>
