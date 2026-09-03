@@ -301,6 +301,29 @@ describe("planning and committing", () => {
     expect(plan.skipped[0]).toMatchObject({ number: 2, reference: refs[1], status: "withdrawn" });
   });
 
+  it("SKIPS a drawn number whose entry was DELETED since the lock, and says so", async () => {
+    /**
+     * Different from a withdrawal, and it used to be worse. The inner join meant a deleted
+     * row was not in the query at all, so the number fell through the "not on the list"
+     * arm and was passed over in complete silence — no skip, no warning, one place quietly
+     * unfilled and nothing anywhere saying why.
+     *
+     * Deletion is not a hypothetical: it is how a test entry or a bogus one gets removed,
+     * and it is how an erasure request is honoured, which cannot be made to wait for a
+     * draw.
+     */
+    const refs = await applicants(4);
+    await lockBallot("e1", 64, DESK);
+    const db = await getDb();
+    await db.prepare("DELETE FROM registrations WHERE reference = ?").bind(refs[1]).run();
+
+    const plan = await planExternalDraw("e1", [1, 2, 3]);
+    expect(plan.selected.map((r) => r.reference)).toEqual([refs[0], refs[2]]);
+    expect(plan.skipped).toHaveLength(1);
+    expect(plan.skipped[0].number).toBe(2);
+    expect(plan.skipped[0].status).toBe("deleted");
+  });
+
   it("marks the selected and records the draw with the paste kept verbatim", async () => {
     const refs = await applicants(5);
     await lockBallot("e1", 64, DESK);
@@ -358,5 +381,84 @@ describe("planning and committing", () => {
       .bind(drawId)
       .first<{ ballot_list: string }>();
     expect(draw!.ballot_list).toBe(lock.ok ? lock.listId : "");
+  });
+});
+
+/**
+ * What happens to a locked list when one of the people in it is deleted.
+ *
+ * The team's question was whether test entries and bogus ones can be removed before the
+ * draw (2026-09-04). Before the lock, trivially — they are simply not in the list. After
+ * the lock is the interesting case, and it was quietly broken.
+ */
+describe("an entry deleted after the list was locked", () => {
+  it("does NOT shrink the list — the numbers everybody else holds cannot move", async () => {
+    /**
+     * The bug this pins. `entries.length` was used as the top of the range handed to the
+     * draw service, and it drops by one for every deletion. On a list of 40 that means
+     * asking for numbers between 1 and 39: number 40 belongs to a real applicant who can
+     * now never be drawn, and nothing on the screen says so. Worse in the other direction
+     * — a service already asked for 1–40 returns 40 and the paste is refused as "not a
+     * number on the list", about the one number that unarguably was.
+     */
+    const refs = await applicants(6);
+    await lockBallot("e1", 64, DESK);
+    const db = await getDb();
+    await db.prepare("DELETE FROM registrations WHERE reference = ?").bind(refs[2]).run();
+
+    const ballot = await currentBallot("e1", 64);
+    expect(ballot!.size).toBe(6);
+    expect(ballot!.removedSinceLock).toBe(1);
+    // The survivors keep the numbers they were given; 3 is absent, not reassigned.
+    expect(ballot!.entries.map((e) => e.number)).toEqual([1, 2, 4, 5, 6]);
+  });
+
+  it("still returns the list rather than pretending none was locked", async () => {
+    // A one-person list whose one person is deleted. `results.length === 0` is the "no
+    // list" signal, and an inner join would have produced it from a list that exists.
+    await applicants(1);
+    await lockBallot("e1", 64, DESK);
+    const db = await getDb();
+    await db.prepare("DELETE FROM registrations").run();
+
+    const ballot = await currentBallot("e1", 64);
+    expect(ballot).not.toBeNull();
+    expect(ballot!.size).toBe(1);
+    expect(ballot!.entries).toHaveLength(0);
+    expect(ballot!.removedSinceLock).toBe(1);
+  });
+
+  it("does not count a deleted entry as somebody who applied since the lock", async () => {
+    // Both are derived by comparing the list against the live applicants, and getting it
+    // wrong would tell a moderator to re-lock for a person who no longer exists.
+    const refs = await applicants(3);
+    await lockBallot("e1", 64, DESK);
+    const db = await getDb();
+    await db.prepare("DELETE FROM registrations WHERE reference = ?").bind(refs[0]).run();
+
+    const ballot = await currentBallot("e1", 64);
+    expect(ballot!.appliedSinceLock).toBe(0);
+    expect(ballot!.removedSinceLock).toBe(1);
+  });
+
+  it("frees the place when the deleted entry was an automatic referred one", async () => {
+    // A referred applicant holds a place without being drawn. Deleting them has to give
+    // that place back to the draw, or a place is lost to a row that no longer exists.
+    const referred = await applicants(2, true);
+    await applicants(3);
+    await lockBallot("e1", 4, DESK);
+    let ballot = await currentBallot("e1", 4);
+    expect(ballot!.automatic).toHaveLength(2);
+    expect(ballot!.places).toBe(2);
+
+    const db = await getDb();
+    await db
+      .prepare("DELETE FROM registrations WHERE reference = ?")
+      .bind(referred[0])
+      .run();
+
+    ballot = await currentBallot("e1", 4);
+    expect(ballot!.automatic).toHaveLength(1);
+    expect(ballot!.places).toBe(3);
   });
 });

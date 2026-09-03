@@ -153,6 +153,25 @@ export async function sendEmail(input: EmailInput): Promise<SendResult> {
   if (!apiKey) {
     const error = "RESEND_API_KEY is not set — nothing was sent.";
     console.warn(`[email] ${input.kind} -> ${input.to}: ${error}`);
+    /**
+     * Locally, print what WOULD have gone out.
+     *
+     * The failure above is still a failure and still recorded as one — see the header; an
+     * email that looks sent and was not is the bug this whole function is shaped around.
+     * This only makes the content readable. `email_sends` keeps the kind, the recipient
+     * and the subject but not the body, so before this the wording of an offer or a
+     * guardian notice could not be checked anywhere except production, which for a
+     * safeguarding email sent to a parent is the wrong place to first read it.
+     *
+     * Guarded on NODE_ENV rather than on a flag: a real child's details are in this text,
+     * and the one environment where it must never reach a log is the one that has them.
+     */
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `\n──────── ${input.kind} → ${input.to}\n` +
+          `Subject: ${input.subject}\n\n${input.text}\n────────\n`,
+      );
+    }
     await record(input, "failed", { error });
     return { ok: false, error };
   }

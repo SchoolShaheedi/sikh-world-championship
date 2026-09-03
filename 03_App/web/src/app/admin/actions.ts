@@ -329,7 +329,8 @@ export async function previewExternalDraw(formData: FormData) {
   if (!ballot) return { error: "No list is locked. Lock one first." };
 
   const raw = String(formData.get("winners") ?? "");
-  const parsed = parseWinners(raw, ballot.entries.length, ballot.places);
+  // `ballot.size`, never `entries.length` — see the field's comment in external-draw.ts.
+  const parsed = parseWinners(raw, ballot.size, ballot.places);
   if (parsed.problems.length > 0) return { error: parsed.problems.join(" ") };
 
   const plan = await planExternalDraw(slug, parsed.numbers);
@@ -364,7 +365,8 @@ export async function commitExternal(formData: FormData) {
   if (!ballot) return { error: "No list is locked. Lock one first." };
 
   const raw = String(formData.get("winners") ?? "");
-  const parsed = parseWinners(raw, ballot.entries.length, ballot.places);
+  // `ballot.size`, never `entries.length` — see the field's comment in external-draw.ts.
+  const parsed = parseWinners(raw, ballot.size, ballot.places);
   if (parsed.problems.length > 0) return { error: parsed.problems.join(" ") };
 
   const { plan } = await commitExternalDraw(slug, {

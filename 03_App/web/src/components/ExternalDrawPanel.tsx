@@ -72,6 +72,8 @@ export function ExternalDrawPanel({
 
   const poolLabel =
     ballot?.pool === "referred" ? "referred applicants" : "everyone not referred";
+  /** Number → entry, so the mapping can be rendered over the whole range including gaps. */
+  const byNumber = new Map((ballot?.entries ?? []).map((e) => [e.number, e]));
 
   return (
     <div className="mt-8 rounded-2xl border border-line bg-ink/20 p-5">
@@ -132,6 +134,23 @@ export function ExternalDrawPanel({
                 their number comes up it is skipped and said so — the place stays open.
               </p>
             )}
+            {/*
+              A deleted entry is different from a withdrawn one and needs saying differently:
+              the person is gone, so the number cannot be resolved to anybody at all. The
+              numbering deliberately does NOT close up — renumbering after a draw service has
+              been given the range is how numbers stop meaning what they meant.
+            */}
+            {ballot.removedSinceLock > 0 && (
+              <p className="mt-2 rounded-lg border border-amber-400/50 bg-amber-500/10 p-3 text-sm text-amber-200">
+                {ballot.removedSinceLock} entr{ballot.removedSinceLock === 1 ? "y" : "ies"} in
+                this list {ballot.removedSinceLock === 1 ? "has" : "have"} been deleted since
+                it was locked. The numbering has not moved — everybody else still holds the
+                number they were given, and the range below is still 1 to {ballot.size} —
+                but {ballot.removedSinceLock === 1 ? "that number" : "those numbers"} cannot
+                win anything. If you deleted test or bogus entries, clear this list and lock
+                a new one before you draw.
+              </p>
+            )}
           </div>
 
           {/* ---------- STEP 2 ---------- */}
@@ -149,16 +168,19 @@ export function ExternalDrawPanel({
               <>
                 <p className="font-display mt-3 rounded-xl border border-kesri/40 bg-kesri/[0.07] p-4 text-lg text-body">
                   Ask for {ballot.places} number{ballot.places === 1 ? "" : "s"} between 1
-                  and {ballot.entries.length}, with no repeats.
+                  and {ballot.size}, with no repeats.
                 </p>
                 <p className="mt-2 text-xs text-muted">
                   That is {ballot.places} place{ballot.places === 1 ? "" : "s"} among{" "}
-                  {ballot.entries.length} {poolLabel}.
+                  {ballot.size} {poolLabel}.
                 </p>
                 <button
                   type="button"
                   onClick={() => {
-                    const list = ballot.entries.map((e) => e.number).join("\n");
+                    // 1..size, not the surviving entries' numbers: the service is drawing
+                    // from the range it was given, and a gap left by a deletion is handled
+                    // when the result comes back rather than by quietly shortening the list.
+                    const list = Array.from({ length: ballot.size }, (_, i) => i + 1).join("\n");
                     navigator.clipboard?.writeText(list).then(
                       () => setCopied(true),
                       () => setCopied(false),
@@ -166,7 +188,7 @@ export function ExternalDrawPanel({
                   }}
                   className="mt-3 rounded-xl border border-line px-4 py-2 text-sm text-muted hover:text-body"
                 >
-                  {copied ? "Copied" : `Copy the numbers 1–${ballot.entries.length}`}
+                  {copied ? "Copied" : `Copy the numbers 1–${ballot.size}`}
                 </button>
                 <p className="mt-1 text-xs text-muted">
                   For a wheel or a picker that wants the entries pasted in.
@@ -174,22 +196,36 @@ export function ExternalDrawPanel({
               </>
             )}
 
-            {/* The mapping, for reading the result out and for anybody who asks later. */}
+            {/*
+              The mapping, for reading the result out and for anybody who asks later.
+
+              Rendered over 1..size rather than over the surviving entries, so a number
+              whose entry was deleted appears in its place and says so. A list that just
+              skipped it would read as though the numbering closed up, which is the one
+              thing it must never be thought to do.
+            */}
             <details className="mt-4 text-sm">
               <summary className="cursor-pointer text-muted hover:text-body">
-                Show the numbered list ({ballot.entries.length})
+                Show the numbered list ({ballot.size})
               </summary>
               <ol className="mt-3 grid gap-x-6 gap-y-1 sm:grid-cols-2">
-                {ballot.entries.map((e) => (
-                  <li key={e.number} className="flex gap-2">
-                    <span className="w-8 shrink-0 text-right font-mono text-muted">
-                      {e.number}
-                    </span>
-                    <span className={e.stillApplied ? "text-body" : "text-muted line-through"}>
-                      {e.fullName}
-                    </span>
-                  </li>
-                ))}
+                {Array.from({ length: ballot.size }, (_, i) => i + 1).map((n) => {
+                  const e = byNumber.get(n);
+                  return (
+                    <li key={n} className="flex gap-2">
+                      <span className="w-8 shrink-0 text-right font-mono text-muted">{n}</span>
+                      {e ? (
+                        <span
+                          className={e.stillApplied ? "text-body" : "text-muted line-through"}
+                        >
+                          {e.fullName}
+                        </span>
+                      ) : (
+                        <span className="text-muted italic">entry deleted</span>
+                      )}
+                    </li>
+                  );
+                })}
               </ol>
               {ballot.automatic.length > 0 && (
                 <>

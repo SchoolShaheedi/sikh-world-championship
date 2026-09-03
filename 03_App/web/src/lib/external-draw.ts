@@ -53,6 +53,27 @@ export interface Ballot {
   pool: Pool;
   /** How many places the numbers are competing for. */
   places: number;
+  /**
+   * How many numbers the list has, exactly as it was locked. THE RANGE GIVEN TO THE DRAW
+   * SERVICE MUST COME FROM HERE, never from `entries.length`.
+   *
+   * They differ the moment an entry in a locked list is deleted — a test row spotted late,
+   * or an erasure request that cannot wait. `entries` loses that person, but their NUMBER
+   * still belongs to them and every number above it still belongs to whoever it belonged
+   * to. Asking a service for "1 to entries.length" after a deletion would quietly put the
+   * highest-numbered applicant beyond the range and out of the draw, and a number that had
+   * already come back would be rejected as not being on a list it was always on.
+   */
+  size: number;
+  /**
+   * Rows in the list whose entry has since been deleted.
+   *
+   * Their numbers cannot win — there is nobody left to give a place to — and that is said
+   * out loud rather than absorbed, because it means the list a moderator published no
+   * longer matches the people in it. The honest fix is to re-lock; the numbers are only
+   * evidence while the mapping behind them is intact.
+   */
+  removedSinceLock: number;
   /** Referred applicants who get a place with no draw needed. Empty when pool is referred. */
   automatic: BallotEntry[];
   /** The numbered list. The numbers, and only the numbers, go to the draw service. */
@@ -155,7 +176,14 @@ export async function clearBallot(eventSlug: string): Promise<number> {
   return results.length;
 }
 
-/** The locked list as it stands now, or null if none has been locked. */
+/**
+ * The locked list as it stands now, or null if none has been locked.
+ *
+ * LEFT JOIN, not JOIN. An inner join was the obvious thing to write and it hid a deletion:
+ * a row whose registration had been erased simply vanished from the list, taking the size
+ * of the list down with it and leaving no trace that a number had gone missing. The count
+ * has to survive the person, because the numbers do.
+ */
 export async function currentBallot(
   eventSlug: string,
   capacity: number,
@@ -166,7 +194,7 @@ export async function currentBallot(
       `SELECT b.list_id, b.pool, b.number, b.auto, b.locked_at,
               r.reference, r.full_name, r.status
          FROM draw_ballots b
-         JOIN registrations r ON r.id = b.registration_id
+         LEFT JOIN registrations r ON r.id = b.registration_id
         WHERE b.event_slug = ?
         ORDER BY b.auto DESC, b.number`,
     )
@@ -177,25 +205,26 @@ export async function currentBallot(
       number: number;
       auto: number;
       locked_at: string;
-      reference: string;
-      full_name: string;
-      status: string;
+      reference: string | null;
+      full_name: string | null;
+      status: string | null;
     }>();
   if (results.length === 0) return null;
 
   const toEntry = (r: (typeof results)[number]): BallotEntry => ({
     number: r.number,
-    reference: r.reference,
-    fullName: r.full_name,
+    reference: r.reference as string,
+    fullName: r.full_name as string,
     stillApplied: r.status === "applied",
   });
+  const alive = (r: (typeof results)[number]) => r.reference !== null;
 
-  const automatic = results.filter((r) => r.auto === 1).map(toEntry);
+  const automatic = results.filter((r) => r.auto === 1 && alive(r)).map(toEntry);
   const drawn = results.filter((r) => r.auto === 0);
   const placesLeft = Math.max(0, capacity - (await selectedCount(eventSlug)));
 
   const applicants = await applicantsFor(eventSlug);
-  const inList = new Set(results.map((r) => r.reference));
+  const inList = new Set(results.filter(alive).map((r) => r.reference));
   const appliedSinceLock = applicants.filter((r) => !inList.has(r.reference)).length;
 
   return {
@@ -203,8 +232,11 @@ export async function currentBallot(
     lockedAt: results[0].locked_at,
     pool: drawn[0]?.pool ?? "general",
     places: Math.max(0, placesLeft - automatic.length),
+    // The list as locked, deletions included. See the field's comment.
+    size: drawn.length,
+    removedSinceLock: results.filter((r) => !alive(r)).length,
     automatic,
-    entries: drawn.map(toEntry),
+    entries: drawn.filter(alive).map(toEntry),
     appliedSinceLock,
   };
 }
@@ -298,7 +330,13 @@ export function parseWinners(raw: string, max: number, places: number): ParsedWi
 export interface ExternalDrawPlan {
   /** Everyone who would get a place: the automatic ones plus the drawn ones. */
   selected: Registration[];
-  /** In the list, drawn, but no longer awaiting a decision — skipped, and said out loud. */
+  /**
+   * In the list, drawn, and unable to take a place — skipped, and said out loud.
+   *
+   * Two causes, both real. They withdrew or were already decided since the lock; or the
+   * entry has been DELETED since the lock, in which case there is no name left to print
+   * and the number is all we can honestly report.
+   */
   skipped: { number: number; reference: string; fullName: string; status: string }[];
   automaticCount: number;
   drawnCount: number;
@@ -317,11 +355,14 @@ export async function planExternalDraw(
   numbers: number[],
 ): Promise<ExternalDrawPlan> {
   const db = await getDb();
+  // LEFT JOIN so a drawn number whose entry has been deleted still arrives here. Under an
+  // inner join it never appeared, fell through `if (!row) continue` below, and was passed
+  // over in silence — the one outcome this function exists to prevent.
   const { results } = await db
     .prepare(
       `SELECT b.number, b.auto, b.registration_id, r.reference, r.full_name, r.status
          FROM draw_ballots b
-         JOIN registrations r ON r.id = b.registration_id
+         LEFT JOIN registrations r ON r.id = b.registration_id
         WHERE b.event_slug = ? AND b.auto = 0
         ORDER BY b.number`,
     )
@@ -329,9 +370,9 @@ export async function planExternalDraw(
     .all<{
       number: number;
       registration_id: string;
-      reference: string;
-      full_name: string;
-      status: string;
+      reference: string | null;
+      full_name: string | null;
+      status: string | null;
     }>();
 
   const byNumber = new Map(results.map((r) => [r.number, r]));
@@ -347,9 +388,9 @@ export async function planExternalDraw(
     if (!reg) {
       skipped.push({
         number: n,
-        reference: row.reference,
-        fullName: row.full_name,
-        status: row.status,
+        reference: row.reference ?? "—",
+        fullName: row.full_name ?? "that entry has been deleted",
+        status: row.status ?? "deleted",
       });
       continue;
     }

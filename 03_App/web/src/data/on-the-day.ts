@@ -56,7 +56,7 @@ export const ON_THE_DAY: OnTheDayItem[] = [
   {
     title: "Delete any test entries",
     detail:
-      "A rehearsal entry is a real row with a made-up name. At the check-in desk it is indistinguishable from a real one, and it will appear in the draw.",
-    appHelps: "Entries → Show all → Delete",
+      "A rehearsal entry is a real row with a made-up name. At the check-in desk it is indistinguishable from a real one, and it will appear in the draw. Do it BEFORE the draw list is locked: deleting afterwards is allowed and always will be — an erasure request cannot be made to wait for a draw — but the numbering deliberately does not close up, so the list keeps a hole in it and the draw panel will ask for a new one.",
+    appHelps: "Entries → Show all → Delete, then type the reference",
   },
 ];

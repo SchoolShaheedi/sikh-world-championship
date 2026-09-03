@@ -2306,7 +2306,8 @@ this was in the backlog to avoid.
 `node scripts/seed-local-bracket.mjs` puts eight invented players with places in the local
 database so the screen can be watched updating. It refuses `--remote`, always passes
 `--local` to wrangler, and prefixes every row it writes so `--clear` removes exactly what
-it made and nothing else.
+it made and nothing else. *(Superseded in round 54 by `scripts/seed-local.mjs`, which
+covers the whole flow rather than the bracket alone.)*
 
 ---
 
@@ -2837,3 +2838,131 @@ name what they still need. `staff_grants` is in the retention policy at six year
 explicit note that no code enforces that yet, rather than a cron nobody asked for.
 
 405 tests (was 365).
+
+---
+
+## Round 54 — 2026-09-04 — Dummy data everywhere, and a hole in a locked list
+
+Three questions, and the third was the real ask: *can we delete test or bogus entries
+before drawing; can we start the tournament without 64 players; and can I have dummy data
+everywhere so I can test the whole flow with no feature left manually untested.* Plus two
+answers owed from round 53: **two to three people hold full moderator**, and the draw
+service is **still not chosen**.
+
+### Deleting entries: yes, and asking the question found a bug
+
+`/admin` → Entries → Show all → Delete has been there since round 45, and it works on an
+applicant as well as anyone else. Deleting *before* the draw list is locked was already
+clean — the row is simply not in the list.
+
+Deleting *after* the lock was quietly broken, and it is the case that will actually happen:
+a bogus entry spotted late, or an erasure request that cannot be made to wait for a draw.
+Both ballot queries used an inner join, so a deleted row **vanished from the list** and took
+the size of the list with it. Three consequences, none of them visible:
+
+* The range handed to the draw service came from `entries.length`, which drops by one per
+  deletion. On a list of 40, one deletion makes the instruction *"numbers between 1 and
+  39"* — and number 40 belongs to a real applicant who can now never be drawn.
+* In the other direction, a service already asked for 1–40 returns 40, and the paste is
+  refused as "not a number on the list" about the one number that unarguably was.
+* A drawn number whose entry had been deleted fell through `if (!row) continue` and was
+  passed over **in silence** — no skip, no warning, a place quietly unfilled and nothing
+  anywhere saying why. A withdrawal was reported; a deletion was not.
+
+Fixed by making the list's own size a stored fact rather than a derived one. `Ballot.size`
+is the count as locked and is what the range comes from; `removedSinceLock` says how many
+rows have lost their person. Both queries are `LEFT JOIN` now, so a deleted row still
+arrives and lands in `skipped` with the only thing left to report about it — its number.
+
+**The numbering deliberately does not close up.** Renumbering after a service has been given
+a range is how numbers stop meaning what the room was told they mean, so a deletion leaves a
+hole, the panel says so in plain words, and it asks for a new list. The numbered mapping is
+now rendered over 1..size rather than over the survivors, with *entry deleted* in the gap —
+a list that skipped the row would read as though the numbering had closed up.
+
+Five tests, four of which fail on the old join. The one that pins the shape:
+`expect(ballot.entries.map(e => e.number)).toEqual([1, 2, 4, 5, 6])`.
+
+### Starting without 64: already true, and now demonstrable
+
+No code needed. `bracketSize()` rounds the field up to the next power of two and
+`generateKnockout()` inserts byes, which `advanceWinners()` resolves *before* anything is
+stored — so the first round on the screen is already correct for a field that is not a power
+of two. `generateBracket()` asks only for two players with places. The seeded 48 gives a
+64-slot bracket with 16 byes, which is the answer rendered rather than asserted.
+
+Worth stating because the obvious guess is the other way round: the bracket is built from
+everyone with a **place**, not from everyone who has arrived.
+
+### The seed: stages, because a flow is a sequence and not a state
+
+`scripts/seed-local-bracket.mjs` (eight players, the projector alone) is replaced by
+`scripts/seed-local.mjs` — 75 invented people and every feature switched on.
+
+The design decision that matters: **handing over the finished tournament would leave every
+step that produces it untested.** So each stage puts the database where it would genuinely
+be at one moment in the run-up and then stops, and the next thing that happens is the user
+doing it in the app:
+
+| Stage | Where it leaves you | What you then do |
+|---|---|---|
+| `entries` | 75 waiting, nothing decided | delete the bogus rows, lock a list, draw it |
+| `places` | a draw has filled 48 of 64 | print slips, run the desk |
+| `gameday` | 31 have arrived, 4 with no DOB checked | build the bracket, run the TV |
+| `extras` | staff, queue, board, a dormant profile | the rest |
+
+Later stages include the earlier ones, so one command reaches any point. Deliberate
+omissions: it does **not** build the bracket (one click, and it is one of the things needing
+testing — and a second copy of `generateKnockout()` in SQL would be free to drift from the
+one that runs on the day), and it does not run the draw at the `entries` stage.
+
+Things put there on purpose rather than as filler:
+
+* **Ages across the whole 12–25 range**, birthdays all in March so the age on 3 October is
+  exactly the age intended. Every supervision rule hangs off an age; 48 identical
+  twenty-year-olds would exercise none of them, which is how the row that matters most on
+  the day is the one nobody ever saw rendered.
+* **Three rows that exist to be deleted** — a rehearsal row, keyboard mash, and the same
+  child entered twice from two addresses, which is the one that actually turns up and the
+  one that is hard to spot in a list.
+* **A referral mix arranged so both branches of the pool split are reachable in a browser.**
+  36 of the 75 are referred, so the first draw is 28 places among 39; after `places` there
+  are 16 places left and 22 referred applicants, so the *referred* pool becomes the
+  contested one and the general pool is not drawn at all. `splitPools()` had unit tests on
+  that boundary already, but a branch that cannot be reached through the UI is a branch
+  nobody has looked at.
+* **Medical notes on six people and nothing on the rest.** A seed with none leaves the first
+  aider's page looking finished when it has never had anything in it; a condition against
+  every name is nothing like the real distribution.
+* **A photography objection as a support message**, because that is the shape it really
+  arrives in — DPIA 18's open gap, seen rather than described.
+* **Three staff accounts**, one a second moderator, so revocation can be tried without the
+  app correctly refusing to remove the last one.
+
+Safety: `--local` is hard-coded into the wrangler call, `--remote` is refused, every row is
+prefixed (`local-*` ids, `LOCAL-*` references, `local-*@example.com` addresses) so `--clear`
+finds all of it and nothing else, and `example.com` can never receive mail (RFC 2606), so a
+stray send cannot reach a person. The SQL goes through a temp file rather than `--command`,
+because 150 inserts on a command line is a limit waiting to be hit.
+
+### Email bodies are now readable locally
+
+The one feature that genuinely could not be tested locally. `sendEmail` records a failure
+when there is no API key — correctly, and that stays: an email that looks sent and was not
+is the bug the whole function is shaped around. But `email_sends` keeps the kind, recipient
+and subject and **not the body**, so the wording of an offer or a guardian notice could only
+be read in production, which for a safeguarding email to a parent is the wrong place to read
+it first. It now prints subject and text to the console when `NODE_ENV !== "production"` —
+guarded on that rather than on a flag, because a real child's details are in that text and
+the one environment where it must never reach a log is the one that has them. It also means
+the magic link is in the dev-server terminal, which is what makes local sign-in possible at
+all.
+
+### `00_Docs/TESTING-LOCALLY.md`
+
+The checklist that makes "no feature manually untested" a thing you can check rather than a
+hope: every feature, in the order it happens on the day, with the row to try it on and what
+to expect — including the four things local testing **cannot** cover (a real email
+arriving, the public state of the form, workerd, and load).
+
+410 tests (was 405).

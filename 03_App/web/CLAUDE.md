@@ -247,8 +247,10 @@ the `version` differs. Three things that are load-bearing rather than incidental
   writing the winner into the next match. A score typed wrong and fixed two minutes later
   is the thing that will actually happen.
 
-To see it working without real registrations: `node scripts/seed-local-bracket.mjs`
-(local database only, refuses `--remote`).
+To see it working without real registrations: `node scripts/seed-local.mjs gameday`
+(local database only, refuses `--remote`). The bracket is built from everyone with a
+**place**, needs only two of them, and rounds the field up to the next power of two with
+byes resolved before anything is stored — so an event that is not full still plays.
 
 ## Two ways to run the draw
 
@@ -286,6 +288,14 @@ skipped, and `draws.ballot_list` ties each result to the exact list it was drawn
   a place to the wrong child.
 * **A drawn number whose applicant withdrew since the lock is SKIPPED and reported.** Left
   unhandled, a place goes to somebody not coming while a real applicant misses out silently.
+* **A locked list never shrinks.** Deleting an entry that is in one is allowed — that is how
+  a test row or a bogus one goes, and an erasure request cannot be made to wait for a draw —
+  but the numbering does not close up. `Ballot.size` is the count as locked and is what the
+  range handed to the service comes from; `entries.length` is the survivors and using it
+  put the highest-numbered applicant beyond the range, silently, with no way to draw them.
+  Both queries are `LEFT JOIN` for the same reason: under an inner join a deleted row simply
+  vanished, and a drawn number that resolved to nobody was passed over without a word.
+  `removedSinceLock` says it out loud and the panel asks for a new list.
 
 ## Feature flags
 
@@ -327,7 +337,11 @@ saves nothing, in tester mode it saves a real child's details to the live databa
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 405 tests
+npm test                         # 410 tests
+node scripts/seed-local.mjs      # 75 invented people, local database only. Stages:
+                                 #   entries | places | gameday | (default: everything)
+                                 # --clear removes every trace. Refuses --remote.
+                                 # ../../00_Docs/TESTING-LOCALLY.md is the walkthrough.
 npx tsc --noEmit
 npm run lint
 npm run build

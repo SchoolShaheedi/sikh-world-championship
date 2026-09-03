@@ -41,8 +41,9 @@ Ordered by what it costs to leave undone.
       seconds with no header or footer; the public bracket page polls every four. Names
       are read live from `players`, never stored on a match — so a correction on /admin
       reaches the projector, and a deleted account cannot leave a name on a screen.
-      **To try it:** `node scripts/seed-local-bracket.mjs` puts eight invented players in
-      the LOCAL database only, then build the bracket on /admin and watch the TV tab.
+      **To try it:** `node scripts/seed-local.mjs gameday` puts 48 invented players with
+      places in the LOCAL database only, then build the bracket on /admin and watch the TV
+      tab. `00_Docs/TESTING-LOCALLY.md` walks the whole flow.
 - [ ] **Stations on the bracket.** The `matches` table has a `station` column and nothing
       sets it. "Report to your station within 5 minutes of being called" is rule 9, and
       the screen is where somebody would read which station. Small, and the difference
