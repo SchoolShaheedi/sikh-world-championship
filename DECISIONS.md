@@ -2966,3 +2966,53 @@ to expect — including the four things local testing **cannot** cover (a real e
 arriving, the public state of the form, workerd, and load).
 
 410 tests (was 405).
+
+### Addendum, same day — the magic link did not arrive, for two reasons
+
+Reported straight back: sign-in produced nothing in the terminal but
+`sendSignInLink({}) in 57ms`. Two independent causes, and a third bug found next to them.
+
+**1. There was no account.** `requestSignInLink()` returns silently when the address is
+unknown — deliberately, because telling the caller otherwise turns the form into a way to
+find out which children have accounts here. Locally that silence has no upside and a real
+cost: it is indistinguishable from a broken mailer, and the answer was simply that
+`grant-moderator.mjs` had not been run. It now prints `no account for <address>` and the
+command to fix it, off production only — that line names an address somebody typed, and the
+one environment where it must never reach a log is the one where the address probably
+belongs to a child. `scripts/seed-local.mjs` also checks and says so in a box before
+anything else.
+
+**2. The link would have pointed at production anyway.** Three places built the base URL by
+hand and two were wrong, in opposite directions:
+
+* `signin/actions.ts` and `signin/[token]/route.ts` fell back to the production domain, so a
+  link generated on a laptop pointed at a site where the token does not exist.
+* `play/guardian-actions.ts` fell back to `http://localhost:3000` — which means **the
+  guardian approval email would have carried a localhost link in production**. Unreachable
+  today only because the board is switched off. It would have shipped the day it was
+  switched on.
+
+Neither default is right, because the answer is not a constant: it depends on where the
+request came from. `src/lib/site-url.ts` derives it, with one rule — **the Host header is
+trusted only when it is localhost.** That rule is the security of it: a Host header is
+supplied by whoever made the request, so trusting it generally would let somebody send a
+header and receive a sign-in link pointing at their own domain, with the token in it. Six
+tests, including the near-misses that a sloppier check would let through
+(`localhost.evil.example`, `127.0.0.1.evil.example`).
+
+The session cookie's `Secure` flag now comes from the same resolved base rather than being
+hard-coded true. A Secure cookie over plain http is refused by some browsers, and the
+symptom is signing in successfully and landing back on the sign-in page. It cannot be
+weakened in production, because there the base is the constant and always https.
+
+**Measured, not assumed: a Worker cannot read the Host header at all** — it is a forbidden
+header name in the fetch spec. Under `cf:preview` the base therefore resolves to the
+production constant even for a request to localhost, which is the safe answer and is
+correct in production, but makes `cf:preview` the wrong place to test signing in. Written
+down in the helper, in CLAUDE.md and in the walkthrough rather than left as a surprise.
+
+Verified end to end rather than by inspection: `GET /signin/<token>` on `next dev` returns
+`Location: http://localhost:3000/profile` with no `Secure` on the cookie; the same request
+with `Host: evil.example` returns `https://sikhchampionships.com/profile`.
+
+420 tests (was 410).

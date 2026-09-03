@@ -11,15 +11,34 @@ submission on the deployed site, which is the one thing a local database cannot 
 ```bash
 cd 03_App/web
 npx wrangler d1 migrations apply swc-production --local
-node scripts/grant-moderator.mjs you@example.com "Your Name"
+node scripts/grant-moderator.mjs you@example.com "Your Name"   # DO THIS ONE FIRST
 node scripts/seed-local.mjs                 # 75 invented people, everything switched on
 npm run dev                                 # http://localhost:3000
 ```
 
-Sign in at `/signin`. **No email is sent locally** — there is no `RESEND_API_KEY` — so the
-magic link is printed in the terminal running `npm run dev`, along with the full text of
-every email that would have gone out. That terminal is the only place the wording of an
+**The `grant-moderator` line is not optional and its absence is silent.** `/signin` says
+the same thing whether or not an address is known — deliberately, so the form cannot be
+used to find out which children have accounts here — so typing an address with no account
+gives you a cheerful "check your inbox", no email, and no error. On a laptop that is
+indistinguishable from a broken mailer. The seed script now checks and says so, and the
+dev-server terminal prints `no account for you@example.com`, but the cheapest fix is to run
+it first.
+
+Then sign in at `/signin`. **No email is sent locally** — there is no `RESEND_API_KEY` — so
+the magic link is printed in the terminal running `npm run dev`, along with the full text
+of every email that would have gone out. That terminal is the only place the wording of an
 offer or a guardian notice can be read without sending one to somebody.
+
+The link points at `http://localhost:3000`, because the base URL is taken from the request
+rather than from a constant. Nothing needs setting for that: there is no `.env.local` to
+create.
+
+**Sign in under `npm run dev`, not `npm run cf:preview`.** A Worker cannot read the `Host`
+header — it is a forbidden header name in the fetch spec — so under `cf:preview` a sign-in
+link falls back to the live domain and will not work on your laptop. That fallback is the
+correct answer in production; it just makes `cf:preview` the wrong place to test signing in.
+Use it for what it is for: catching things `next dev` cannot, like anything touching
+`node:fs`.
 
 To rewind to an earlier point in the timeline, or start over:
 

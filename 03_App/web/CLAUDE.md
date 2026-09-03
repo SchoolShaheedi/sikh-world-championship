@@ -117,7 +117,22 @@ medical notes. That single fact drives most of the rules below.
     the first rather than succeeding again, and the nightly job blanks every token the day
     after the event. What a slip may carry is what the projector already shows: the public
     name and the reference, never a surname, a date of birth, a phone number or an email.
-14. **No secret is ever a literal in a file in this tree.** API keys live in the macOS
+14. **A URL in an email comes from the request, and the Host header is trusted only when
+    it is localhost.** `src/lib/site-url.ts`. Three places used to build this string
+    themselves and two were wrong in opposite directions: the sign-in link fell back to the
+    production domain, so a link generated on a laptop pointed at a site where the token
+    does not exist; the guardian approval link fell back to `http://localhost:3000`, which
+    would have put a localhost link in a parent's email the day the board was switched on.
+    Deriving it from the request is the only thing that is right in every environment, and
+    the localhost-only trust rule is what stops a supplied Host header turning a sign-in
+    email into a token handed to whoever sent the header. The session cookie's `Secure`
+    flag comes from the same resolved base, so signing in works over plain http locally and
+    can never be weakened in production. Do not add a fourth place that builds it by hand.
+    **Inside a Worker there is no host to read** — `Host` is a forbidden header name in the
+    fetch spec — so under `cf:preview` this resolves to the production constant and a
+    sign-in link generated there points at the live site. Production is unaffected, since
+    the constant is the right answer there. Test sign-in with `npm run dev`.
+15. **No secret is ever a literal in a file in this tree.** API keys live in the macOS
     Keychain and are loaded by `.envrc.local`, which contains lookups and no values —
     `scripts/secrets-to-keychain.sh` writes it. Two leaks came from that file being read
     aloud into a transcript; git was never involved. `.claude/hooks/deny-secret-reads.py`
@@ -337,7 +352,7 @@ saves nothing, in tester mode it saves a real child's details to the live databa
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 410 tests
+npm test                         # 420 tests
 node scripts/seed-local.mjs      # 75 invented people, local database only. Stages:
                                  #   entries | places | gameday | (default: everything)
                                  # --clear removes every trace. Refuses --remote.

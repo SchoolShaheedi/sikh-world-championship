@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { requestSignInLink } from "@/lib/auth";
 import { rateLimit, LIMITS } from "@/lib/rate-limit";
+import { siteUrl } from "@/lib/site-url-server";
 
 /**
  * Ask for a sign-in link.
@@ -24,8 +25,9 @@ export async function sendSignInLink(formData: FormData) {
     return { error: "That's a lot of attempts. Wait a few minutes and try again." };
   }
 
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://sikhchampionships.com";
-  await requestSignInLink(email, base);
+  // From the request, not from a constant: a link built on a laptop has to point at the
+  // laptop. See src/lib/site-url.ts for why the host is trusted only when it is localhost.
+  await requestSignInLink(email, await siteUrl());
 
   return { ok: true };
 }

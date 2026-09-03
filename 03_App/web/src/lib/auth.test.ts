@@ -36,6 +36,45 @@ async function aPlayer(email = "player@example.com") {
   });
 }
 
+/**
+ * The one thing an unknown address must NOT do is tell the caller — and the one thing it
+ * must do on a laptop is tell the developer. Both are asserted here, because they pull in
+ * opposite directions and it would be easy to satisfy one by breaking the other.
+ *
+ * The cost of the silence was real: a sign-in attempt against an address with no local
+ * account printed nothing at all, and looked exactly like a mailer that had stopped
+ * working.
+ */
+describe("an address with no account", () => {
+  it("says nothing to the caller and something to the console, in development", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const before = process.env.NODE_ENV;
+    vi.stubEnv("NODE_ENV", "development");
+
+    const r = await requestSignInLink("nobody@example.com", "http://localhost:3000");
+    expect(r).toEqual({ ok: true });
+
+    const said = warn.mock.calls.flat().join(" ");
+    expect(said).toContain("no account for nobody@example.com");
+    expect(said).toContain("grant-moderator");
+
+    vi.stubEnv("NODE_ENV", before ?? "test");
+    warn.mockRestore();
+  });
+
+  it("prints NOTHING in production — that line names an address somebody typed", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const before = process.env.NODE_ENV;
+    vi.stubEnv("NODE_ENV", "production");
+
+    await requestSignInLink("nobody@example.com", "https://sikhchampionships.com");
+    expect(warn.mock.calls.flat().join(" ")).not.toContain("nobody@example.com");
+
+    vi.stubEnv("NODE_ENV", before ?? "test");
+    warn.mockRestore();
+  });
+});
+
 /** The token that was just emailed. */
 async function tokenFor(playerId: string): Promise<string> {
   const db = await getDb();

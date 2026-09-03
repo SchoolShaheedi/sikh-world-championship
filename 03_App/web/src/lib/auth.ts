@@ -46,7 +46,24 @@ export async function requestSignInLink(
   baseUrl: string,
 ): Promise<{ ok: true }> {
   const player = await playerByEmail(email);
-  if (!player) return { ok: true };
+  if (!player) {
+    /**
+     * Nothing is sent and the caller is told nothing, which is the whole point of the
+     * function — but it is also indistinguishable from a broken mailer, and locally that
+     * silence is pure cost. There is nobody to enumerate on a laptop.
+     *
+     * Guarded on NODE_ENV rather than a flag: this line names an address that was typed
+     * into a form, and the one environment where that must never reach a log is the one
+     * where the address probably belongs to a child.
+     */
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[auth] no account for ${email} — no link sent. ` +
+          `Create one with: node scripts/grant-moderator.mjs ${email} "Your Name"`,
+      );
+    }
+    return { ok: true };
+  }
 
   const db = await getDb();
   const token = newToken();

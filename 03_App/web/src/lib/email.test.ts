@@ -37,6 +37,53 @@ function mockResend(status: number, body: unknown) {
 }
 
 /**
+ * With no API key, nothing is sent — and the TEXT is printed, but only off production.
+ *
+ * The failure recording is unchanged and must stay that way: an email that looks sent and
+ * was not is the bug this module is shaped around. What was missing is that `email_sends`
+ * keeps the kind, the recipient and the subject and NOT the body, so the wording of an
+ * offer or a guardian notice could not be read anywhere but production — which for a
+ * safeguarding email to a parent is the wrong place to read it first.
+ */
+describe("no API key configured", () => {
+  it("records a FAILURE and prints the body, in development", async () => {
+    delete process.env.RESEND_API_KEY;
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const before = process.env.NODE_ENV;
+    vi.stubEnv("NODE_ENV", "development");
+
+    const r = await sendEmail(
+      mail({ text: "Here is your sign-in link:\n\nhttp://localhost:3000/signin/abc" }),
+    );
+    expect(r.ok).toBe(false);
+
+    const said = warn.mock.calls.flat().join(" ");
+    expect(said).toContain("http://localhost:3000/signin/abc");
+    expect(said).toContain("Permission needed");
+
+    // Still recorded as failed. The console is a convenience, not a delivery.
+    const rows = await failedSends();
+    expect(rows).toHaveLength(1);
+
+    vi.stubEnv("NODE_ENV", before ?? "test");
+    warn.mockRestore();
+  });
+
+  it("does NOT print the body in production — a child's details are in that text", async () => {
+    delete process.env.RESEND_API_KEY;
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const before = process.env.NODE_ENV;
+    vi.stubEnv("NODE_ENV", "production");
+
+    await sendEmail(mail({ text: "Amritpal, born 2013-04-12, 07700900123" }));
+    expect(warn.mock.calls.flat().join(" ")).not.toContain("07700900123");
+
+    vi.stubEnv("NODE_ENV", before ?? "test");
+    warn.mockRestore();
+  });
+});
+
+/**
  * The unattended mailbox.
  *
  * We send from `no-reply@`, which has no mailbox. The footer used to say "reply to this

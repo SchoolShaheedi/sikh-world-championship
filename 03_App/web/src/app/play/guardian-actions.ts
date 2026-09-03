@@ -5,6 +5,7 @@ import { currentPlayer } from "@/lib/session";
 import { requestApproval } from "@/lib/guardian-store";
 import { notifyGuardianApprovalRequest } from "@/lib/notify";
 import { rateLimit, LIMITS } from "@/lib/rate-limit";
+import { siteUrl } from "@/lib/site-url-server";
 
 /**
  * An under-16 asks their guardian for board access.
@@ -44,7 +45,9 @@ export async function askGuardian(): Promise<{ ok: boolean; error?: string }> {
     guardianEmail: me.guardianEmail,
   });
 
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  // Was `?? "http://localhost:3000"`, which would have put a localhost link in a
+  // guardian's email in production the day the board was switched on.
+  const base = await siteUrl();
   await notifyGuardianApprovalRequest({
     guardianEmail: me.guardianEmail,
     childDisplayName: me.displayName,

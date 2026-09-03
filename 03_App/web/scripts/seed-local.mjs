@@ -714,6 +714,34 @@ try {
 
 /* ------------------------------------------------------------------ what to do next */
 
+/**
+ * Is there an account that is not one of ours to sign in as?
+ *
+ * Asked because of the exact way this goes wrong. `/signin` deliberately says the same
+ * thing whether or not an address is known — otherwise it becomes a way to find out which
+ * children have accounts here — so typing an address with no account produces a cheerful
+ * "check your inbox" and no email, no error and nothing in the log. On a laptop that is
+ * indistinguishable from a broken mailer, and the answer is simply that nobody has run
+ * grant-moderator yet. Better to say so before it is a puzzle.
+ */
+function hasOwnAccount() {
+  try {
+    const out = execFileSync(
+      "npx",
+      [
+        "wrangler", "d1", "execute", "swc-production", "--local", "--json",
+        "--command",
+        "SELECT COUNT(*) AS n FROM players WHERE email NOT LIKE 'local-%@example.com'",
+      ],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
+    );
+    return JSON.parse(out)[0].results[0].n > 0;
+  } catch {
+    // Never let a check about convenience turn into a failed seed.
+    return true;
+  }
+}
+
 if (clear) {
   console.log("Cleared every seeded row: people, entries, staff, queue, board, bracket.");
   process.exit(0);
@@ -811,6 +839,20 @@ EVERYTHING ELSE.
 console.log(`
 Seeded the LOCAL database only — stage "${stage}".
 `);
+
+if (!hasOwnAccount()) {
+  console.log(`  ┌────────────────────────────────────────────────────────────────────────┐
+  │  YOU HAVE NO ACCOUNT YET, so /signin will do nothing.                  │
+  │                                                                        │
+  │    node scripts/grant-moderator.mjs you@example.com "Your Name"        │
+  │                                                                        │
+  │  The sign-in form says the same thing whether or not an address is     │
+  │  known — that is deliberate, so it cannot be used to find out which    │
+  │  children have accounts — so an unknown address looks exactly like a   │
+  │  broken mailer. Run that first and the puzzle does not happen.         │
+  └────────────────────────────────────────────────────────────────────────┘
+`);
+}
 for (const s of STAGES.slice(0, upTo + 1)) console.log(NEXT[s]);
 console.log(`
 SIGNING IN
