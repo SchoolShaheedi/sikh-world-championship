@@ -50,11 +50,12 @@ messages for us to hold.
 |---|---|---|
 | Full name | To identify you at the check-in desk and on the bracket | Contract |
 | Date of birth | To check you meet the age limit and to decide what supervision rules apply. **We never publish it** — profiles show an age band only | Legal obligation / legitimate interests (child safety) |
-| Email address | To send your confirmation, your check-in code, and event updates | Contract |
+| Email address | To send your confirmation and event updates | Contract |
 | Mobile number | So a volunteer can reach you on the day. Used for nothing else — we do not text or message you | Contract |
 | Region (e.g. "Birmingham") | Shown on your player card. **Never a postcode or street address** | Contract |
-| A name for the bracket | The name shown on the bracket, the big screen and your player card. You choose it; leave it blank and we use your first name and last initial. **It is never your surname** | Contract |
+| A name for the bracket | The name shown on the bracket, the big screen, your player card and the slip you pick up at the door. Since 2 September 2026 there is no box for this — we build it from your name, so it is your first name and last initial. **It is never your surname** | Contract |
 | Chosen avatar | Shown on your player card | Contract |
+| Whether you arrived, at what time, and which volunteer checked you in | So we know who is in the building. If a child is missing, "were they ever here?" is the first question, and a register nobody can trust is worse than no register | Legitimate interests (child safety) |
 | Medical conditions, and any detail you add | So our first aider knows before the day rather than discovering it during an incident | **Explicit consent** (special category data — see below) |
 | Accessibility needs | So we can actually accommodate you | Explicit consent |
 | Emergency contact: name, relationship, phone | Someone to call if you are hurt or unwell. Required of every adult entrant; for under-18s the parent or guardian below serves this purpose | Legitimate interests (vital interests in an emergency) |
@@ -195,7 +196,9 @@ that matters most now that no clock runs on its own.
 
 ## Who we share it with
 
-- **Our volunteers**, only what they need: the check-in desk sees names and references;
+- **Our volunteers**, only what they need: the check-in desk sees names, references, whether
+  a player is under 18 and what was agreed about them leaving — not phone numbers, dates of
+  birth or anything medical;
   the first aider sees medical notes; moderators see reports.
 - **Suppliers** who process data on our behalf, under contract: `[HOSTING — e.g. Vercel]`,
   `[DATABASE — Cloudflare D1]`, `[EMAIL — e.g. Resend]`. Each needs a data processing

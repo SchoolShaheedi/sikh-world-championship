@@ -31,7 +31,10 @@ const NAV = [
  * to keep one page's furniture off.
  */
 function isBareRoute(pathname: string | null): boolean {
-  return !!pathname && pathname.endsWith("/tv");
+  if (!pathname) return false;
+  // /tv is a projector. /slips is a printer. Both are output devices rather than pages
+  // somebody navigates, and site chrome on either is wasted ink or wasted screen.
+  return pathname.endsWith("/tv") || pathname.endsWith("/slips");
 }
 
 export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {

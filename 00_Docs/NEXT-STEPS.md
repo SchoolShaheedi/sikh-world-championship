@@ -56,13 +56,29 @@ Ordered by what it costs to leave undone.
       nowhere to write that down: it arrives as a support message. Needs a moderator
       toggle on `/admin` → Entries and a "do not film" list for the day. DPIA risk 18, and
       the thing that keeps the wording on the form honest.
-- [ ] **Check-in on the day.** The token is issued on selection and `checkIn()` exists;
-      there is no scanner UI. This is now the biggest hole in the day: the bracket can run
-      and the screen can show it, but nobody can be marked present.
+- [x] **Check-in on the day** — built 2026-09-03. `/admin/checkin/slips` prints one slip
+      per player (public name, reference, QR code, 18 to an A4 sheet); `/admin/checkin` is
+      the desk: camera decodes with jsQR, and the same page carries a name-and-reference
+      list that does exactly the same thing for a slip that will not scan or a player who
+      never picked one up. Five outcomes are named rather than collapsed into worked/didn't,
+      and `already` carries the time of the first scan. Migration 0012 records when somebody
+      arrived and which volunteer said so. Undo is on the list, because scanning the wrong
+      slip off a table is a silent mistake.
+      `[LEFT: stations on the slip. A slip could also say which console to go to, which
+      would replace a volunteer pointing — but the draw and the station allocation are not
+      the same decision and the slips get printed the night before.]`
 - [ ] **Reminder email** with the venue address and what to bring. **Unblocked in round
       46** — the venue is confirmed, so `event.venue` is real and `detailsConfirmed` is
       true. Day timings can be filled in when they are settled; the address no longer has
       to wait for them.
+- [ ] **Grant moderator to whoever is on the desk.** Check-in is behind the moderator gate
+      by design — a printed QR is not a secret, so the authority has to be the volunteer's
+      session. That means every person checking people in needs a moderator account, and
+      moderator is a database grant with no button:
+      `node scripts/grant-moderator.mjs them@example.com "Their Name"`. Two or three
+      accounts, done before the day, or there is one laptop and one queue. Note it grants
+      access to safeguarding reports and applicants' details too, so it is a real decision
+      about a real person and not an ops step.
 - [ ] **A real volunteer sign-up form.** `src/app/volunteer/page.tsx` still carries a TODO —
       DBS status, availability and a reference.
 

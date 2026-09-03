@@ -18,10 +18,16 @@ export interface OnTheDayItem {
 
 export const ON_THE_DAY: OnTheDayItem[] = [
   {
+    title: "Print and cut the check-in slips, and try the camera, the night before",
+    detail:
+      "Sixty-four slips, 18 to a sheet, cut along the lines and laid out on a table by the door in name order. Then open Arrivals on the actual laptop that will be on the desk and scan one, because the browser asks for camera permission the first time and a refused prompt is a locked camera. Do both the night before: a printer with no toner at nine in the morning is a queue of parents.",
+    appHelps: "Arrivals → Open the print sheet",
+  },
+  {
     title: "Nobody under 16 leaves without the adult who brought them",
     detail:
       "12–15s have a parent at the venue all day. 16–17s leave alone only if their guardian ticked it at registration. Somebody has to be on the door at the end with that list — the app records the permission, it cannot stop a child walking out.",
-    appHelps: "Entries shows the permission against each selected player",
+    appHelps: "Arrivals shows it against every name, and on the desk list at the end of the day",
   },
   {
     title: "Brief the photographers",
@@ -32,7 +38,7 @@ export const ON_THE_DAY: OnTheDayItem[] = [
   {
     title: "Read the public names before the doors open",
     detail:
-      "Every name that goes on the big screen is a handle the player chose. The form refuses a surname; it cannot spot an insult or somebody else's name. 64 rows, once, by a human being.",
+      "Smaller than it used to be. Since the handle box was removed on 2026-09-02 nobody types the string that goes on the screen — it is built from the name on the registration, so it is first name plus last initial and nothing else. What is left is the name itself: a child can still have typed something into the name field that should not be on a projector or on a slip laid out on a table. 64 rows, once, by a human being.",
     appHelps: "Names on the screen, with an inline correction",
   },
   {

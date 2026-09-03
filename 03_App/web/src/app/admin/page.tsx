@@ -118,6 +118,17 @@ export default async function AdminPage() {
       <nav className="mt-6 flex flex-wrap gap-2" aria-label="Game day">
         {[
           {
+            href: "/admin/checkin",
+            label: "Arrivals",
+            hint: "scan people in at the door, or find them by name",
+          },
+          {
+            href: "/admin/checkin/slips",
+            label: "Print the slips",
+            hint: "one QR code per player, 18 to a sheet",
+            blank: true,
+          },
+          {
             href: "/moderation",
             label: "Messages & reports",
             hint: "everything sent through the contact form",

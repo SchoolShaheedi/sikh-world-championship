@@ -1,0 +1,28 @@
+-- Arrival at the desk: when somebody was marked present, and by whom.
+--
+-- WHY (2026-09-03): `status = 'checked-in'` already recorded THAT a player arrived, and
+-- that was all a check-in could ever say. Two questions a desk actually asks could not be
+-- answered from it:
+--
+--   * "It says you are already checked in" — at what time? Without a timestamp a volunteer
+--     cannot tell a double scan a second later from somebody using a slip that has already
+--     been used by another person half an hour ago. The first is noise. The second is the
+--     only real attack on a paper pass, and it is also how a child ends up unaccounted for
+--     because the register says they are here.
+--   * "Who checked them in?" A register of children in a building is a safeguarding
+--     record. If it turns out to be wrong, the useful question is who was on the desk.
+--
+-- `checked_in_by` holds a moderator's player id, not their name or email. It is the
+-- minimum that answers the question, and it resolves to a person only by joining a table
+-- somebody has to have access to anyway.
+--
+-- RETENTION. Both columns live and die with the registration they are on: deleted by
+-- `purgeRegistrations()` twelve months after the event, untouched by the 30-day medical
+-- purge. They are attendance evidence, so they must outlive the event — and they must not
+-- outlive the record of who attended it. No new clock, no new rule.
+--
+-- Deliberately NOT a separate `check_ins` table. One row per registration is what the day
+-- needs; an append-only log of every scan would be a second store to purge, and the thing
+-- it would tell us that this does not — that somebody scanned twice — is not worth it.
+ALTER TABLE registrations ADD COLUMN checked_in_at TEXT;
+ALTER TABLE registrations ADD COLUMN checked_in_by TEXT;

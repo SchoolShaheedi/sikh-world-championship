@@ -343,6 +343,10 @@ export function applicationOutcome(n: {
       ``,
       `Your reference is ${n.reference}. Keep it; you will need it at the desk.`,
       ``,
+      `ARRIVING. There is nothing to bring and nothing to print. Your name will be on a`,
+      `card on a table by the door — find yours, hold it up to the camera at the desk, and`,
+      `you are checked in. If you cannot find it, just give your name.`,
+      ``,
       `Your SWC profile keeps your results and trophies across every event you play in.`,
       `Sign in at any time at https://sikhchampionships.com/signin using this email`,
       `address — no password.`,
@@ -362,6 +366,11 @@ export function applicationOutcome(n: {
        <p style="margin:0 0 14px;">
          Your reference is <strong style="font-family:monospace;">${esc(n.reference)}</strong>.
          Keep it; you will need it at the desk.
+       </p>
+       <p style="margin:0 0 14px;">
+         <strong>Arriving.</strong> Nothing to bring, nothing to print. Your name will be on
+         a card on a table by the door — find yours, hold it up to the camera at the desk,
+         and you are checked in. If you cannot find it, just give your name.
        </p>
        <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
          Your SWC profile keeps your results and trophies across every event you play in.

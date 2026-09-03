@@ -2443,3 +2443,173 @@ twelve-month boundary and asserts the contact details are there before it and go
 **A rule for anything added to `players` from now on**, written into CLAUDE.md: if the
 registration purge deletes a field, a copy of it on the profile needs its own rule in that
 function. Otherwise the copy outlives the original and the purge is decoration.
+
+## Round 51 — 2026-09-03 — Sixty-four people through one door
+
+**The ask:** sign participants up on arrival with a QR code per selected player, printed
+all at once from admin and laid on a table so each person picks up their own, scanned by a
+camera page on the site, with a manual fallback if scanning fails.
+
+Built as asked. The interesting part is what was already there and what was not.
+
+### Most of it already existed, and the missing half was the important half
+
+`check_in_token` has been on `registrations` since migration 0005, issued at selection
+because a credential that marks somebody present must not exist before there is a place to
+attend. There was a `checkIn(token)` in `store.ts` that flipped the status. Nothing called
+it. What was missing was not the write — it was everything that makes the write safe to do
+at a door.
+
+`checkIn()` returned the registration or `null`, which collapsed five situations into
+worked and didn't. A desk needs five sentences, and it needs them in the two seconds
+somebody is standing in front of it:
+
+| | what it means at the door |
+|---|---|
+| `checked-in` | green, send them through |
+| `already` | **with the time of the first scan** |
+| `not-eligible` | on the list but withdrawn — a real person with a real problem, not a broken scan |
+| `wrong-event` | a valid pass for another event, true the moment there is a second one |
+| `not-a-pass` | somebody's loyalty card. Nothing is wrong, try again |
+| `unknown` | one of ours, not on today's list. Escalate |
+
+The `already` timestamp is the one that earns its migration. A slip scanned twice in a
+second is noise and happens constantly. A slip somebody else used half an hour ago is the
+only real attack on a paper pass, and it is also how a child ends up unaccounted for while
+the register says they are inside. **Without a time on it those two are indistinguishable.**
+So migration 0012 adds `checked_in_at` and `checked_in_by` — the second because a register
+of children in a building is a safeguarding record, and if it turns out to be wrong the
+useful question is who was on the desk. It holds a moderator's player id, not a name.
+
+The old `checkIn()` was deleted rather than left alongside. Two ways to mark a child
+present is one too many when one of them records neither the time nor the person.
+
+### The security model, which is the whole design
+
+A printed QR code sits face-up on a table and anyone in the hall can photograph one.
+**Possession must therefore never be sufficient to mark somebody present.** Every check-in
+goes through `src/app/admin/checkin/actions.ts`, which re-checks the moderator gate: the
+authority is the volunteer's session, and the token only says which row to write to.
+
+That is why there is **no public check-in route and no self-service scanner**. The
+attractive version — a child scans their own slip on their own phone — is precisely the
+version where somebody else can scan it too. It is now invariant 13.
+
+The cost is real and is on the backlog: everyone on the desk needs a moderator account, and
+moderator is a database grant with no button. Two or three, granted before the day.
+
+### The QR code: a library, and a test that would actually catch a mistake
+
+A QR encoder is Reed–Solomon error correction, eight mask patterns and a BCH format code —
+three places where a bug produces something that looks perfect and does not scan, first
+discoverable at a door with a queue behind it. So `qrcode-generator` encodes (no
+dependencies, no I/O, runs on Workers) and `jsqr` decodes in the browser.
+
+The SVG is ours: one `<path>` in integer module coordinates, because this is printed and a
+fractional coordinate is how a code comes out of a printer grey.
+
+`qr.test.ts` **encodes with ours and decodes with theirs** — 100 random tokens, plus every
+base64url character. Two independent implementations agreeing on the bits is a far stronger
+statement than any assertion about our own output, and it is the only test that would have
+caught an error-correction mistake. A second test parses the rendered `<path>` back into a
+grid and compares it to the matrix, because the path is the one step the round-trip does not
+cover and a mirrored coordinate would have left everything else passing.
+
+Verified end to end against the workerd preview: all eight QR codes were pulled out of the
+HTML the server actually sent and decoded back to their tokens.
+
+### Payload: `SWC1:<token>`
+
+Five characters, and they buy the difference between "that is not one of our passes" and
+"that pass is not on today's list". Those need different things done about them and a
+volunteer should not have to guess which one they are looking at. Versioned because the day
+the payload changes, the old slips are already in a box.
+
+### The manual list is not a fallback
+
+It shares `mark()` with the scanner, so it writes the identical audit row. A slip that will
+not scan, a camera that will not start and a player who left their slip at home are three
+routine events, not edge cases — and **a fallback that records less than the happy path
+becomes the normal route and takes the record with it.**
+
+It is on the same page, always visible, never behind a tab. A page that has to be navigated
+while a queue waits is a page that gets abandoned for a paper list.
+
+### What is on a slip, and the privacy call
+
+Public name — first name and last initial — plus the reference. **No surname, no date of
+birth, no phone number, no email, nothing medical.** These lie face-up on a table in a
+public hall, so a slip may reveal no more than the projector already shows the same room.
+`checkInSlips()` is the only code that builds one and a test asserts the surname and the
+mobile are absent.
+
+Deliberately not the full name, even though "Amritpal S." is harder to find on a table than
+"Amritpal Singh" when two people share a first name — the reference disambiguates, and it
+is in the selection email. The slip reads `publicName()` like the bracket and the player
+card do; a special case here is how they start disagreeing about what somebody is called.
+
+**No contact details on the desk list either.** A guardian's mobile is exactly what you want
+if a child arrives alone and exactly what should not be on a screen facing a queue for forty
+minutes next to that child's name. What is there instead is `under18` and one line about
+what was agreed on leaving — decision support with no contact route attached. One line to
+add if the team wants the number; left out until they say so.
+
+### It carries the exit permission to the door
+
+DPIA risk 2 said the app records who may leave unaccompanied and nothing brings it to the
+door. Now every name shows a `U18` badge and one of "Must be collected by an adult",
+"Adult staying on site" or "May leave on their own" — and the same line appears on the big
+card the instant somebody is scanned in, so it is read at arrival rather than looked up at
+half past four. The exit itself still needs a person standing there. The app can tell them;
+it cannot stand there.
+
+### Small things that matter more than they look
+
+- **Every action returns the whole roster.** "31 of 64 arrived" is then a fact rather than
+  one tab's opinion, which matters the moment two volunteers work two devices.
+- **`checkInRoster()` never returns a token.** It feeds a client component and props are
+  serialised into a page left open on a desk all day; sixty-four live credentials in that
+  HTML would be a self-inflicted wound.
+- **The same code is ignored for four seconds.** The decode loop runs ten times a second and
+  a slip is held up for two, so without this one arrival fires twenty writes.
+- **It beeps.** The volunteer is looking at the person, not the screen.
+- **The camera is off until asked.** A page that grabs the camera on load gets its
+  permission prompt dismissed by whoever opened it to look at something else, and then the
+  camera is blocked for the day.
+- **Undo, on the list.** Scanning the wrong slip is a silent mistake: the register says a
+  child is inside who is standing in the car park. It does not clear the attended badge —
+  that would strip one legitimately earned at an earlier event, which is the worse risk.
+- **Slips print for people already checked in**, so a reprint at half ten does not drop
+  everybody inside.
+- **Anybody with no token is skipped, not printed blank.** A blank slip looks like it should
+  work, so somebody holds it to a camera and waits. The desk page says how many and why.
+
+### Two documents that were quietly out of date
+
+- The on-the-day checklist said the public name is "a handle the player chose". The handle
+  box was removed on 2 September; nobody types that string any more. Rewritten to what is
+  left, which is smaller but not nothing — a child can still type something into the *name*
+  field that should not be on a projector or on a card on a table.
+- The privacy notice promised "your check-in code" by email and said you choose your bracket
+  name. Neither is true. Both fixed, and a row added for the attendance record.
+
+### Also
+
+The selection email now says what happens on arrival: nothing to bring, nothing to print,
+your name is on a card on a table by the door, and if you cannot find it just give your
+name. One paragraph that removes a conversation from every one of sixty-four arrivals.
+
+The local seed script now issues check-in tokens and a spread of ages and exit permissions,
+because eight identical twenty-year-olds would have exercised neither the U18 badge nor the
+leaving line — which is how the row that matters most on the day is the one nobody ever saw
+rendered.
+
+**DPIA risk 20** is new and is the honest one: sixty-four printed cards with children's
+names and live codes on a table in a public hall. The alternatives were judged worse — every
+phone or email route degrades into a volunteer typing names, which is slower and puts more on
+a screen for longer. The mitigations are in code where they can be (gate, timestamped
+re-use, tokens blanked the night after) and in ink where they cannot: keep the pile face-up
+on one table with somebody beside it, and bin the leftovers. `RETENTION-POLICY.md` now lists
+printed slips as a store with a destruction time, which is the first physical one it has had.
+
+357 tests (was 318).

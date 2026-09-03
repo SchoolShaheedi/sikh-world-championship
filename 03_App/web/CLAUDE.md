@@ -97,7 +97,17 @@ medical notes. That single fact drives most of the rules below.
     kind** — WhatsApp event news was added in round 47 and withdrawn the next day; email is
     the only channel, and adding another means the privacy notice and both emails change
     with it.
-13. **No secret is ever a literal in a file in this tree.** API keys live in the macOS
+13. **A printed check-in code is an identifier, not a credential to trust.** The slips lie
+    face-up on a table and anyone in the hall can photograph one, so possession must never
+    be sufficient to mark a child present. Every check-in goes through
+    `src/app/admin/checkin/actions.ts`, which re-checks the moderator gate: the authority
+    is the volunteer's session, the token only says which row to write. There is
+    deliberately **no public check-in route and no self-service scanner** — that shape
+    moves the authority onto the thing lying on the table. A second use reports the time of
+    the first rather than succeeding again, and the nightly job blanks every token the day
+    after the event. What a slip may carry is what the projector already shows: the public
+    name and the reference, never a surname, a date of birth, a phone number or an email.
+14. **No secret is ever a literal in a file in this tree.** API keys live in the macOS
     Keychain and are loaded by `.envrc.local`, which contains lookups and no values —
     `scripts/secrets-to-keychain.sh` writes it. Two leaks came from that file being read
     aloud into a transcript; git was never involved. `.claude/hooks/deny-secret-reads.py`
@@ -116,6 +126,45 @@ register interest ──> profile created + application recorded ──> emails 
 
 A check-in token is the credential that marks someone present, so it is issued **only** on
 selection, never at submission.
+
+## The arrival desk
+
+Sixty-four people, most of them children, over about forty minutes at one door.
+
+```
+confirmSelection() issues check_in_token
+        │
+        ├──> /admin/checkin/slips   one slip per player: public name, reference, QR code
+        │                           printed, cut, laid out on a table in first-name order
+        │
+        └──> /admin/checkin         camera decodes (jsQR) ──> scanPass() ──> checkInByScan()
+                                    manual list          ──> checkInManually() ──> checkInByReference()
+                                                             both land in the same mark()
+```
+
+* `src/lib/qr.ts` **encodes** (qrcode-generator, server-side SVG); jsQR **decodes** in the
+  browser. `qr.test.ts` encodes with ours and decodes with theirs — two independent
+  implementations agreeing is the only test that would catch a Reed–Solomon mistake, and a
+  code that does not scan is only discoverable at a door with a queue behind it.
+* The payload is `SWC1:<token>`. The prefix exists so the desk can say "that is not one of
+  our passes" (somebody's loyalty card) separately from "that pass is not on today's list"
+  (escalate) — two situations needing two different actions.
+* **Every outcome is named**: `checked-in`, `already`, `not-eligible`, `wrong-event`,
+  `not-a-pass`, `unknown`. `already` carries the time of the first scan, because a double
+  scan a second later and a slip somebody else used half an hour ago are indistinguishable
+  without it, and only one of them means a child is unaccounted for.
+* **The manual list is not a fallback bolted on.** It shares `mark()`, so it writes the
+  same audit row. A fallback that records less becomes the normal route and takes the
+  record with it.
+* Every action returns the **whole roster**, so the "31 of 64 arrived" counter is a fact
+  rather than one tab's opinion — which matters as soon as two volunteers use two devices.
+* `checkInRoster()` **never returns a token**: it feeds a client component whose props are
+  serialised into a page left open on a desk all day. `checkInSlips()` is the only thing
+  that reads tokens, and only the print page calls it.
+* No contact details on the desk list, deliberately. A guardian's mobile is exactly what
+  you want if a child arrives alone and exactly what should not be on a screen facing a
+  queue. `under18` and a one-line `leaving` note are decision support with no contact route
+  attached.
 
 ## Storage is Cloudflare D1
 
@@ -214,7 +263,7 @@ saves nothing, in tester mode it saves a real child's details to the live databa
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 318 tests
+npm test                         # 357 tests
 npx tsc --noEmit
 npm run lint
 npm run build

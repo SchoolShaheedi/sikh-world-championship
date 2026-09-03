@@ -5,7 +5,6 @@ import {
   apply,
   applicantsFor,
   selectedCount,
-  checkIn,
   purgeMedical,
   clearCheckInTokens,
   registrationsFor,
@@ -78,18 +77,14 @@ describe("applying", () => {
   });
 });
 
-describe("check-in", () => {
-  it("ignores an unknown token", async () => {
-    expect(await checkIn("nope")).toBeNull();
-  });
-
-  it("does NOT accept the human-readable reference as a check-in token", async () => {
+describe("the check-in token", () => {
+  // Checking somebody in is tested in check-in.test.ts. What belongs HERE is the one
+  // property this file is responsible for: an application does not come with a credential.
+  it("is not issued by applying", async () => {
     const r = await apply(base());
-    expect(await checkIn(r.reference)).toBeNull();
-  });
-
-  it("refuses an empty token even after tokens are cleared", async () => {
-    expect(await checkIn("")).toBeNull();
+    const [row] = await registrationsFor("e1");
+    expect(row.reference).toBe(r.reference);
+    expect(row.checkInToken).toBe("");
   });
 });
 
@@ -164,13 +159,13 @@ describe("retention", () => {
       .prepare("UPDATE registrations SET check_in_token = 'live-token' WHERE reference = ?")
       .bind(r.reference)
       .run();
-    expect(await checkIn("live-token")).not.toBeNull();
-
     await clearCheckInTokens("e1");
-    // The credential is gone, and an empty token must not match the rows it was cleared
-    // from — otherwise clearing them would turn "" into a master key.
-    expect(await checkIn("live-token")).toBeNull();
-    expect(await checkIn("")).toBeNull();
+
+    // The credential is gone. That an EMPTY token must not then match the rows it was
+    // cleared from — otherwise clearing tokens would turn "" into a master key — is
+    // asserted in check-in.test.ts, where the checking-in code now lives.
+    const [row] = await registrationsFor("e1");
+    expect(row.checkInToken).toBe("");
   });
 });
 

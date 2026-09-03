@@ -252,23 +252,15 @@ export async function selectedCount(eventSlug: string): Promise<number> {
   return row?.n ?? 0;
 }
 
-/** Mark a player present from their QR check-in token. */
-export async function checkIn(token: string): Promise<Registration | null> {
-  const db = await getDb();
-  // An emptied token must never match: it is cleared after the event, and "" would
-  // otherwise check in whoever was purged first.
-  if (!token) return null;
-  const row = await db
-    .prepare("SELECT * FROM registrations WHERE check_in_token = ?")
-    .bind(token)
-    .first<Row>();
-  if (!row) return null;
-  await db
-    .prepare("UPDATE registrations SET status = 'checked-in' WHERE id = ?")
-    .bind(row.id)
-    .run();
-  return toRegistration({ ...row, status: "checked-in" });
-}
+/*
+ * CHECKING SOMEBODY IN LIVES IN src/lib/check-in.ts, not here.
+ *
+ * There used to be a `checkIn(token)` in this file that flipped the status and returned
+ * the row or null. It was removed on 2026-09-03 rather than kept alongside the new one,
+ * because two ways to mark a child present is one too many: the old one recorded neither
+ * the time nor which volunteer did it, and could not tell a first arrival from a slip
+ * being used twice. A second path that quietly writes a worse record is not a fallback.
+ */
 
 /**
  * Delete the special-category fields from an event's registrations, keeping the rows.
