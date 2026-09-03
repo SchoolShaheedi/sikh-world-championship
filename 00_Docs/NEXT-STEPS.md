@@ -71,14 +71,13 @@ Ordered by what it costs to leave undone.
       46** — the venue is confirmed, so `event.venue` is real and `detailsConfirmed` is
       true. Day timings can be filled in when they are settled; the address no longer has
       to wait for them.
-- [ ] **Grant moderator to whoever is on the desk.** Check-in is behind the moderator gate
-      by design — a printed QR is not a secret, so the authority has to be the volunteer's
-      session. That means every person checking people in needs a moderator account, and
-      moderator is a database grant with no button:
-      `node scripts/grant-moderator.mjs them@example.com "Their Name"`. Two or three
-      accounts, done before the day, or there is one laptop and one queue. Note it grants
-      access to safeguarding reports and applicants' details too, so it is a real decision
-      about a real person and not an ops step.
+- [x] **Give the desk volunteers access** — solved properly 2026-09-03 rather than by
+      handing out moderator. There are now two roles: `desk` (the arrival desk and nothing
+      else) and `moderator` (everything). Add people on `/admin/people` — any email
+      address, an account is created if they have never been here, and they sign in with a
+      link. Do it before the day, and check the page does not flag them "never signed in".
+      `[DECIDE: how many people should hold FULL moderator. The technical control is now a
+      button an existing moderator can press, so the real control is who you give it to.]`
 - [ ] **A real volunteer sign-up form.** `src/app/volunteer/page.tsx` still carries a TODO —
       DBS status, availability and a reference.
 

@@ -13,6 +13,7 @@
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, playerForSession } from "./auth";
 import { hasApproval } from "./guardian-store";
+import { hasDeskAccess } from "./players";
 import type { AgeBand } from "./types";
 
 export interface SessionPlayer {
@@ -58,6 +59,13 @@ export interface SessionPlayer {
   guardianRelation: string | null;
   guardianMobile: string | null;
   isModerator: boolean;
+  /**
+   * Desk staff only: the arrival desk and nothing else (2026-09-03). False for a
+   * moderator, who has more — use `canWorkDesk` rather than either flag on its own.
+   */
+  isDesk: boolean;
+  /** Moderator OR desk staff. What every check-in gate actually asks. */
+  canWorkDesk: boolean;
 }
 
 /**
@@ -95,6 +103,8 @@ export async function currentPlayer(): Promise<SessionPlayer | null> {
     guardianRelation: player.ageBand === "16+" ? null : player.guardianRelation,
     guardianMobile: player.ageBand === "16+" ? null : player.guardianMobile,
     isModerator: player.isModerator,
+    isDesk: player.isDesk,
+    canWorkDesk: hasDeskAccess(player),
   };
 }
 

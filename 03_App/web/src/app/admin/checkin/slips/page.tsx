@@ -47,10 +47,10 @@ export const dynamic = "force-dynamic";
  */
 export default async function SlipsPage() {
   const me = await currentPlayer();
-  if (!me?.isModerator) {
+  if (!me?.canWorkDesk) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-20 text-center">
-        <h1 className="font-display text-3xl">Moderators only</h1>
+        <h1 className="font-display text-3xl">Staff only</h1>
       </div>
     );
   }

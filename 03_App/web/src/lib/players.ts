@@ -28,6 +28,15 @@ export interface Player {
   handle: string | null;
   eventVerified: boolean;
   isModerator: boolean;
+  /**
+   * Desk staff: the arrival desk and nothing else (2026-09-03).
+   *
+   * A lesser role than moderator, added so that staffing a door with volunteers does not
+   * mean handing out the safeguarding queue — see src/lib/staff.ts. Never set on a
+   * moderator, who already has more; read `hasDeskAccess()` rather than this field when
+   * deciding whether somebody may work the desk.
+   */
+  isDesk: boolean;
   guardianEmail: string | null;
   /**
    * REUSABLE CONTACT DETAILS, added 2026-09-02 so a second event does not ask for them
@@ -75,6 +84,7 @@ function toPlayer(r: Row): Player {
     handle: (r.handle as string | null) ?? null,
     eventVerified: fromBool(r.event_verified),
     isModerator: fromBool(r.is_moderator),
+    isDesk: fromBool(r.is_desk),
     guardianEmail: (r.guardian_email as string | null) ?? null,
     fullName: (r.full_name as string | null) ?? null,
     mobile: (r.mobile as string | null) ?? null,
@@ -205,6 +215,7 @@ export async function upsertPlayer(input: NewPlayer): Promise<Player> {
     handle: input.handle ?? null,
     eventVerified: false,
     isModerator: false,
+    isDesk: false,
     guardianEmail: input.guardianEmail ?? null,
     fullName: input.fullName ?? null,
     mobile: input.mobile ?? null,
@@ -246,6 +257,20 @@ export async function upsertPlayer(input: NewPlayer): Promise<Player> {
  */
 export function publicName(player: Pick<Player, "handle" | "displayName">): string {
   return player.handle?.trim() || player.displayName;
+}
+
+/**
+ * May this person work the arrival desk?
+ *
+ * ONE FUNCTION, so the two flags can never be read inconsistently. A moderator has
+ * everything the desk needs and more, so `is_desk` is never set on one — which means
+ * every gate on the desk has to check both, and forgetting the moderator half would lock
+ * the person running the event out of their own door.
+ */
+export function hasDeskAccess(
+  player: Pick<Player, "isModerator" | "isDesk"> | null | undefined,
+): boolean {
+  return !!player && (player.isModerator || player.isDesk);
 }
 
 /** Set when a volunteer checks someone in on the day. Shown as a badge on the board. */

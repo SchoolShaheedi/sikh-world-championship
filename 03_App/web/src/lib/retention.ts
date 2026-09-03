@@ -138,8 +138,11 @@ function monthsBefore(now: Date, months: number): string {
  *
  * FOUR EXEMPTIONS, each for a reason worth stating:
  *
- *  1. `is_moderator` — a staff account is not a dormant child's profile, and deleting one
- *     silently removes someone's access to the safeguarding queue.
+ *  1. `is_moderator` OR `is_desk` — a staff account is not a dormant child's profile, and
+ *     deleting one silently removes someone's access to the safeguarding queue or to the
+ *     arrival desk. Desk staff were added to this on 2026-09-03 with the second role: a
+ *     volunteer granted desk access in September and never signing in until 3 October
+ *     looks exactly like a dormant profile to every clause below.
  *  2. `event_verified`, and any registration checked in — somebody who ATTENDED is out of
  *     scope entirely. This rule exists for the profile with no event behind it.
  *  3. Named in a report, as reporter or as subject — safeguarding records are kept for six
@@ -150,6 +153,7 @@ function monthsBefore(now: Date, months: number): string {
 const DORMANT_WHERE = `
   FROM players p
  WHERE p.is_moderator = 0
+   AND p.is_desk = 0
    AND p.event_verified = 0
    AND NOT EXISTS (SELECT 1 FROM registrations r
                     WHERE r.player_id = p.id AND r.status = 'checked-in')

@@ -87,10 +87,18 @@ export async function deletionBlockers(playerId: string): Promise<string[]> {
   const blockers: string[] = [];
 
   const p = await db
-    .prepare("SELECT is_moderator FROM players WHERE id = ?")
+    .prepare("SELECT is_moderator, is_desk FROM players WHERE id = ?")
     .bind(playerId)
-    .first<{ is_moderator: number }>();
-  if (p?.is_moderator) blockers.push("This account is a moderator.");
+    .first<{ is_moderator: number; is_desk: number }>();
+  // Any staff access, not only moderator. Deleting an account that still holds a grant
+  // would leave `staff_grants` pointing at somebody who no longer exists — and the whole
+  // point of that table is that "who had access" stays answerable. Revoke, then delete.
+  if (p?.is_moderator || p?.is_desk) {
+    blockers.push(
+      `This account has ${p.is_moderator ? "moderator" : "desk"} access. ` +
+        `Remove it on /admin/people first.`,
+    );
+  }
 
   const report = await db
     .prepare(

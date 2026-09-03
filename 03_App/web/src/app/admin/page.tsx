@@ -13,6 +13,8 @@ import { DormantSweepPanel } from "@/components/DormantSweepPanel";
 import { BracketAdminPanel, type BracketAdminData } from "@/components/BracketAdminPanel";
 import { storedBracket } from "@/lib/match-store";
 import { ON_THE_DAY } from "@/data/on-the-day";
+import { ExternalDrawPanel } from "@/components/ExternalDrawPanel";
+import { currentBallot, type Ballot } from "@/lib/external-draw";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -42,12 +44,21 @@ export default async function AdminPage() {
       const { results: draws } = await db
         .prepare("SELECT * FROM draws WHERE event_slug = ? ORDER BY ran_at DESC")
         .bind(event.slug)
-        .all<{ id: string; ran_at: string; seed: string; applicants: number; places: number }>();
+        .all<{
+          id: string; ran_at: string; seed: string; applicants: number; places: number;
+          method: string | null; service: string | null; winners: string | null;
+        }>();
 
       /**
        * The bracket, if one has been built. Null is the normal state until the draw has
        * run and somebody presses the button — the panel says so rather than erroring.
        */
+      /**
+       * The locked numbered list for an outside draw, if one has been locked. Null is the
+       * normal state — see src/lib/external-draw.ts.
+       */
+      const ballot: Ballot | null = await currentBallot(event.slug, event.capacity);
+
       const stored = await storedBracket(event.slug, event.divisions[0]?.name ?? "Open");
       const bracketData: BracketAdminData | null = stored
         ? {
@@ -60,6 +71,7 @@ export default async function AdminPage() {
 
       return {
         event,
+        ballot,
         bracketData,
         names: await bracketNames(event.slug),
         /**
@@ -134,6 +146,11 @@ export default async function AdminPage() {
             hint: "everything sent through the contact form",
           },
           {
+            href: "/admin/people",
+            label: "People",
+            hint: "who can work the desk, who can do everything",
+          },
+          {
             href: `/events/${EVENTS[0]?.slug ?? ""}/tv`,
             label: "Big screen",
             hint: "open on the laptop plugged into the TV",
@@ -193,7 +210,7 @@ export default async function AdminPage() {
         </ul>
       </section>
 
-      {events.map(({ event, counts, draws, names, entries, bracketData }) => (
+      {events.map(({ event, counts, draws, names, entries, bracketData, ballot }) => (
         <section
           key={event.slug}
           className="mt-10 rounded-3xl border border-line bg-surface/60 p-6"
@@ -236,6 +253,8 @@ export default async function AdminPage() {
             latestDrawId={draws[0]?.id ?? null}
           />
 
+          <ExternalDrawPanel slug={event.slug} ballot={ballot} />
+
           <PublicNamePanel names={names} />
 
           <EntryAdminPanel entries={entries} />
@@ -262,7 +281,21 @@ export default async function AdminPage() {
                       <span className="text-muted">
                         {d.places} places from {d.applicants} applicants
                       </span>
-                      <span className="font-mono text-xs text-muted">seed {d.seed}</span>
+                      {/* An external draw has no seed — what makes it checkable is the
+                          service and the numbers, so show those instead of 'seed
+                          external', which would read as a missing value. */}
+                      {d.method === "external" ? (
+                        <>
+                          <span className="text-kesrisoft">
+                            drawn by {d.service ?? "an outside service"}
+                          </span>
+                          <span className="font-mono text-xs text-muted">
+                            winners {(d.winners ?? "").replace(/\s+/g, " ").trim().slice(0, 60)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="font-mono text-xs text-muted">seed {d.seed}</span>
+                      )}
                     </div>
                   </li>
                 ))}

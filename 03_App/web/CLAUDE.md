@@ -56,8 +56,18 @@ medical notes. That single fact drives most of the rules below.
 6. **Access decisions fail closed.** `currentPlayer()` returns `SessionPlayer | null`;
    there is no fallback viewer. It once returned a fixed player who was also a moderator,
    which made `/moderation` readable by anyone. Nothing may invent a viewer again.
-   Moderator is a database grant — `scripts/grant-moderator.mjs`, or `setModerator()` in
-   `src/lib/players.ts` — with no button anywhere in the app.
+   **TWO ROLES since 2026-09-03.** `is_moderator` grants everything; `is_desk` grants the
+   arrival desk and nothing else. Read `canWorkDesk` (or `hasDeskAccess()`) on a desk gate
+   and `isModerator` everywhere else — never `isDesk` alone, because a moderator never has
+   that flag set.
+   **The "no button anywhere" rule is now NARROWED, not dropped.** Both roles are grantable
+   from `/admin/people` by an existing moderator. A deliberate weakening (DECISIONS.md
+   round 53) with compensating controls: the desk no longer *needs* the big grant, which
+   was the actual problem; every grant and revocation goes to `staff_grants` with the
+   actor's email; a moderator cannot revoke their own moderator role, and the last
+   moderator cannot be revoked at all; and the page states what each role can see instead
+   of hiding it in help text. `scripts/grant-moderator.mjs` remains, for the first
+   moderator and for a lock-out.
 7. **Nothing invented is ever rendered in production.** `showDemoData()` in
    `src/lib/features.ts` has no environment-variable override, deliberately: a bracket of
    plausible invented names is not a broken page, it is a convincing lie on a projector.
@@ -240,6 +250,43 @@ the `version` differs. Three things that are load-bearing rather than incidental
 To see it working without real registrations: `node scripts/seed-local-bracket.mjs`
 (local database only, refuses `--remote`).
 
+## Two ways to run the draw
+
+Both are honest and neither replaces the other.
+
+| | `src/lib/draw.ts` | `src/lib/external-draw.ts` |
+|---|---|---|
+| How | seeded Fisher–Yates, here and now | numbers handed to an outside service |
+| Proof | the seed is stored; recompute it | the locked mapping + the pasted result |
+| Convinces | a developer | a hall |
+| Use for | backfilling three drop-outs on a Tuesday | the draw people watch |
+
+**The order of the external one IS the audit.** Lock the numbering → draw elsewhere → paste
+the numbers back. A number is meaningful only because the mapping from number to person was
+recorded *before* the draw; numbers resolved against a mapping invented afterwards are
+indistinguishable from picking the winners by hand. `lockBallot()` therefore cannot be
+skipped, and `draws.ballot_list` ties each result to the exact list it was drawn from.
+
+* **The service is given integers and nothing else.** No names, no ages, no references — so
+  no processor agreement, no children's names in somebody else's logs, and a picker that
+  could not favour a name if it wanted to. `draw_ballots` holds registration ids only, the
+  same rule as `matches`.
+* **There is only ever ONE list to hand over.** Referred applicants take priority for every
+  place, so at most one pool is ever partly filled: either they fit and the general pool is
+  drawn, or they do not and the general pool is not drawn at all. `splitPools()` is pure and
+  tested on that boundary. Building for two lists would have been building for a case that
+  cannot occur.
+* **`draws.winners` holds the paste verbatim**, whitespace and commentary included. A tidied
+  copy would be our reading of the evidence rather than the evidence. `seed` is the literal
+  string `external`, because we did not generate the randomness.
+* **`parseWinners()` is forgiving about format and unforgiving about content.** A numbered
+  list ("1. 5 / 2. 8") hands us the positions as winners too — caught by arithmetic, since k
+  winners always yield 2k numbers, and the message names that cause. Stripping ordinals by
+  pattern was rejected: it means guessing which digits were meant, and guessing wrong gives
+  a place to the wrong child.
+* **A drawn number whose applicant withdrew since the lock is SKIPPED and reported.** Left
+  unhandled, a place goes to somebody not coming while a real applicant misses out silently.
+
 ## Feature flags
 
 `src/lib/features.ts`. **`SWC_REGISTRATION_OPEN` is set to `"true"` in `wrangler.jsonc`
@@ -280,7 +327,7 @@ saves nothing, in tester mode it saves a real child's details to the live databa
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 365 tests
+npm test                         # 405 tests
 npx tsc --noEmit
 npm run lint
 npm run build

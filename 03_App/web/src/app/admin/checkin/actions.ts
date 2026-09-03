@@ -25,7 +25,9 @@ import {
  */
 async function gate() {
   const me = await currentPlayer();
-  if (!me?.isModerator) throw new Error("Moderators only.");
+  // Desk staff, not only moderators. `canWorkDesk` is moderator OR desk, computed in one
+  // place (`hasDeskAccess`) so a gate cannot read half of it — see src/lib/staff.ts.
+  if (!me?.canWorkDesk) throw new Error("Staff only.");
   return me;
 }
 

@@ -58,6 +58,17 @@ export function DrawPanel({
         {placesLeft} place{placesLeft === 1 ? "" : "s"} left, {waiting} awaiting a decision.
         Referred applicants are drawn first, then everyone else — random within each group.
       </p>
+      {/* TWO WAYS TO RUN THE DRAW, and having both is deliberate rather than indecision.
+          This one is instant and recomputable from its stored seed, which is the right
+          tool for backfilling three drop-outs on a Tuesday. The outside service below is
+          slower and public, which is the right tool for the draw people watch. Saying so
+          here stops the second panel looking like a replacement for this one. */}
+      <p className="mt-2 text-sm text-muted">
+        This runs here and now, and records a seed so the same result can be recomputed and
+        shown to be honest. For a draw people can <em>watch</em>, use{" "}
+        <span className="text-body">Draw with an outside service</span> below — this one is
+        the quicker tool for backfilling a drop-out.
+      </p>
 
       <div className="mt-4 flex flex-wrap gap-3">
         <button

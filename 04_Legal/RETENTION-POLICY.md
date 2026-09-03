@@ -35,6 +35,8 @@ parent how long you keep their child's data until you have decided.
 | LFG board posts | `lfg-posts.json` | Already expire after 14 days; **delete, do not just mark expired** | The code sets `expiresAt` but keeps the row. Expiry must become deletion. |
 | Game requests, incl. PlayStation IDs and guardian email | `game-requests.json` | **`[90]` days after the request settles** | These contain two children's contact handles and a guardian's email. No reason to keep them once the game has happened. |
 | Blocks | `blocks.json` | **Keep while both accounts exist** | A block must not quietly expire. Deleting it re-exposes someone to a person they blocked. |
+| **Who was granted or removed staff access, by whom** | `staff_grants` | **`[6]` years** | Added 2026-09-03 when access grants became clickable (`/admin/people`). Holds only the email addresses of STAFF acting in an official capacity — never a child's. Kept long deliberately: "who had access to children's data on 3 October 2026" is exactly the question a later investigation asks, and it must outlive both the event and the accounts. **No automatic purge is implemented** — see the not-enforced list below. |
+| **The numbered list for an outside draw** | `draw_ballots` | **Until the next list is locked, or with the event** | Added 2026-09-03. Registration ids and numbers only — no names and no contact details, and nothing at all is sent to the third-party service, which receives integers. A list that was actually used is referenced by a `draws` row which keeps the numbers pasted against it; that draw record is the audit and is kept with the event. |
 | Rate-limit counters | In memory | Minutes | Never persisted. |
 | Photographs and video from the event | `[WHERE? Drive? A photographer's own drive?]` | `[3]` years, and **delete immediately on request** | Needs deciding — this is currently the biggest undocumented data store in the project, and it lives outside the app entirely. |
 | Backups | `[TBC]` | Must not outlive the data they contain by more than `[30]` days | A deletion that leaves the data in a backup for a year is not a deletion. |
@@ -74,6 +76,12 @@ holds no personal data, so the proof outlives the data it is about.
 | Deletion on request, and clearing up after a rehearsal | `deleteAccount()` from `/admin` → Entries, recorded like any scheduled deletion |
 
 **Not enforced. Stated plainly because the gaps matter more than the list above.**
+
+0. **`staff_grants` has a stated period and no code enforcing it.** Six years is in the
+   table above; nothing deletes a row at six years. Said here rather than quietly fixed
+   with a cron nobody asked for — the table holds a handful of rows about adults, and
+   inventing a purge for it without a decision would repeat exactly the mistake this
+   document exists to prevent: code enforcing a duration nobody agreed to.
 
 1. **No profile has an end date, by decision (2026-09-01).** This is no longer a gap
    somebody forgot; it is a choice, and it is the weakest point in this document. What a

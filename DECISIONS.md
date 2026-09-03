@@ -2711,3 +2711,129 @@ safeguarding reports and applicants' details. Two or three accounts, decided on 
 before the day.
 
 365 tests (was 357).
+
+## Round 53 — 2026-09-03 — A draw people can watch, and two roles instead of one
+
+Three asks: see the interested list and draw it with an outside service; let a moderator
+add new people from the app; and — the question that shaped the rest — **is admin the same
+as moderator?**
+
+### Yes, and that was the actual problem
+
+One flag, `is_moderator`, gating `/admin`, `/moderation`, the draw, entry deletion, every
+applicant's name, date of birth, mobile and guardian contact, and every safeguarding
+report. There is no separate admin and never was.
+
+It had no button in the app, deliberately, since round 24. Then check-in shipped and needed
+two or three volunteers on a door — and **under one flag, staffing a door meant handing out
+the safeguarding queue.** That is a much worse outcome than a grant button, and it is what
+made the question urgent rather than convenient.
+
+So the answer was not to make the big grant easier. It was to stop the desk needing it:
+
+| | what it gets |
+|---|---|
+| `desk` | The arrival desk. Check people in, print slips, record a date of birth was seen. Nothing else — no admin page, no messages, no draw, no deletion. |
+| `moderator` | All of that, plus every applicant's contact details, safeguarding reports and messages, the draw, and deletion. |
+
+`is_desk` is never set on a moderator, who already has more — which means every desk gate
+has to check both flags, and reading half of it would lock the person running the event out
+of their own door. So there is one function, `hasDeskAccess()`, surfaced on the session as
+`canWorkDesk`, and gates read that rather than either flag.
+
+Verified against the deployed bundle rather than assumed: signed in as desk staff, `/admin`,
+`/admin/people` and `/moderation` all refuse; `/admin/checkin` and the slips both allow.
+
+### Narrowing invariant 6 rather than dropping it
+
+Both roles are now grantable from `/admin/people`. That is a real weakening of a control
+that existed for a good reason, so it is written down as one, with what compensates for it:
+
+* **The desk no longer needs the big grant.** This is the actual mitigation. The rest is
+  fencing around a button that should now rarely be used.
+* Only an existing moderator can grant. Checked in the page, in the action, and again in
+  `staff.ts` — the action gate stops a non-moderator reaching the function, the function
+  gate stops it ever being called with a non-moderator actor from anywhere else.
+* **Two routes to the same lock-out, both closed.** A moderator cannot revoke their own
+  moderator role, and the last moderator cannot be revoked at all. Without the second, two
+  moderators revoking each other ends with the survivor succeeding into an empty room, and
+  the only way back is a database console somebody may not have on the day.
+* Revoking clears **both** flags. "Remove their access" must not quietly leave them holding
+  some.
+* Granting `desk` to somebody who is already a moderator is **refused**, not applied: it
+  would be a downgrade dressed as a grant, and whoever clicked it almost certainly meant to
+  remove the moderator role instead.
+* An account holding either grant **cannot be deleted** until it is revoked, so the audit
+  trail can never point at somebody who no longer exists.
+* Desk accounts are **exempt from the dormancy sweep**. A volunteer granted access in
+  September who never signs in until 3 October looks exactly like a dormant profile to
+  every clause in that rule.
+* The page flags **"has never signed in"**. The invitation is a magic link to an address a
+  moderator typed; a typo produces an account that can never be used, and the morning of the
+  event is a bad time to find out.
+
+The audit table found a bug of its own. `ORDER BY at DESC` alone left two same-millisecond
+rows in an undefined order — and for this table the two orders mean **opposite things**:
+"granted, then revoked" and "revoked, then granted" describe different states of somebody's
+access. `rowid DESC` as a tiebreaker is insertion order, which is the truth. Same class of
+bug as the bracket version hash in round 49.
+
+### The draw, run somewhere else
+
+The seeded draw is honest — every result recomputes from its stored seed — but "you can
+recompute it from a seed" is an argument that convinces a developer and not a hall. Both
+are kept, and the DrawPanel now says which is for what, so the new one does not look like a
+replacement: seeded for backfilling three drop-outs on a Tuesday, external for the draw
+people watch.
+
+**The order is the audit, and the code enforces it.** Lock the numbering → draw elsewhere →
+paste the numbers back. A number means something only because the mapping from number to
+person was recorded *before* the draw. Numbers resolved against a mapping invented
+afterwards are indistinguishable from picking the winners by hand, so `lockBallot()` cannot
+be skipped and `draws.ballot_list` ties every result to the exact list it came from.
+
+**The service is given integers.** No names, no ages, no references. That is worth being
+explicit about because it answers the obvious objection to using an outside site at all: no
+processor to appoint, no transfer to assess, nothing of a child's in somebody else's logs —
+and a picker that has never seen a name cannot favour one, which is a fairness property the
+internal draw could never quite claim. `draw_ballots` holds registration ids only, the same
+rule as `matches`, with a test asserting no name, email, mobile or date of birth is in it.
+
+**There is only ever ONE list to hand over**, which is the insight that made this small.
+Referred applicants take priority for every place, so at most one pool is ever *partly*
+filled: either they all fit and the general pool is drawn, or they do not and the general
+pool is not drawn at all. Never both. `splitPools()` is a pure function tested on that
+boundary, and building for two lists would have been building for a case that cannot occur.
+
+The page writes out the instruction — "Ask for 27 numbers between 1 and 145, with no
+repeats" — because somebody doing this in front of an audience should be reading a sentence,
+not working out which box on random.org is which.
+
+### Two traps closed
+
+**A numbered list.** A service returning "1. 5 / 2. 8 / 3. 12" hands us the list positions
+as winners too, and 1, 2 and 3 are perfectly valid entry numbers — there is nothing in the
+digits themselves that says which is which. Stripping ordinals by pattern was the obvious
+fix and is the wrong one: it means guessing which digits the moderator meant, and guessing
+wrong here **gives a place to the wrong child.** Arithmetic catches it instead and cannot be
+fooled — k winners in a numbered list always yield 2k numbers, and 2k > k always trips the
+count check. My own test found this; what was missing was never safety, it was a useful
+sentence, so the over-count error now names this cause.
+
+**A withdrawal between the lock and the paste.** Their number can still come up, at which
+point a place goes to somebody who is not coming and a real applicant misses out with
+nobody noticing. Skipped, reported by name and status, and the freed places stay open.
+
+`draws.winners` holds the paste **verbatim**, whitespace and commentary included, and `seed`
+is the literal string `external`. A tidied copy of the numbers would be our reading of the
+evidence rather than the evidence, and there is no seed to store because we did not generate
+the randomness.
+
+### Also
+
+DPIA risks 22 (third-party draw — Low, because nothing personal is transferred) and 23
+(moderator became grantable — Medium, and the honest residual is *who gets given it*). Both
+name what they still need. `staff_grants` is in the retention policy at six years with an
+explicit note that no code enforces that yet, rather than a cron nobody asked for.
+
+405 tests (was 365).

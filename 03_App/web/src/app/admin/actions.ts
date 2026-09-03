@@ -15,6 +15,14 @@ import {
 } from "@/lib/account-delete";
 import { purgeDormantProfiles } from "@/lib/retention";
 import { generateBracket, clearBracket, recordScore } from "@/lib/match-store";
+import {
+  lockBallot,
+  clearBallot,
+  parseWinners,
+  planExternalDraw,
+  commitExternalDraw,
+  currentBallot,
+} from "@/lib/external-draw";
 
 /**
  * Every action re-checks moderator status.
@@ -266,4 +274,122 @@ export async function enterScore(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath(`/events/${slug}/bracket`);
   return { ok: true as const, message: "Score recorded." };
+}
+
+
+/* ------------------------------------------------------------------ *
+ * The draw, run by an outside service.
+ *
+ * Three actions in a fixed order, and the order IS the audit: lock the numbering, take it
+ * away and draw it somewhere witnessable, paste the winning numbers back against a mapping
+ * that provably could not have moved. See src/lib/external-draw.ts.
+ * ------------------------------------------------------------------ */
+
+/** Step one: fix who is which number, and record it. Nothing else can happen first. */
+export async function lockDrawList(formData: FormData) {
+  const me = await gate();
+  const slug = String(formData.get("slug") ?? "");
+  const event = getEvent(slug);
+  if (!event) return { error: "Unknown event" };
+
+  const r = await lockBallot(slug, event.capacity, me.id);
+  if (!r.ok) return { error: r.error };
+  revalidatePath("/admin");
+  return {
+    ok: true as const,
+    message:
+      `List locked: ${r.entries} numbered entr${r.entries === 1 ? "y" : "ies"}. ` +
+      `Give the draw service the numbers below — it never sees a name.`,
+  };
+}
+
+/** Throw the numbering away, for when more people have applied since it was locked. */
+export async function unlockDrawList(formData: FormData) {
+  await gate();
+  const slug = String(formData.get("slug") ?? "");
+  const rows = await clearBallot(slug);
+  revalidatePath("/admin");
+  return { ok: true as const, message: `Cleared a list of ${rows}. Lock a new one when ready.` };
+}
+
+/**
+ * Step three, first half: show exactly who these numbers mean, and change nothing.
+ *
+ * Never skippable. Committing creates accounts and emails sixty-odd people, several of
+ * them children, and the numbers came out of a text box — the one thing a moderator must
+ * be able to do before that is read the names back and recognise them.
+ */
+export async function previewExternalDraw(formData: FormData) {
+  await gate();
+  const slug = String(formData.get("slug") ?? "");
+  const event = getEvent(slug);
+  if (!event) return { error: "Unknown event" };
+
+  const ballot = await currentBallot(slug, event.capacity);
+  if (!ballot) return { error: "No list is locked. Lock one first." };
+
+  const raw = String(formData.get("winners") ?? "");
+  const parsed = parseWinners(raw, ballot.entries.length, ballot.places);
+  if (parsed.problems.length > 0) return { error: parsed.problems.join(" ") };
+
+  const plan = await planExternalDraw(slug, parsed.numbers);
+  return {
+    ok: true as const,
+    drawPreview: {
+      warnings: parsed.warnings,
+      numbers: parsed.numbers,
+      automatic: plan.automaticCount,
+      drawn: plan.drawnCount,
+      names: plan.selected.map((r) => String(r.answers.fullName)),
+      skipped: plan.skipped,
+    },
+  };
+}
+
+/** Step three, second half: make it real, then create the accounts and send the offers. */
+export async function commitExternal(formData: FormData) {
+  await gate();
+  const slug = String(formData.get("slug") ?? "");
+  const event = getEvent(slug);
+  if (!event) return { error: "Unknown event" };
+
+  const service = String(formData.get("service") ?? "").trim();
+  if (!service) {
+    // Recorded because "it was random" is not an audit trail. Which service, in their
+    // words, is what makes the draw checkable by anybody who asks later.
+    return { error: "Say which service ran the draw — it goes in the record." };
+  }
+
+  const ballot = await currentBallot(slug, event.capacity);
+  if (!ballot) return { error: "No list is locked. Lock one first." };
+
+  const raw = String(formData.get("winners") ?? "");
+  const parsed = parseWinners(raw, ballot.entries.length, ballot.places);
+  if (parsed.problems.length > 0) return { error: parsed.problems.join(" ") };
+
+  const { plan } = await commitExternalDraw(slug, {
+    service,
+    rawWinners: raw,
+    numbers: parsed.numbers,
+    note: `External draw, run from the admin panel`,
+  });
+
+  let created = 0;
+  for (const reg of plan.selected) {
+    await confirmSelection(event, { ...reg, status: "selected" });
+    created += 1;
+  }
+
+  revalidatePath("/admin");
+  return {
+    ok: true as const,
+    message:
+      `${plan.selected.length} places filled — ${plan.automaticCount} referred automatically, ` +
+      `${plan.drawnCount} drawn. ${created} offers emailed.` +
+      (plan.skipped.length > 0
+        ? ` ${plan.skipped.length} drawn number${plan.skipped.length === 1 ? "" : "s"} skipped: ` +
+          plan.skipped.map((s) => `#${s.number} (${s.status})`).join(", ") +
+          `. Those places are still open — draw again for them.`
+        : ""),
+  };
 }
