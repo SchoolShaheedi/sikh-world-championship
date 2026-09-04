@@ -1,0 +1,480 @@
+<title>SWC Copy Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+/* ---------------------------------------------------------------- tokens --
+   Palette taken from the site's own brand — kesri, ink, a warm paper — rather
+   than invented, so the desk reads as part of the project. Light is primary:
+   this page exists for reading seven hundred sentences carefully. */
+:root {
+  --paper:#FBF8F4; --card:#FFFFFF; --card-2:#F5F0E9;
+  --ink:#1A1714; --muted:#6E655C; --faint:#9A9089;
+  --rule:#E6DED3; --rule-soft:#F0E9E0;
+  --kesri:#B8540A; --kesri-soft:#FBEDE1; --on-kesri:#FFFFFF;
+  --changed:#0A635C; --changed-soft:#E3F2F0;
+  --note:#2C4A6B; --note-soft:#E8EEF5;
+  --shadow:0 1px 2px rgba(26,23,20,.05), 0 8px 24px -16px rgba(26,23,20,.25);
+  --scrim:rgba(20,18,16,.5);
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:#141210; --card:#1C1917; --card-2:#232019;
+    --ink:#EDE7DF; --muted:#A2978B; --faint:#7D7267;
+    --rule:#332C26; --rule-soft:#272220;
+    --kesri:#F2842B; --kesri-soft:#2A1B0E; --on-kesri:#1A1005;
+    --changed:#5CC9BC; --changed-soft:#122B29;
+    --note:#8FB6DC; --note-soft:#16212C;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    --scrim:rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"] {
+  --paper:#141210; --card:#1C1917; --card-2:#232019;
+  --ink:#EDE7DF; --muted:#A2978B; --faint:#7D7267;
+  --rule:#332C26; --rule-soft:#272220;
+  --kesri:#F2842B; --kesri-soft:#2A1B0E; --on-kesri:#1A1005;
+  --changed:#5CC9BC; --changed-soft:#122B29;
+  --note:#8FB6DC; --note-soft:#16212C;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  --scrim:rgba(0,0,0,.6);
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink);
+  font: 400 15px/1.55 "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--kesri); }
+:focus-visible { outline: 2px solid var(--kesri); outline-offset: 2px; border-radius: 3px; }
+
+/* ------------------------------------------------------------------ chrome */
+.bar {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--rule);
+}
+.bar-in {
+  max-width: 1440px; margin: 0 auto; padding: 12px 24px;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+.brand h1 { font: 600 19px/1 "Newsreader", Georgia, serif; margin: 0; letter-spacing: -.01em; }
+.brand .sub { color: var(--faint); font-size: 12px; }
+
+.count {
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px;
+  padding: 5px 10px; border-radius: 999px;
+  border: 1px solid var(--rule); color: var(--muted); background: var(--card);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.count.on { border-color: var(--changed); color: var(--changed); background: var(--changed-soft); }
+
+input[type="search"] {
+  font: inherit; font-size: 14px; padding: 7px 12px; min-width: 210px;
+  border: 1px solid var(--rule); border-radius: 8px;
+  background: var(--card); color: var(--ink);
+}
+input[type="search"]::placeholder { color: var(--faint); }
+
+button {
+  font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+  padding: 7px 13px; border-radius: 8px;
+  border: 1px solid var(--rule); background: var(--card); color: var(--ink);
+}
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--kesri); border-color: var(--kesri); color: var(--on-kesri); font-weight: 600; }
+button.primary:hover { filter: brightness(1.08); border-color: var(--kesri); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.toggle[aria-pressed="true"] { background: var(--changed-soft); border-color: var(--changed); color: var(--changed); }
+
+/* ------------------------------------------------------------------ layout */
+.wrap { max-width: 1440px; margin: 0 auto; padding: 0 24px 96px; display: grid; gap: 40px; }
+@media (min-width: 1080px) { .wrap { grid-template-columns: 216px minmax(0,1fr); align-items: start; } }
+
+.intro { grid-column: 1 / -1; padding: 32px 0 4px; max-width: 68ch; }
+.intro h2 { font: 500 27px/1.2 "Newsreader", Georgia, serif; margin: 0 0 12px; text-wrap: balance; }
+.intro p { color: var(--muted); margin: 0 0 10px; }
+.intro b { color: var(--ink); font-weight: 600; }
+.intro code {
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: .86em;
+  background: var(--card-2); padding: 1px 5px; border-radius: 4px; color: var(--ink);
+}
+
+.tally { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px; }
+.tally span {
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: var(--muted);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 3px 8px;
+  font-variant-numeric: tabular-nums;
+}
+.tally b { color: var(--ink); font-weight: 500; }
+
+.problems {
+  grid-column: 1 / -1; border: 1px solid var(--kesri); background: var(--kesri-soft);
+  border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--ink);
+}
+
+/* ------------------------------------------------------------------- index */
+.index { position: sticky; top: 66px; display: none; font-size: 13px; }
+@media (min-width: 1080px) { .index { display: block; } }
+.index ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.index a {
+  display: flex; justify-content: space-between; gap: 8px; align-items: baseline;
+  padding: 5px 8px; border-radius: 6px; text-decoration: none; color: var(--muted);
+}
+.index a:hover { background: var(--card-2); color: var(--ink); }
+.index .n {
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px;
+  color: var(--faint); font-variant-numeric: tabular-nums;
+}
+.index .n.on { color: var(--changed); }
+
+/* ---------------------------------------------------------------- sections */
+.sheet { display: grid; gap: 30px; min-width: 0; }
+.sheet > section { scroll-margin-top: 76px; }
+.sec-head {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  padding-bottom: 10px; border-bottom: 1px solid var(--rule);
+}
+.sec-head h3 { font: 500 21px/1.2 "Newsreader", Georgia, serif; margin: 0; }
+.sec-head .route { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11.5px; color: var(--kesri); }
+.sec-head .n {
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11.5px;
+  color: var(--faint); margin-left: auto; font-variant-numeric: tabular-nums;
+}
+.sec-note { color: var(--muted); font-size: 13.5px; margin: 12px 0 0; max-width: 74ch; }
+
+.rows { display: grid; margin-top: 6px; }
+
+/* One string: left rail says where it lives, right column is the words themselves. */
+.row {
+  display: grid; gap: 4px 20px; padding: 13px 0 13px 14px;
+  border-bottom: 1px solid var(--rule-soft);
+  border-left: 2px solid transparent; margin-left: -16px;
+}
+@media (min-width: 760px) { .row { grid-template-columns: 232px minmax(0,1fr); } }
+.row.dirty { border-left-color: var(--changed); background: linear-gradient(90deg, var(--changed-soft), transparent 62%); }
+.row.hidden { display: none; }
+
+.meta { min-width: 0; }
+.k { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11.5px; color: var(--ink); word-break: break-word; }
+.f { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10.5px; color: var(--faint); margin-top: 2px; word-break: break-word; }
+.where { font-size: 12px; color: var(--muted); margin-top: 5px; }
+.note {
+  font-size: 12px; color: var(--note); background: var(--note-soft);
+  border-radius: 6px; padding: 6px 8px; margin-top: 7px; line-height: 1.4;
+}
+
+.field { min-width: 0; display: grid; gap: 6px; }
+.field textarea {
+  font: 400 15.5px/1.55 "Newsreader", Georgia, serif;
+  color: var(--ink); background: transparent;
+  border: 1px solid transparent; border-radius: 7px;
+  padding: 6px 9px; margin: -6px -9px; width: calc(100% + 18px);
+  resize: none; overflow: hidden; min-height: 34px;
+}
+.field textarea:hover { border-color: var(--rule); }
+.field textarea:focus { border-color: var(--kesri); background: var(--card); outline: none; box-shadow: var(--shadow); }
+
+.chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.chip {
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10.5px; letter-spacing: .04em;
+  text-transform: uppercase; padding: 2px 7px; border-radius: 5px;
+  border: 1px solid var(--rule); color: var(--faint);
+}
+.chip.edited { color: var(--changed); border-color: var(--changed); background: var(--changed-soft); }
+.chip.warn { color: var(--on-kesri); background: var(--kesri); border-color: var(--kesri); }
+.chip button {
+  padding: 0; border: 0; background: none; font-size: 11px;
+  color: var(--changed); text-decoration: underline; text-transform: none;
+}
+.chip button:hover { border: 0; }
+.was {
+  font: 400 14px/1.5 "Newsreader", Georgia, serif; color: var(--faint);
+  border-left: 2px solid var(--rule); padding-left: 10px;
+}
+.was b { font-weight: 400; text-decoration: line-through; }
+
+/* ------------------------------------------------------------------ export */
+dialog {
+  border: 1px solid var(--rule); border-radius: 14px;
+  background: var(--card); color: var(--ink);
+  padding: 0; max-width: min(780px, 92vw); width: 780px; box-shadow: var(--shadow);
+}
+dialog::backdrop { background: var(--scrim); }
+.dlg-head { padding: 18px 22px 14px; border-bottom: 1px solid var(--rule); }
+.dlg-head h4 { font: 500 19px/1.2 "Newsreader", Georgia, serif; margin: 0 0 4px; }
+.dlg-head p { margin: 0; color: var(--muted); font-size: 13px; }
+.dlg-body { padding: 16px 22px; }
+.dlg-body textarea {
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; line-height: 1.5;
+  width: 100%; height: 46vh; overflow: auto; resize: vertical; color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 8px; background: var(--card-2); padding: 12px;
+}
+.dlg-foot { padding: 12px 22px 18px; display: flex; gap: 10px; align-items: center; }
+.dlg-foot .said { font-size: 12.5px; color: var(--changed); margin-left: auto; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="brand">
+      <h1>SWC Copy Desk</h1>
+      <span class="sub" id="stamp"></span>
+    </div>
+    <span class="count" id="counter">no edits</span>
+    <input type="search" id="q" placeholder="Search all copy…" aria-label="Search all copy">
+    <button class="toggle" id="onlyEdited" aria-pressed="false">Only edited</button>
+    <button id="theme">Theme</button>
+    <button class="primary" id="export" disabled>Export changes</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="intro">
+    <h2>Every word on the public site, in one place.</h2>
+    <p>
+      Type straight over any line to change it. Nothing reaches the site — your edits stay
+      in this browser until you press <b>Export changes</b>, which gives you a JSON block
+      naming the file and key behind each one. Send that back and the changes get applied.
+    </p>
+    <p>
+      Two things in the text are code rather than words. <code>{capacity}</code> is a value
+      filled in when the page renders — keep it exactly as written, or the sentence loses its
+      number. <code>[[like this]]</code> marks the run of words shown brighter, bolder, or as
+      a link; move the brackets, don't delete them. Either one going missing is flagged on the
+      row as you type.
+    </p>
+    <p>
+      Not here: <code>/admin</code>, <code>/moderation</code> and the arrival desk, which are
+      staff-only rather than public, and the emails in <code>src/lib/email-templates.ts</code>,
+      which have HTML and plain-text versions that have to stay in step.
+    </p>
+    <div class="tally" id="tally"></div>
+  </div>
+
+  <div class="problems" id="problems" hidden></div>
+
+  <nav class="index" aria-label="Sections"><ol id="index"></ol></nav>
+  <main class="sheet" id="sheet"></main>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg-head">
+    <h4>Changes to apply</h4>
+    <p>Copy this and send it back. Each entry names the file and the exact key or text to replace.</p>
+  </div>
+  <div class="dlg-body"><textarea id="out" readonly spellcheck="false"></textarea></div>
+  <div class="dlg-foot">
+    <button class="primary" id="copy">Copy to clipboard</button>
+    <button id="close">Close</button>
+    <span class="said" id="said"></span>
+  </div>
+</dialog>
+
+<script>
+const DATA = /*__DATA__*/null;
+const KEY = "swc-copy-desk-v1";
+
+/* Drafts live in this browser only. Every access is guarded: a private window, or a
+   browser set to block site data, throws on read — and the page still has to work. */
+const store = {
+  read() { try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { return {}; } },
+  write(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch {} },
+};
+const drafts = store.read();
+
+const entries = new Map();
+for (const s of DATA.sections) for (const e of s.entries) entries.set(e.id, e);
+
+const el = (t, c, txt) => {
+  const n = document.createElement(t);
+  if (c) n.className = c;
+  if (txt != null) n.textContent = txt;
+  return n;
+};
+const current = (e) => (e.id in drafts ? drafts[e.id] : e.value);
+const isDirty = (e) => e.id in drafts && drafts[e.id] !== e.value;
+
+/* A placeholder or emphasis marker dropped from an edit is a broken sentence, not a
+   style choice — so it is called out on the row rather than discovered on the page. */
+const tokens = (s) =>
+  [...(s.match(/\{\w+\}/g) || []), ...(s.match(/\[\[|\]\]/g) || [])].sort().join(" ");
+const tokenLoss = (e) => tokens(e.value) !== tokens(current(e));
+
+document.getElementById("stamp").textContent =
+  DATA.total + " strings · " +
+  new Date(DATA.generatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
+const tally = document.getElementById("tally");
+for (const [f, n] of Object.entries(DATA.byFile).sort((a, b) => b[1] - a[1])) {
+  const s = el("span");
+  s.append(el("b", null, String(n)), " " + f.replace("src/", ""));
+  tally.append(s);
+}
+
+if (DATA.problems.length) {
+  const p = document.getElementById("problems");
+  p.hidden = false;
+  p.append(el("b", null, "This page may be out of date. "), DATA.problems.join(" · "));
+}
+
+const index = document.getElementById("index");
+const sheet = document.getElementById("sheet");
+
+for (const s of DATA.sections) {
+  const a = el("a");
+  a.href = "#" + s.id;
+  const n = el("span", "n", String(s.entries.length));
+  n.id = "n-" + s.id;
+  a.append(el("span", null, s.title), n);
+  const li = el("li");
+  li.append(a);
+  index.append(li);
+
+  const sec = el("section");
+  sec.id = s.id;
+  const head = el("div", "sec-head");
+  head.append(
+    el("h3", null, s.title),
+    el("span", "route", s.route),
+    el("span", "n", s.entries.length + " strings"),
+  );
+  sec.append(head);
+  if (s.note) sec.append(el("p", "sec-note", s.note));
+
+  const rows = el("div", "rows");
+  for (const e of s.entries) rows.append(row(e));
+  sec.append(rows);
+  sheet.append(sec);
+}
+
+function row(e) {
+  const r = el("div", "row");
+  r.dataset.id = e.id;
+
+  const meta = el("div", "meta");
+  meta.append(el("div", "k", e.key), el("div", "f", e.file.replace("src/", "")));
+  if (e.where) meta.append(el("div", "where", e.where));
+  if (e.note) meta.append(el("div", "note", e.note));
+
+  const field = el("div", "field");
+  const ta = el("textarea");
+  ta.value = current(e);
+  ta.setAttribute("aria-label", e.key);
+  if (!e.multiline) ta.rows = 1;
+  const chips = el("div", "chips");
+  const was = el("div", "was");
+  field.append(ta, chips, was);
+
+  const grow = () => { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; };
+  const paint = () => {
+    const dirty = isDirty(e);
+    r.classList.toggle("dirty", dirty);
+    chips.replaceChildren();
+    was.replaceChildren();
+    if (!dirty) return;
+    const c = el("span", "chip edited", "edited ");
+    const undo = el("button", null, "revert");
+    undo.onclick = () => {
+      delete drafts[e.id];
+      store.write(drafts);
+      ta.value = e.value;
+      grow(); paint(); tallyUp();
+    };
+    c.append(undo);
+    chips.append(c);
+    if (tokenLoss(e)) chips.append(el("span", "chip warn", "placeholder changed"));
+    was.append(el("span", null, "was "), el("b", null, e.value));
+  };
+
+  ta.addEventListener("input", () => {
+    grow();
+    if (ta.value === e.value) delete drafts[e.id];
+    else drafts[e.id] = ta.value;
+    store.write(drafts);
+    paint(); tallyUp();
+  });
+
+  requestAnimationFrame(grow);
+  paint();
+  r.append(meta, field);
+  return r;
+}
+
+function tallyUp() {
+  const n = [...entries.values()].filter(isDirty).length;
+  const c = document.getElementById("counter");
+  c.textContent = n === 0 ? "no edits" : n === 1 ? "1 edit" : n + " edits";
+  c.classList.toggle("on", n > 0);
+  document.getElementById("export").disabled = n === 0;
+  for (const s of DATA.sections) {
+    const d = s.entries.filter(isDirty).length;
+    const node = document.getElementById("n-" + s.id);
+    node.textContent = d ? d + "/" + s.entries.length : String(s.entries.length);
+    node.classList.toggle("on", d > 0);
+  }
+}
+tallyUp();
+
+const q = document.getElementById("q");
+const only = document.getElementById("onlyEdited");
+function filter() {
+  const term = q.value.trim().toLowerCase();
+  const editedOnly = only.getAttribute("aria-pressed") === "true";
+  for (const s of DATA.sections) {
+    let shown = 0;
+    for (const e of s.entries) {
+      const r = sheet.querySelector('[data-id="' + CSS.escape(e.id) + '"]');
+      const hay = (current(e) + " " + e.value + " " + e.key + " " + (e.where || "") + " " + e.file).toLowerCase();
+      const ok = (!term || hay.includes(term)) && (!editedOnly || isDirty(e));
+      r.classList.toggle("hidden", !ok);
+      if (ok) shown++;
+    }
+    document.getElementById(s.id).hidden = shown === 0;
+  }
+}
+q.addEventListener("input", filter);
+only.addEventListener("click", () => {
+  only.setAttribute("aria-pressed", only.getAttribute("aria-pressed") === "true" ? "false" : "true");
+  filter();
+});
+
+document.getElementById("theme").onclick = () => {
+  const root = document.documentElement;
+  const dark = root.getAttribute("data-theme") === "dark" ||
+    (!root.hasAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
+  root.setAttribute("data-theme", dark ? "light" : "dark");
+};
+
+const dlg = document.getElementById("dlg");
+document.getElementById("export").onclick = () => {
+  const changes = [...entries.values()].filter(isDirty).map((e) => {
+    const c = { id: e.id, file: e.file };
+    if (e.path) c.path = e.path; else c.match = e.match;
+    c.from = e.value;
+    c.to = drafts[e.id];
+    return c;
+  });
+  document.getElementById("out").value =
+    JSON.stringify({ generatedAt: DATA.generatedAt, changes }, null, 2);
+  document.getElementById("said").textContent = "";
+  dlg.showModal();
+};
+document.getElementById("close").onclick = () => dlg.close();
+document.getElementById("copy").onclick = async () => {
+  const out = document.getElementById("out");
+  try {
+    await navigator.clipboard.writeText(out.value);
+    document.getElementById("said").textContent = "Copied.";
+  } catch {
+    out.select();
+    document.getElementById("said").textContent = "Select all and copy.";
+  }
+};
+</script>

@@ -312,7 +312,7 @@ describe("the desk list", () => {
     ]);
   });
 
-  it("flags the children, without putting a date of birth on the screen", async () => {
+  it("flags the children", async () => {
     await selected({ fullName: "Child One", dob: "2013-05-02", email: "c@example.com", token: "t1" });
     await selected({ fullName: "Adult Two", dob: "2000-05-02", email: "d@example.com", token: "t2" });
 
@@ -322,7 +322,63 @@ describe("the desk list", () => {
 
     expect(child.under18).toBe(true);
     expect(adult.under18).toBe(false);
-    expect(JSON.stringify(roster)).not.toContain("2013-05-02");
+  });
+
+  /**
+   * The desk needs both halves of the comparison it is being asked to make, and it needs
+   * the half that is arithmetic done for it. It does NOT need the day.
+   */
+  describe("the date of birth shown at the desk", () => {
+    it("gives the month and year, and the age on the day, so nobody has to work it out", async () => {
+      await selected({ fullName: "Child One", dob: "2013-05-02", email: "c@example.com" });
+
+      const [row] = await checkInRoster("e1", EVENT_DATE);
+      expect(row.bornLabel).toBe("May 2013");
+      // 13 on 3 October 2026, not 13 today. The desk is checking against the event.
+      expect(row.ageOnDay).toBe(13);
+    });
+
+    it("NEVER carries the day of the month, anywhere in what it returns", async () => {
+      // A month and a year catch a wrong year, which is the whole point of the check. The
+      // day only catches a typo, and it is the part worth having if you are pretending to
+      // be a child. This asserts the shape, not one field: a future addition that puts the
+      // full date back on the desk list has to fail here first.
+      await selected({ fullName: "Child One", dob: "2013-05-02", email: "c@example.com" });
+
+      const json = JSON.stringify(await checkInRoster("e1", EVENT_DATE));
+      expect(json).not.toContain("2013-05-02");
+      expect(json).not.toContain("2 May");
+      expect(json).not.toContain("05-02");
+    });
+
+    it("counts the age against the event date and not against today", async () => {
+      // Born five days after the event: seventeen on the day, eighteen within the week.
+      await selected({ fullName: "Just Under", dob: "2008-10-08", email: "u@example.com" });
+
+      const [row] = await checkInRoster("e1", EVENT_DATE);
+      expect(row.ageOnDay).toBe(17);
+      expect(row.under18).toBe(true);
+    });
+
+    it("says nothing rather than something wrong when the stored date will not parse", async () => {
+      await selected({ fullName: "Bad Date", email: "b@example.com" });
+      const db = await getDb();
+      await db.prepare("UPDATE registrations SET dob = ? WHERE event_slug = ?")
+        .bind("not-a-date", "e1").run();
+
+      const [row] = await checkInRoster("e1", EVENT_DATE);
+      expect(row.bornLabel).toBeNull();
+      expect(row.ageOnDay).toBeNull();
+      /**
+       * `under18` is false, and that IS the wrong side to be wrong on — no age, so no
+       * supervision note either. It cannot arrive through the form, which validates the
+       * date, so the fix is not a guess about the age but telling the desk the record is
+       * unreadable: with both fields null the row shows no date line at all and the ID
+       * prompt reads "We have no readable date on file — find a steward."
+       */
+      expect(row.under18).toBe(false);
+      expect(row.leaving).toBeNull();
+    });
   });
 
   it("says what was agreed about a child leaving, and nothing for an adult", async () => {

@@ -62,8 +62,35 @@ export interface RosterEntry {
    * question is not, so the two facts never gate each other.
    */
   dobVerifiedAt: string | null;
-  /** Under 18 on the day of the event. A boolean, never the date of birth. */
+  /** Under 18 on the day of the event. */
   under18: boolean;
+  /**
+   * Age on the day of the event, so nobody at the desk has to work it out.
+   *
+   * ADDED 2026-09-04 with `bornLabel`, because the screen was making the volunteer do the
+   * arithmetic. The desk's job is to compare a document against what we hold, and it was
+   * being given a badge saying "U18" and a document saying "14 March 2009" — from which
+   * confirming our record is right means subtracting two dates while somebody waits. That
+   * is how a wrong year gets nodded through, which is the single thing the check exists to
+   * catch (src/data/id-check.ts).
+   */
+  ageOnDay: number | null;
+  /**
+   * The month and year of birth we hold, e.g. "March 2009". **Never the day.**
+   *
+   * The desk needs enough to notice a wrong YEAR — a twenty-seven-year-old in a children's
+   * bracket, or a fifteen-year-old on a sixteen-year-old's permission to leave alone. A
+   * month and a year catch that. The day catches a typo nobody is worried about, and it is
+   * the part of a date of birth that makes it useful to somebody impersonating a child, so
+   * it stays off a screen that faces a queue for forty minutes.
+   *
+   * Read the document FIRST and then compare, which is what the desk copy says. A
+   * volunteer who reads our record out loud has asked a leading question and learnt
+   * nothing.
+   *
+   * Null only if the stored date will not parse.
+   */
+  bornLabel: string | null;
   /**
    * For an under-18, what was agreed about them leaving: null for adults.
    *
@@ -77,6 +104,10 @@ export interface RosterEntry {
 
 /**
  * NO CONTACT DETAILS ON THE DESK LIST, on purpose.
+ *
+ * A month and year of birth is on it (see `bornLabel`), and that is the only personal
+ * detail here beyond the name: it is what the desk is there to compare, so withholding it
+ * would mean the check cannot be done. Everything else stays off.
  *
  * A guardian's mobile number is exactly what you want if a child arrives alone and
  * something is wrong — and exactly what should not be on a screen that faces a queue, next
@@ -125,6 +156,19 @@ function namesFor(rows: Row[]): string[] {
   return uniquePublicNames(rows, (r) => ({ name: baseName(r), stable: r.reference }));
 }
 
+/**
+ * "March 2009" from a stored ISO date, or null if it will not parse.
+ *
+ * `timeZone: "UTC"` because the date is stored as a plain date and parsed at midnight UTC:
+ * formatted in a negative offset, the first of a month would render as the last day of the
+ * one before, and report the wrong month to the desk.
+ */
+function bornLabel(dob: string): string | null {
+  const d = new Date(`${dob}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+}
+
 function toEntry(row: Row, eventDate: string | null, publicNameOverride?: string): RosterEntry {
   const age = ageOnEventDay(row.dob, eventDate);
   const under18 = age !== null && age < 18;
@@ -136,6 +180,8 @@ function toEntry(row: Row, eventDate: string | null, publicNameOverride?: string
     checkedInAt: row.checked_in_at,
     dobVerifiedAt: row.dob_verified_at,
     under18,
+    ageOnDay: age,
+    bornLabel: bornLabel(row.dob),
     leaving: leavingNote(row, under18),
   };
 }

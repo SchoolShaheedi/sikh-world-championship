@@ -198,9 +198,12 @@ that matters most now that no clock runs on its own.
 ## Who we share it with
 
 - **Our volunteers**, only what they need: the check-in desk sees names, references, whether
-  a player is under 18 and what was agreed about them leaving — not phone numbers, dates of
-  birth or anything medical;
-  the first aider sees medical notes; moderators see reports.
+  a player is under 18, what was agreed about them leaving, and **the month and year you were
+  born** — not the day, not phone numbers and nothing medical. The month and year are there
+  because the desk is comparing what you show them against what we hold, and doing that from
+  an age band alone means guessing; the day is the part that would make the record useful to
+  somebody else, so it is never on the screen. The first aider sees medical notes; moderators
+  see reports.
 - **Suppliers** who process data on our behalf, under contract: `[HOSTING — e.g. Vercel]`,
   `[DATABASE — Cloudflare D1]`, `[EMAIL — e.g. Resend]`. Each needs a data processing
   agreement in place before it holds real data.

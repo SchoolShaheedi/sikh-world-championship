@@ -100,6 +100,28 @@ the range stays 1 to *n*, and that number simply cannot win. The panel says so a
 you to lock a new list. To see it: lock a list, delete an entry from it, and look at the
 draw panel.
 
+## Reading the four numbers on `/admin`
+
+They have to add up, and for a while they did not — the tile said "Selected" and counted
+`status = 'selected'` alone, so everybody who had already checked in dropped out of it while
+"places left" underneath counted them. 17 selected, 64 places, 16 left is not arithmetic
+anybody can follow (invariant 19).
+
+| Tile | Counts |
+|---|---|
+| **Awaiting the draw** | Applied, no decision yet. These are who the next draw works from. |
+| **— of those, referred** | The subset drawn first, ahead of everyone else. |
+| **Have a place** | Selected **plus** already arrived. The sub-line splits it. |
+| **Not selected** | Drawn against **and told so** — it stays at 0 until you press *Tell the rest they were not selected*, so 0 does not mean nobody missed out. |
+
+The line underneath states the total, the capacity and how many places are still to fill, so
+the arithmetic is on the page rather than in your head. With the seed at the `gameday` stage:
+48 have a place (some to arrive, some arrived), 27 are waiting, 75 in total, 16 places left.
+Those move as soon as you check people in or add entries of your own through the form.
+
+**"Selected" and "not selected" are draw outcomes, not attendance.** A person who has
+arrived is still selected; a person who was never drawn is neither.
+
 ## The draw, both ways
 
 `/admin` → **Draw with an outside service**.
@@ -171,12 +193,20 @@ stops matching the projector is worse than an ambiguous one.
 `/admin/checkin/slips` → one slip per player with a place, 18 to an A4 sheet. Print them,
 or just hold the **screen** up to the laptop's own camera.
 
-**Print them to a PDF and look at it**, rather than trusting the screen. The sheet declares
-`color-scheme: light`, `forced-color-adjust: none` and `print-color-adjust: exact`, and
-states a colour on every text element instead of inheriting one — because Chrome's auto-dark
-mode, macOS "Increase contrast" and Windows High Contrast each override author colours, and
-the failure mode is three blank pages discovered at a door with a queue behind it. Names
-wrap at the space, never mid-word.
+This is **not a page** — it is a route handler returning a complete HTML document built by
+`src/lib/slips-document.ts`, with no site header, no theme, no Tailwind and no JavaScript in
+it (invariant 18). It got that way because it printed as three blank sheets on a real laptop
+while printing perfectly in headless Chrome, twice, after being hardened twice: the page was
+right, and what was wrong was everything a page inherits.
+
+**Print it to a PDF and look at the PDF**, rather than trusting the screen. Expect three
+sheets for 48 slips, black codes on white, names breaking at the space and never mid-word.
+
+*If your preview is blank*, open the same URL in a **private/incognito window** and print
+from there. The document carries its own stylesheet and nothing else, so blank sheets now
+mean a browser extension — a dark-mode or reader extension — is rewriting the colours with
+`!important`, and extensions are off in a private window. The page says this on itself, for
+whoever hits it on the day. Safari and Firefox print it correctly too.
 
 `/admin/checkin`:
 
@@ -188,8 +218,10 @@ wrap at the space, never mid-word.
 | Type a reference into the manual box | Same result, same audit row. It is not a lesser path. |
 | Check somebody in by name from the list | Same again |
 | **Undo** a check-in | Clears the four columns. Does not clear their profile's attendance badge. |
-| Record a date of birth | A separate one-tap step. **Never a gate** — check somebody in with nothing verified and it works, because who is in the building must be right even while the ID question is not. |
-| The **No date of birth** filter | Four seeded people arrived without one. The safeguarding lead decides about them, not the door. |
+| Record a date of birth | **Confirm date of birth** (amber, an action) becomes **✓ Date of birth confirmed** (green, a state). A separate one-tap step and **never a gate** — check somebody in with nothing verified and it works, because who is in the building must be right even while the ID question is not. |
+| Read the born line on any row | `Born March 2009 · 17 on the day`. The month and year we hold plus the age **on the day of the event**, so the volunteer compares two things instead of doing arithmetic in a queue. The **day** of the month is never shown, in the data or on the screen — see DPIA 25. |
+| **`LOCAL-005`** — the age boundary | Born 8 October 2008, five days after the event. Reads `Born October 2008 · 17 on the day` and keeps the U18 badge, because the age that counts is the age on 3 October and not the age today. This is the row that proves it in a browser rather than only in a test. |
+| The **Date of birth not confirmed** filter | Four seeded people arrived without one. The safeguarding lead decides about them, not the door. |
 | Open the desk in two tabs | Every action returns the whole roster, so the counter is a fact rather than one tab's opinion |
 | The end-of-day list | U18 badges and the leaving permission against every name. No contact details anywhere — deliberately. |
 

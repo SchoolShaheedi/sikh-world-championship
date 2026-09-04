@@ -3164,3 +3164,103 @@ locally — the only collision in the data was the bogus duplicate row the instr
 you to delete.
 
 449 tests (was 423).
+
+---
+
+## Round 56 — 2026-09-04 — A document instead of a page, an age nobody has to work out, and four numbers that add up
+
+Three reports in one round: the slips still would not print, the two date-of-birth buttons
+were indistinguishable, and the numbers on `/admin` did not add up. The last one was a real
+bug that nobody had noticed in three rounds of looking at that panel.
+
+### The slips: stop defending the page, remove the page
+
+Round 55 hardened the print CSS against Chrome auto-dark mode, forced colours and inherited
+text colour. It did not work, and the honest reading of that is that I was guessing.
+
+So this round measured instead. I fetched the **real** page, as a signed-in desk volunteer,
+through `next dev`, and printed it headlessly: three sheets, 48 slips, every code present,
+correct. Then again with `--force-dark-mode` and Chrome's `WebContentsForceDark` feature
+enabled: byte-for-byte identical output. Then a fixture reproducing the app shell — the
+`page-grain` fixed pseudo-elements, the flex `body` with `min-height: 100dvh`, the sticky
+header: also correct. **The page was never wrong, and I could not reproduce the failure**,
+which is the point at which adding a fourth layer of defensive CSS is not engineering.
+
+The dependency is what had to go. `/admin/checkin/slips` is now a **route handler** returning
+a complete HTML document built by `src/lib/slips-document.ts` — doctype, one stylesheet, the
+slips, nothing else. No root layout, no site header or footer, no Tailwind preflight, no
+near-black theme, no `next/font`, no client JavaScript. 126KB where the page was 313KB.
+
+That closes the whole class rather than the instance. It is also *simpler* than what it
+replaced: the measurements here are millimetres on A4 and Tailwind's scale is rem against a
+screen, so the page could never use the framework it was inheriting and carried its own
+plain CSS anyway. And it is the first version of this that can be **tested** — the document
+is a string, so there are now 15 assertions about it, most of them about what is *not* in
+it: no `page-grain`, no `min-h-dvh`, no `sticky`, no `_next/static`, no `<script`.
+
+Two things learnt that are worth keeping:
+
+- **`color-scheme: light` belongs on `:root`, not on a region.** Chrome's auto-dark-mode
+  decides per *document*. Declaring it on the white sheet opted a white box out of nothing.
+- **The residual cause is an extension**, and nothing in a stylesheet beats `!important`
+  from Dark Reader. So the page says so on itself: *if the preview is blank, print from a
+  private window, where extensions are off.* That is the one instruction a volunteer can
+  act on at 9am on 3 October, and it is on the sheet rather than in a document.
+
+Verified the way it should have been the first time: rasterised the printed PDF at 300dpi and
+**decoded the QR codes back out of it** with the same jsQR the camera uses. Six distinct
+codes read off page one, each matching the token of the person whose name is beside it. The
+chain from D1 to paper to decoder is now checked end to end, not assumed.
+
+### The desk was making a volunteer do arithmetic
+
+The two buttons read `DOB seen` and `✓ DOB`, which are not an action and a state — they are
+two labels for the same idea, one of which happens to be clickable. Now `Confirm date of
+birth` (a verb) and `✓ Date of birth confirmed` (a fact), with the same vocabulary on the
+counter, the filter tab and the result card.
+
+The deeper problem was underneath it. **The desk exists to compare a document against what
+we hold, and it was only being shown half of the comparison** — a badge reading "U18". A
+volunteer holding a passport that said "14 March 2009" had to subtract two dates, standing
+up, with a queue, to know whether our record was right. A control that requires arithmetic
+under time pressure is a control that gets nodded through, which is worse than none because
+it looks present.
+
+Every row now reads `Born March 2009 · 17 on the day`.
+
+**The day of the month is deliberately not shown**, and not returned either. Month and year
+catch a wrong *year*, which is the entire purpose of the check — a twenty-seven-year-old in a
+children's bracket, a fifteen-year-old on a sixteen-year-old's permission to leave alone. The
+day would only catch a typo, and it is the part of a date of birth worth having to somebody
+impersonating a child. `checkInRoster()` returns `bornLabel` and `ageOnDay`, never `dob`, and
+a test asserts the full date appears nowhere in what the roster serialises — the desk is a
+client component, so anything returned sits in the page source.
+
+The age is the age **on the day of the event**, not today. Somebody born five days after 3
+October reads `17 on the day` and keeps the U18 badge, which is the answer that matters.
+
+And the copy says **read theirs before you read ours**. A volunteer who recites the month
+first has asked a leading question and verified nothing.
+
+This is a real expansion of what a volunteer sees, so it is written down: DPIA risk 25, and
+the privacy notice corrected — it had said in as many words that the desk sees no date of
+birth, and leaving that standing would have been the worst outcome of the three.
+
+### Four numbers that did not add up
+
+Reported as confusion about the seed data; it was a bug. The tile said **Selected** and
+counted `status = 'selected'` alone, so everybody who had already checked in silently
+dropped out of it — while `placesLeft` immediately below was computed from selected **and**
+checked-in, correctly. On a seeded database that produced *17 selected, 64 places, 16 left*.
+
+Nothing was wrong with the draw or the data. The tile was lying, and the honest reading of it
+("we have barely filled a quarter of the field") is wrong in the direction that matters.
+
+The tile now counts everyone **with a place** and splits it — `48` over `15 to arrive · 33
+arrived`. Each of the four carries a line saying what it counts, because "selected" and "not
+selected" are *draw outcomes and not attendance*, and that is not guessable from a two-word
+label by somebody opening the page for the first time on the morning of an event. The totals
+are stated underneath, so the arithmetic is on the page instead of in somebody's head. "Not
+selected" says it stays at zero until the emails are sent, which is why it was zero.
+
+467 tests (was 449).

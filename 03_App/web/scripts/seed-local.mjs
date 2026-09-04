@@ -98,10 +98,21 @@ const FIRST = [
  * Birthdays are all in March so the age on 3 October is exactly the age intended — a
  * December birthday would make somebody a year younger than this table claims and quietly
  * put them in a different tier than the comment says.
+ *
+ * WITH ONE EXCEPTION, and it is the row that matters most. `BIRTHDAY_JUST_AFTER` gives one
+ * person a birthday five days AFTER the event, so they are seventeen on the day and
+ * eighteen within the week. Every age in the app is computed against the event date and not
+ * against today (`ageOnEventDay`), and that is exactly the kind of claim that is true in a
+ * unit test and unverifiable in a browser unless somebody in the data sits on the line.
+ * They stay in the same tier the table above claims — seventeen either way — so nothing
+ * else in this seed shifts because of it.
  */
 const AGES = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25];
+const BIRTHDAY_JUST_AFTER = { 5: "2008-10-08" };
 const dobFor = (i) => {
   const age = AGES[i % AGES.length];
+  const override = BIRTHDAY_JUST_AFTER[i];
+  if (override) return { age, dob: override };
   const day = String((i % 27) + 1).padStart(2, "0");
   return { age, dob: `${2026 - age}-03-${day}` };
 };

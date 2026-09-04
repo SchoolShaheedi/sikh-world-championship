@@ -236,19 +236,56 @@ export default async function AdminPage() {
             </p>
           </div>
 
+          {/**
+           * FOUR NUMBERS THAT HAVE TO ADD UP, and for a while they did not.
+           *
+           * The third tile said "Selected" and counted `status = 'selected'` alone, so
+           * everybody who had already arrived — a third of the field on the day — dropped
+           * out of it. Meanwhile "places left" below was computed from selected AND
+           * checked-in, correctly. The result was a panel showing 17 selected, 64 places
+           * and 16 left, which is not arithmetic anybody can follow, and the honest
+           * reading of it ("we have barely filled a quarter") is wrong in the direction
+           * that matters.
+           *
+           * So the tile counts everyone WITH A PLACE and says so. Each tile also carries a
+           * line of its own explaining what it counts: "selected" and "not selected" are
+           * draw outcomes, not attendance, and that is not guessable from a four-word
+           * label by somebody opening this page for the first time on the morning.
+           */}
           <div className="mt-5 grid gap-3 sm:grid-cols-4">
-            {[
-              ["Awaiting the draw", counts.applied],
-              ["— of those, referred", counts.referredWaiting],
-              ["Selected", counts.selected],
-              ["Not selected", counts.notSelected],
-            ].map(([label, n]) => (
+            {(
+              [
+                ["Awaiting the draw", counts.applied, "applied, no decision yet"],
+                [
+                  "— of those, referred",
+                  counts.referredWaiting,
+                  "drawn first, ahead of the rest",
+                ],
+                [
+                  "Have a place",
+                  counts.selected + counts.checkedIn,
+                  counts.checkedIn > 0
+                    ? `${counts.selected} to arrive · ${counts.checkedIn} arrived`
+                    : "offered a place by the draw",
+                ],
+                ["Not selected", counts.notSelected, "drawn against, and told so"],
+              ] as [string, number, string][]
+            ).map(([label, n, hint]) => (
               <div key={label} className="rounded-2xl border border-line bg-ink/30 p-4">
                 <p className="text-[11px] tracking-[0.16em] text-muted uppercase">{label}</p>
                 <p className="font-display mt-1.5 text-2xl text-body">{n}</p>
+                <p className="mt-1 text-xs text-muted">{hint}</p>
               </div>
             ))}
           </div>
+          <p className="mt-2 text-xs text-muted">
+            {counts.applied + counts.selected + counts.checkedIn + counts.notSelected}{" "}
+            entries in total · {event.capacity} places ·{" "}
+            {Math.max(0, event.capacity - counts.selected - counts.checkedIn)} still to fill.
+            Nobody is told they missed out until you press{" "}
+            <span className="text-body">Tell the rest they were not selected</span>, so that
+            number stays at zero until then.
+          </p>
 
           <DrawPanel
             slug={event.slug}

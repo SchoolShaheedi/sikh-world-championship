@@ -46,7 +46,33 @@ import { ID_ACCEPTED, ID_NO_DOCUMENT_RULE } from "@/data/id-check";
  *      two volunteers are working two devices.
  */
 
+/**
+ * WHY THE MONTH AND YEAR OF BIRTH IS ON SCREEN (2026-09-04).
+ *
+ * The desk's job is to compare a document against what we hold. Before this it was shown
+ * a badge reading "U18" and nothing else, so a volunteer holding a passport that said
+ * "14 March 2009" had to subtract two dates, in a queue, to know whether our record was
+ * right — and the answer that takes effort is the answer that gets nodded through. Both
+ * halves of the comparison are now on the row: `Born March 2009 · 17 on the day`.
+ *
+ * The DAY is deliberately not shown. Month and year catch the thing the check exists for,
+ * which is a wrong YEAR — a twenty-seven-year-old in a children's bracket, a fifteen-year-old
+ * on a sixteen-year-old's permission to leave alone. The day would only catch a typo, and
+ * it is the part of a date of birth worth having if you are impersonating a child.
+ *
+ * Look at the document FIRST, then compare. A volunteer who reads our record out loud has
+ * asked a leading question and learnt nothing, so the copy says so where the prompt is.
+ */
+
 type Filter = "all" | "waiting" | "arrived" | "no-id";
+
+/** "Born March 2009 · 17 on the day", with whichever halves we have. */
+function bornLine(r: { bornLabel: string | null; ageOnDay: number | null }): string | null {
+  const parts: string[] = [];
+  if (r.bornLabel) parts.push(`Born ${r.bornLabel}`);
+  if (r.ageOnDay !== null) parts.push(`${r.ageOnDay} on the day`);
+  return parts.length ? parts.join(" · ") : null;
+}
 
 /** What the big card says, and what colour it is. */
 function describe(r: CheckInResult): {
@@ -300,7 +326,7 @@ export function CheckInDesk({
             <span className="text-lg text-muted"> of {roster.length} arrived</span>
           </p>
           <p className="text-sm text-muted">
-            {dobChecked} date{dobChecked === 1 ? "" : "s"} of birth checked
+            {dobChecked} date{dobChecked === 1 ? "" : "s"} of birth confirmed
             {arrivedNoId > 0 && (
               <span className="text-amber-300"> · {arrivedNoId} here without one</span>
             )}
@@ -331,6 +357,9 @@ export function CheckInDesk({
             {card.name && <p className="font-display text-4xl leading-tight">{card.name}</p>}
             <p className="font-display mt-1 text-2xl">{card.heading}</p>
             <p className="mt-1 text-sm opacity-80">{card.detail}</p>
+            {result && "entry" in result && bornLine(result.entry) && (
+              <p className="mt-1 text-base font-semibold">{bornLine(result.entry)}</p>
+            )}
             {result && "entry" in result && result.entry.under18 && result.entry.leaving && (
               <p className="mt-3 inline-block rounded-lg border border-current/40 px-3 py-1.5 text-sm">
                 Under 18 · {result.entry.leaving}
@@ -343,10 +372,16 @@ export function CheckInDesk({
                 through the door. */}
             {result?.kind === "checked-in" &&
               (result.entry.dobVerifiedAt ? (
-                <p className="mt-4 text-sm">✓ Date of birth checked</p>
+                <p className="mt-4 text-sm">✓ Date of birth confirmed</p>
               ) : (
                 <div className="mt-4 rounded-2xl border border-current/40 bg-ink/30 p-4">
                   <p className="font-display text-lg">Now check their date of birth</p>
+                  <p className="mt-1 text-sm opacity-80">
+                    Look at what they show you first, then compare it with the line above.
+                    {result.entry.bornLabel
+                      ? ` We have ${result.entry.bornLabel}.`
+                      : " We have no readable date on file — find a steward."}
+                  </p>
                   <button
                     type="button"
                     disabled={busy}
@@ -448,7 +483,7 @@ export function CheckInDesk({
               [
                 ["waiting", `Still to arrive (${roster.length - arrived})`],
                 ["arrived", `Arrived (${arrived})`],
-                ["no-id", `No date of birth (${arrivedNoId})`],
+                ["no-id", `Date of birth not confirmed (${arrivedNoId})`],
                 ["all", "Everyone"],
               ] as [Filter, string][]
             ).map(([id, label]) => (
@@ -485,6 +520,7 @@ export function CheckInDesk({
                   )}
                 </p>
                 <p className="font-mono text-xs text-muted">{r.reference}</p>
+                {bornLine(r) && <p className="text-xs text-body">{bornLine(r)}</p>}
                 {r.leaving && <p className="text-xs text-muted">{r.leaving}</p>}
               </div>
 
@@ -499,16 +535,17 @@ export function CheckInDesk({
                   title="Recorded in error? This clears it."
                   className="rounded-lg border border-emerald-400/40 px-3 py-1.5 text-xs text-emerald-300 disabled:opacity-40"
                 >
-                  ✓ DOB
+                  ✓ Date of birth confirmed
                 </button>
               ) : (
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => run(() => markDobSeen(slug, r.reference, true))}
+                  title="Records that you have seen something showing their date of birth."
                   className="rounded-lg border border-amber-400/50 px-3 py-1.5 text-xs text-amber-200 hover:bg-amber-500/10 disabled:opacity-40"
                 >
-                  DOB seen
+                  Confirm date of birth
                 </button>
               )}
 
@@ -558,6 +595,12 @@ export function CheckInDesk({
             <span className="text-body">A photo of any of these on a phone is fine.</span>{" "}
             Look at it, hand it straight back, and record nothing from it — we keep only
             that a date of birth was seen.
+          </p>
+          <p className="mt-3 text-muted">
+            <span className="text-body">Read theirs before you read ours.</span> Each row
+            shows the month and year we hold, so there is nothing to work out — but say it
+            after they have, not before, or you have asked a leading question and learnt
+            nothing.
           </p>
 
           {/* The rule for somebody with nothing, HERE as well as on the result card.

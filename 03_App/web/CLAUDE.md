@@ -169,6 +169,30 @@ medical notes. That single fact drives most of the rules below.
     being on a screen by accident. DPIA risk 24 records why the reveal is deliberately
     **not** audited.
 
+18. **The print sheet is a document, not a page.** `src/lib/slips-document.ts` builds the
+    entire HTML for `/admin/checkin/slips` — doctype, one stylesheet, the slips — and
+    `route.ts` returns it as `text/html`. It printed as three blank sheets on a real laptop
+    while printing perfectly in headless Chrome, twice, after being hardened twice. The
+    page was never wrong; a page inherits the whole document, and a document here means
+    Tailwind's preflight, a near-black theme, a `sticky` header, two fixed-position
+    pseudo-elements painting grain onto every printed page, a flex `body` with
+    `min-height: 100dvh` that Chrome fragments badly in paged media, and whatever an
+    extension injects with `!important`. Defending against those one at a time is a game
+    with no end **and no test**. As a string, the layout is unit-testable, and the tests are
+    mostly assertions about what is NOT in it. Two details worth keeping: `color-scheme:
+    light` belongs on `:root` and not on a region, because Chrome's auto-dark-mode decides
+    per DOCUMENT; and every text element states its own colour, because inheritance loses to
+    any direct rule from anywhere. **Do not turn this back into a page**, and do not import
+    a component from `src/components/` into it.
+
+19. **A number on the admin panel is the number the sentence beside it uses.** The stat
+    tile read "Selected" and counted `status = 'selected'` alone, so a third of the field
+    vanished from it the moment they checked in — beside a "places left" figure computed
+    from selected AND checked-in. 17 selected, 64 places, 16 left is not arithmetic anybody
+    can follow, and the honest reading of it is wrong in the direction that matters. Tiles
+    on `/admin` count everyone with a place, carry a line saying what they count, and the
+    totals underneath add up in public.
+
 ## The registration lifecycle
 
 ```
@@ -192,6 +216,8 @@ confirmSelection() issues check_in_token
         │
         ├──> /admin/checkin/slips   one slip per player: public name, reference, QR code
         │                           printed, cut, laid out on a table in first-name order
+        │                           a ROUTE HANDLER, not a page — lib/slips-document.ts
+        │                           builds the whole HTML document (invariant 18)
         │
         └──> /admin/checkin         camera decodes (jsQR) ──> scanPass() ──> checkInByScan()
                                     manual list          ──> checkInManually() ──> checkInByReference()
@@ -379,17 +405,47 @@ key with `npx wrangler secret put SWC_TEST_KEY` (a secret, never a var in
 A page in the tester state says so, louder than the demo banner: in demo mode a mistake
 saves nothing, in tester mode it saves a real child's details to the live database.
 
+## Public copy lives in one file
+
+**`src/copy/en.json` holds every public-facing string that had no other home.** Pages and
+components read it through `copy` from `@/copy`; nothing user-visible on a public page is
+typed inline in JSX any more. Adding a sentence to a page means adding a key.
+
+Two conventions in those strings, both rendered rather than literal:
+
+- `{capacity}`, `{closeDate}`, `{childName}` … — filled in by `fill(template, vars)`. An
+  unmatched placeholder renders as `{capacity}` on the page rather than blanking, so a
+  missing variable is visible in a screenshot instead of silently producing "all  places".
+- `[[a run of words]]` — the part shown brighter, bolder, or as a link. `<Rich>` splits on
+  it and the CALL SITE decides the treatment, because that is a styling decision. The
+  alternative was splitting each sentence into before/middle/after keys, which is three
+  boxes to proofread for one sentence.
+
+**What is deliberately NOT in en.json**, and must not be moved there: copy that is already
+single-sourced in a typed module — `src/data/org.ts`, `src/data/events/<slug>.ts`,
+`profile-benefits`, `sponsors`, `qualities`, `id-check`, `referral-orgs`, `avatars`,
+`lib/support-types`, `lib/guardian-types`, `lib/guardian-rules`, `lib/play-types`,
+`lib/registration-schema`, `lib/email-templates`. Several of those are `as const` tuples
+that the validation schema is built from: a medical condition or a support category is a
+permitted value, not just a label, and JSON would lose the union.
+
+`npm run copy:desk` writes `copy-desk.html` — one page listing all 785 public strings from
+BOTH sources with an editable box beside each, and an export naming the file and key for
+every change. Regenerate it after a copy change; it reads the real files, so it cannot
+silently go stale. It excludes /admin, /moderation, the desk, and the email templates.
+
 ## Commands
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 449 tests
+npm test                         # 467 tests
 node scripts/seed-local.mjs      # 75 invented people, local database only. Stages:
                                  #   entries | places | gameday | (default: everything)
                                  # --clear removes every trace. Refuses --remote.
                                  # ../../00_Docs/TESTING-LOCALLY.md is the walkthrough.
 npx tsc --noEmit
 npm run lint
+npm run copy:desk               # copy-desk.html — every public string, editable
 npm run build
 npm run cf:preview               # run the built Worker in workerd — catches what
                                  # `next dev` cannot, e.g. anything touching node:fs

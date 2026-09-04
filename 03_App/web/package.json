@@ -13,7 +13,8 @@
     "cf:preview": "opennextjs-cloudflare preview",
     "cf:deploy": "opennextjs-cloudflare deploy",
     "brand:manifest": "node scripts/brand-manifest.mjs",
-    "prebuild": "node scripts/brand-manifest.mjs"
+    "prebuild": "node scripts/brand-manifest.mjs",
+    "copy:desk": "node scripts/copy-report.mjs"
   },
   "dependencies": {
     "jsqr": "^1.4.0",
