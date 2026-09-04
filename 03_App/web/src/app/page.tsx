@@ -7,6 +7,8 @@ import { CinematicHero } from "@/components/CinematicHero";
 import { Logo3D } from "@/components/Logo3D";
 import { findLogo, findLogo3D } from "@/lib/brand-assets";
 import { HeroArcs } from "@/components/HeroArcs";
+import { copy, fill } from "@/copy";
+import { Rich } from "@/copy/Rich";
 
 export default function HomePage() {
   const events = upcomingEvents();
@@ -34,8 +36,14 @@ export default function HomePage() {
               className="display-xl hero-rise mt-4 text-[clamp(2.4rem,6.4vw,4.4rem)]"
               style={{ animationDelay: "0.3s" }}
             >
-              Competition that brings the{" "}
-              <span className="text-flare">Panth</span> together
+              <Rich
+                text={copy.home.heroTitle}
+                em={(s, i) => (
+                  <span key={i} className="text-flare">
+                    {s}
+                  </span>
+                )}
+              />
             </h1>
 
             <p
@@ -54,7 +62,7 @@ export default function HomePage() {
                   href={`/events/${featured.slug}/register-interest`}
                   className="group pill relative inline-flex items-center gap-2 overflow-hidden bg-kesri px-7 py-3.5 font-bold text-ink shadow-lg shadow-black/30 transition-transform hover:scale-[1.04] active:scale-95 sm:px-8"
                 >
-                  Register interest →
+                  {copy.home.heroPrimaryCta}
                   {/* Shine sweep on hover. */}
                   <span
                     aria-hidden
@@ -65,7 +73,7 @@ export default function HomePage() {
                   href={`/events/${featured.slug}`}
                   className="pill inline-flex items-center gap-2 border border-line bg-ink/50 px-7 py-3.5 font-semibold text-body backdrop-blur-sm transition-colors hover:border-kesri/60"
                 >
-                  Event details
+                  {copy.home.heroSecondaryCta}
                 </Link>
               </div>
             )}
@@ -80,7 +88,7 @@ export default function HomePage() {
             <div className="grid gap-8 p-7 sm:grid-cols-5 sm:p-10">
               <div className="sm:col-span-3">
                 <span className="pill inline-block bg-kesri/15 px-3 py-1 text-[11px] font-bold tracking-[0.16em] text-kesri uppercase">
-                  Event 01
+                  {copy.home.featuredBadge}
                 </span>
                 <h2 className="display-xl mt-4 text-[clamp(1.7rem,4vw,2.6rem)]">
                   {featured.title}
@@ -90,20 +98,35 @@ export default function HomePage() {
                   href={`/events/${featured.slug}`}
                   className="link-underline mt-6 inline-block font-semibold text-kesri"
                 >
-                  Full details and rules →
+                  {copy.home.featuredLink}
                 </Link>
               </div>
 
               <dl className="space-y-4 sm:col-span-2">
                 {[
-                  ["When", formatEventDate(featured.date)],
-                  ["Where", featured.venue?.name ?? "Venue to be announced"],
-                  ["Places", `${featured.capacity} players`],
+                  [copy.home.featuredWhen, formatEventDate(featured.date)],
                   [
-                    featured.divisions.length === 1 ? "Division" : "Divisions",
+                    copy.home.featuredWhere,
+                    featured.venue?.name ?? copy.common.venueTbc,
+                  ],
+                  [
+                    copy.home.featuredPlaces,
+                    fill(copy.home.featuredPlacesValue, {
+                      capacity: featured.capacity,
+                    }),
+                  ],
+                  [
+                    featured.divisions.length === 1
+                      ? copy.home.featuredDivision
+                      : copy.home.featuredDivisions,
                     featured.divisions.map((d) => d.name).join(" · "),
                   ],
-                  ["Entry", featured.entryFee === 0 ? "Free" : `£${featured.entryFee}`],
+                  [
+                    copy.home.featuredEntry,
+                    featured.entryFee === 0
+                      ? copy.common.free
+                      : `£${featured.entryFee}`,
+                  ],
                 ].map(([k, v]) => (
                   <div key={k} className="border-b border-line/60 pb-3">
                     <dt className="text-[11px] tracking-[0.16em] text-muted uppercase">
@@ -120,24 +143,15 @@ export default function HomePage() {
 
       {/* What we do */}
       <section className="mx-auto max-w-6xl px-4 py-14">
-        <p className="micro">01 — The organisation</p>
+        <p className="micro">{copy.home.orgEyebrow}</p>
         <h2 className="display-xl mt-3 text-[clamp(1.6rem,3.6vw,2.4rem)]">
-          More than one tournament
+          {copy.home.orgTitle}
         </h2>
         <div className="reveal-stagger mt-8 grid gap-4 sm:grid-cols-3">
           {[
-            {
-              t: "Every arena",
-              d: "FIFA today. Chess, kabaddi, gatka, quiz and athletics to come. One organisation, one profile, every event you enter.",
-            },
-            {
-              t: "A trophy cabinet that follows you",
-              d: "Every event you compete in and every award you win stays on your profile — across sports, across years.",
-            },
-            {
-              t: "Find your players",
-              d: "Meet Sikh players near you and online. Post that you're looking for a game, and get matched with someone who plays what you play.",
-            },
+            { t: copy.home.orgCard1Title, d: copy.home.orgCard1Detail },
+            { t: copy.home.orgCard2Title, d: copy.home.orgCard2Detail },
+            { t: copy.home.orgCard3Title, d: copy.home.orgCard3Detail },
           ].map((c) => (
             <div key={c.t} className="lift glass rounded-[20px] p-6">
               <h3 className="font-display text-lg text-kesri">{c.t}</h3>
@@ -156,15 +170,13 @@ export default function HomePage() {
           style={{ background: "var(--swc-gold)", top: 20 }}
         />
         <div className="relative">
-          <p className="micro">02 — Why</p>
+          <p className="micro">{copy.home.whyEyebrow}</p>
           <p className="display-xl mx-auto mt-6 max-w-4xl text-[clamp(1.6rem,4.2vw,3rem)] leading-[1.08]">
-            Sixty-four players will walk in as strangers.
+            {copy.home.whyLine1}
             <br className="hidden sm:block" />{" "}
-            <span className="text-flare">They won&apos;t walk out as strangers.</span>
+            <span className="text-flare">{copy.home.whyLine2}</span>
           </p>
-          <p className="mx-auto mt-7 max-w-lg text-muted">
-            That&apos;s the point. The trophy is the excuse.
-          </p>
+          <p className="mx-auto mt-7 max-w-lg text-muted">{copy.home.whySub}</p>
         </div>
       </section>
 
@@ -172,10 +184,10 @@ export default function HomePage() {
       <section className="mx-auto max-w-6xl px-4 pb-6">
         <div className="reveal-stagger grid gap-px overflow-hidden rounded-[20px] border border-line bg-line sm:grid-cols-4">
           {[
-            ["64", "Places"],
-            ["1", "Open division"],
-            ["6", "Rounds to win it"],
-            ["£0", "To enter"],
+            [copy.home.stat1Value, copy.home.stat1Label],
+            [copy.home.stat2Value, copy.home.stat2Label],
+            [copy.home.stat3Value, copy.home.stat3Label],
+            [copy.home.stat4Value, copy.home.stat4Label],
           ].map(([value, label]) => (
             <div key={label} className="bg-surface px-6 py-8 text-center">
               <p className="font-mono-num text-[clamp(1.8rem,3.4vw,2.6rem)] font-bold text-body">
@@ -191,13 +203,13 @@ export default function HomePage() {
       <section className="mx-auto max-w-6xl px-4 pb-8">
         <div className="flex items-baseline justify-between">
           <div>
-            <p className="micro">03 — What&apos;s on</p>
+            <p className="micro">{copy.home.upcomingEyebrow}</p>
             <h2 className="display-xl mt-3 text-[clamp(1.6rem,3.6vw,2.4rem)]">
-              Upcoming events
+              {copy.home.upcomingTitle}
             </h2>
           </div>
           <Link href="/events" className="link-underline text-sm font-semibold text-kesri">
-            All events →
+            {copy.home.upcomingAllLink}
           </Link>
         </div>
         <div className="reveal-stagger mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -229,18 +241,18 @@ export default function HomePage() {
                 />
               )}
 
-              <p className="micro">04 — Your place</p>
+              <p className="micro">{copy.home.ctaEyebrow}</p>
 
               <h2 className="display-xl mx-auto mt-4 max-w-3xl text-[clamp(1.9rem,4.6vw,3.4rem)]">
-                {featured.capacity} places. Free to enter.
+                {fill(copy.home.ctaTitleLine1, {
+                  capacity: featured.capacity,
+                })}
                 <br />
-                <span className="text-flare">Take one.</span>
+                <span className="text-flare">{copy.home.ctaTitleLine2}</span>
               </h2>
 
               <p className="mx-auto mt-5 max-w-md text-muted">
-                Two minutes. This registers your interest — it is not a place: all
-                {featured.capacity} are decided by a random draw after entries close. No
-                entry fee, langar on the day, straight knockout.
+                {fill(copy.home.ctaBody, { capacity: featured.capacity })}
               </p>
 
               <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -248,7 +260,7 @@ export default function HomePage() {
                   href={`/events/${featured.slug}/register-interest`}
                   className="group pill relative inline-flex items-center gap-2 overflow-hidden bg-kesri px-8 py-4 font-bold text-ink shadow-lg shadow-black/30 transition-transform hover:scale-[1.04] active:scale-95"
                 >
-                  Register interest →
+                  {copy.home.ctaPrimary}
                   <span
                     aria-hidden
                     className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/60 to-transparent transition-transform duration-700 group-hover:translate-x-full"
@@ -258,13 +270,11 @@ export default function HomePage() {
                   href="/volunteer"
                   className="pill inline-flex items-center gap-2 border border-line px-8 py-4 font-semibold text-body transition-colors hover:border-kesri/60"
                 >
-                  Volunteer instead
+                  {copy.home.ctaSecondary}
                 </Link>
               </div>
 
-              <p className="micro mt-8">
-                Free entry · Ages 12–25 · PlayStation 5
-              </p>
+              <p className="micro mt-8">{copy.home.ctaFootnote}</p>
             </div>
           </div>
         </section>

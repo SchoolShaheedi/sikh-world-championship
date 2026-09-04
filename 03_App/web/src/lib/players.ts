@@ -260,6 +260,62 @@ export function publicName(player: Pick<Player, "handle" | "displayName">): stri
 }
 
 /**
+ * Tell two people with the same public name apart.
+ *
+ * WHY THIS IS NEEDED. A public name is a first name plus a last initial, and Sikh surnames
+ * are overwhelmingly Singh and Kaur — so the last initial does almost no work and common
+ * first names collide constantly. Two entrants called Aman Singh are both "Aman S." on the
+ * projector, on the desk list and on a printed slip, and the hall is told "Aman S. to
+ * station three."
+ *
+ * WHAT IT DOES, AND WHAT IT DELIBERATELY DOES NOT. It appends "(1)", "(2)" to EVERY member
+ * of a clash, and nothing at all to a name that is unique. Numbering all of them rather
+ * than leaving the first bare is the point: a slip reading plain "Aman S." gives its holder
+ * no reason to suspect there is another one, and an unnumbered name next to a numbered one
+ * reads as the real one beside an afterthought.
+ *
+ * It adds NO new information about anybody. The city would have been more useful to a
+ * spectator and was rejected on 2026-09-04 for that reason — a child's town on a projector
+ * and on paper lying on a table is a new identifying field, and this is a display problem.
+ *
+ * This distinguishes the SCREEN, not the PERSON. Two identically named rows on the desk
+ * list still need something real to tell them apart, and that is the reference on the slip
+ * and the date-of-birth conversation, not the number.
+ *
+ * THE ORDER IS STABLE, and that is the whole difficulty. Numbering by position in a query
+ * result means a name that changes when somebody withdraws, so the slip in a child's hand
+ * stops matching the projector. Numbers are therefore assigned by a caller-supplied stable
+ * key — the registration reference, which is unique and assigned once at application time.
+ */
+export function uniquePublicNames<T>(
+  rows: readonly T[],
+  read: (row: T) => { name: string; stable: string },
+): string[] {
+  const seen = new Map<string, string[]>();
+  for (const row of rows) {
+    const { name, stable } = read(row);
+    const list = seen.get(name);
+    if (list) list.push(stable);
+    else seen.set(name, [stable]);
+  }
+
+  // Sorted, so the number a person is given depends only on who else shares their name —
+  // never on how a query happened to order them.
+  const ordinal = new Map<string, number>();
+  for (const [name, keys] of seen) {
+    if (keys.length < 2) continue;
+    keys.sort();
+    keys.forEach((k, i) => ordinal.set(`${name}\u0000${k}`, i + 1));
+  }
+
+  return rows.map((row) => {
+    const { name, stable } = read(row);
+    const n = ordinal.get(`${name}\u0000${stable}`);
+    return n ? `${name} (${n})` : name;
+  });
+}
+
+/**
  * May this person work the arrival desk?
  *
  * ONE FUNCTION, so the two flags can never be read inconsistently. A moderator has
@@ -337,18 +393,31 @@ export async function bracketNames(eventSlug: string): Promise<BracketName[]> {
   const db = await getDb();
   const { results } = await db
     .prepare(
-      `SELECT p.id, p.handle, p.display_name, r.status
+      `SELECT p.id, p.handle, p.display_name, r.status, r.reference
          FROM registrations r
          JOIN players p ON p.id = r.player_id
         WHERE r.event_slug = ? AND r.status IN ('selected','checked-in')
         ORDER BY p.handle COLLATE NOCASE`,
     )
     .bind(eventSlug)
-    .all<{ id: string; handle: string | null; display_name: string; status: string }>();
+    .all<{
+      id: string;
+      handle: string | null;
+      display_name: string;
+      status: string;
+      reference: string;
+    }>();
 
-  return results.map((r) => ({
+  // Numbered where two entrants share a name, so the bracket and the slips agree with each
+  // other and with what the hall is told. See `uniquePublicNames`.
+  const names = uniquePublicNames(results, (r) => ({
+    name: publicName({ handle: r.handle, displayName: r.display_name }),
+    stable: r.reference,
+  }));
+
+  return results.map((r, i) => ({
     playerId: r.id,
-    handle: publicName({ handle: r.handle, displayName: r.display_name }),
+    handle: names[i],
     displayName: r.display_name,
     status: r.status,
   }));

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { GAMES, PLATFORMS, WINDOWS, INTENSITY, PRESET_NOTES } from "@/lib/play-types";
 import { postToBoard } from "@/app/play/actions";
+import { copy } from "@/copy";
 
 const field =
   "mt-2 w-full rounded-xl border border-line bg-surface px-4 py-3 text-body focus:border-kesri focus:outline-none";
@@ -18,10 +19,12 @@ export function PostComposer({ hasPost }: { hasPost: boolean }) {
         className="w-full rounded-2xl border border-dashed border-kesri/50 bg-kesri/[0.06] px-6 py-5 text-left transition-colors hover:bg-kesri/10"
       >
         <p className="font-display text-lg text-kesri">
-          {hasPost ? "Update your post" : "Put up a post"}
+          {hasPost
+            ? copy.play.composerOpenUpdate
+            : copy.play.composerOpenNew}
         </p>
         <p className="mt-1 text-sm text-muted">
-          Say what you play and when you&apos;re free. Other players send you a request.
+          {copy.play.composerOpenHint}
         </p>
       </button>
     );
@@ -39,11 +42,15 @@ export function PostComposer({ hasPost }: { hasPost: boolean }) {
       }}
       className="rounded-2xl border border-line bg-surface/70 p-6"
     >
-      <h2 className="font-display text-lg text-kesri">Your post</h2>
+      <h2 className="font-display text-lg text-kesri">
+        {copy.play.composerTitle}
+      </h2>
 
       <div className="mt-5 grid gap-5 sm:grid-cols-2">
         <label className="block">
-          <span className="text-sm font-semibold text-body">Game</span>
+          <span className="text-sm font-semibold text-body">
+            {copy.play.composerGame}
+          </span>
           <select name="game" className={field} defaultValue={GAMES[0]}>
             {GAMES.map((g) => (
               <option key={g}>{g}</option>
@@ -52,7 +59,9 @@ export function PostComposer({ hasPost }: { hasPost: boolean }) {
         </label>
 
         <label className="block">
-          <span className="text-sm font-semibold text-body">Platform</span>
+          <span className="text-sm font-semibold text-body">
+            {copy.play.composerPlatform}
+          </span>
           <select name="platform" className={field} defaultValue={PLATFORMS[0]}>
             {PLATFORMS.map((p) => (
               <option key={p}>{p}</option>
@@ -63,11 +72,10 @@ export function PostComposer({ hasPost }: { hasPost: boolean }) {
 
       <fieldset className="mt-6">
         <legend className="text-sm font-semibold text-body">
-          When are you usually free?
+          {copy.play.composerWindowsLegend}
         </legend>
         <p className="mt-1 text-xs text-muted">
-          Pick as many as you like. We don&apos;t show whether you&apos;re online — nobody
-          should feel they have to be available.
+          {copy.play.composerWindowsHint}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {WINDOWS.map((w) => (
@@ -84,7 +92,9 @@ export function PostComposer({ hasPost }: { hasPost: boolean }) {
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         <label className="block">
-          <span className="text-sm font-semibold text-body">How do you play?</span>
+          <span className="text-sm font-semibold text-body">
+            {copy.play.composerIntensity}
+          </span>
           <select name="intensity" className={field} defaultValue={INTENSITY[2]}>
             {INTENSITY.map((i) => (
               <option key={i}>{i}</option>
@@ -93,15 +103,16 @@ export function PostComposer({ hasPost }: { hasPost: boolean }) {
         </label>
 
         <label className="block">
-          <span className="text-sm font-semibold text-body">Add a note</span>
+          <span className="text-sm font-semibold text-body">
+            {copy.play.composerNote}
+          </span>
           <select name="note" className={field} defaultValue={PRESET_NOTES[5]}>
             {PRESET_NOTES.map((n) => (
               <option key={n}>{n}</option>
             ))}
           </select>
           <span className="mt-1.5 block text-xs text-muted">
-            Set notes only — there&apos;s no free typing on the board, which is what keeps
-            it safe without anyone having to police it.
+            {copy.play.composerNoteHint}
           </span>
         </label>
       </div>
@@ -117,14 +128,16 @@ export function PostComposer({ hasPost }: { hasPost: boolean }) {
           type="submit"
           className="rounded-xl bg-kesri px-6 py-3 font-bold text-ink hover:bg-kesrisoft"
         >
-          {hasPost ? "Update post" : "Put it up"}
+          {hasPost
+            ? copy.play.composerSubmitUpdate
+            : copy.play.composerSubmitNew}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
           className="rounded-xl border border-line px-6 py-3 font-semibold text-body"
         >
-          Cancel
+          {copy.play.composerCancel}
         </button>
       </div>
     </form>

@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { requestSignInLink } from "@/lib/auth";
 import { rateLimit, LIMITS } from "@/lib/rate-limit";
 import { siteUrl } from "@/lib/site-url-server";
+import { copy } from "@/copy";
 
 /**
  * Ask for a sign-in link.
@@ -14,7 +15,7 @@ import { siteUrl } from "@/lib/site-url-server";
 export async function sendSignInLink(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!email || !email.includes("@")) {
-    return { error: "Enter the email address you signed up with." };
+    return { error: copy.signin.needEmail };
   }
 
   // Per IP: stops someone hammering the form to spray links at an address, without
@@ -22,7 +23,7 @@ export async function sendSignInLink(formData: FormData) {
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const { limit, windowMs } = LIMITS.signInLink;
   if (!rateLimit(`signin:${ip}`, limit, windowMs).ok) {
-    return { error: "That's a lot of attempts. Wait a few minutes and try again." };
+    return { error: copy.signin.rateLimited };
   }
 
   // From the request, not from a constant: a link built on a laptop has to point at the

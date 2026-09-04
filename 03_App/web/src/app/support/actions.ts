@@ -6,11 +6,12 @@ import { currentPlayer } from "@/lib/session";
 import { createTicket } from "@/lib/support-store";
 import { categoryById, type SupportCategoryId } from "@/lib/support-types";
 import { rateLimit, LIMITS } from "@/lib/rate-limit";
+import { copy } from "@/copy";
 
 export async function submitTicket(formData: FormData) {
   const categoryId = String(formData.get("category"));
   const category = categoryById(categoryId);
-  if (!category) return { error: "Pick what your message is about." };
+  if (!category) return { error: copy.support.errorNoCategory };
 
   // Flood protection. The urgent queue is where a safeguarding disclosure lands, and a
   // queue buried under generated tickets is a queue where a real report goes unread.
@@ -20,15 +21,13 @@ export async function submitTicket(formData: FormData) {
   const { limit, windowMs } = LIMITS.supportTicket;
   if (!rateLimit(`support:${ip}`, limit, windowMs).ok) {
     return {
-      error:
-        "That's a lot of messages in a short time. If this is urgent, use the emergency " +
-        "contacts above the form — they reach a person directly.",
+      error: copy.support.errorRateLimited,
     };
   }
 
   const message = String(formData.get("message") ?? "").trim();
   if (message.length < 10) {
-    return { error: "Tell us a bit more so we can actually help." };
+    return { error: copy.support.errorTooShort };
   }
 
   // Signing in is optional here — see support-types.ts for why.

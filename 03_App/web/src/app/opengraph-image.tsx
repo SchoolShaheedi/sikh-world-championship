@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { ORG } from "@/data/org";
+import { copy } from "@/copy";
 
 /**
  * The image people see when the site is shared — WhatsApp, Slack, Instagram DMs, the
@@ -111,8 +112,8 @@ export default async function OgImage() {
             width: "100%",
           }}
         >
-          <span>sikhchampionships.com</span>
-          <span>Esports · Sport · Mind games</span>
+          <span>{copy.og.domain}</span>
+          <span>{copy.og.strapline}</span>
         </div>
       </div>
     ),

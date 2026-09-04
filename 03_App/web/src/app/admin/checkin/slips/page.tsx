@@ -135,23 +135,61 @@ const CSS = `
   .printbtn { margin-top: .5rem; border: 1px solid #4a463f; background: none;
               color: #d6d3cd; border-radius: .6rem; padding: .6rem 1rem; font: inherit; }
 
-  /* The sheet itself is always white with black text, on screen as well as on paper, so
-     what is previewed is what comes out of the printer. */
-  .sheet { background: #fff; color: #000; display: grid; grid-template-columns: repeat(3, 1fr);
+  /* ------------------------------------------------------------------------------
+     THE SHEET IS WHITE WITH BLACK INK AND NOTHING MAY DECIDE OTHERWISE.
+
+     This block is defensive to a degree that looks excessive until the failure is seen:
+     the slips print as three blank pages. Every property below closes one way for
+     somebody else's colour decision to reach a page whose only job is to come out of a
+     printer, and each of them is a real setting on a real laptop:
+
+       color-scheme: light      Chrome's auto-dark-mode inverts a white region on a page
+                                whose theme is dark. Inverted, black ink becomes near-white
+                                and near-white ink on white paper is a blank sheet. Naming
+                                the scheme opts this region out of the inversion.
+       forced-color-adjust      Windows High Contrast, and macOS "Increase contrast",
+                                REPLACE author colours with system ones. In a dark system
+                                palette that is light text — invisible on paper.
+       print-color-adjust       Stops the browser "optimising" colour for print, which is
+                                also what drops the white ground under a QR code when
+                                "Background graphics" is off.
+       an explicit color on
+       every text element       'color' on '.sheet' alone reaches the names only by
+                                INHERITANCE, and inheritance loses to any direct rule from
+                                anywhere — a global stylesheet, an extension, a user
+                                stylesheet. Stating it three times costs nothing.
+
+     A code that scans on screen and prints blank is discovered at a door with a queue
+     behind it, so this is the one place in the app worth being paranoid about.
+     ------------------------------------------------------------------------------ */
+  .sheet { background: #fff; color: #000; color-scheme: light;
+           forced-color-adjust: none; -webkit-print-color-adjust: exact;
+           print-color-adjust: exact;
+           display: grid; grid-template-columns: repeat(3, 1fr);
            gap: 0; width: 190mm; margin: 1.5rem auto; }
   .slip { display: flex; align-items: center; gap: 2.5mm; box-sizing: border-box;
           height: 43mm; padding: 2.5mm; border: 0.3mm dashed #b0b0b0;
+          background: #fff; color: #000; forced-color-adjust: none;
           break-inside: avoid; page-break-inside: avoid; }
-  .qr { width: 30mm; height: 30mm; flex: none; }
+  .qr { width: 30mm; height: 30mm; flex: none; forced-color-adjust: none; }
   .who { min-width: 0; }
-  .name { margin: 0; font: 700 13pt/1.15 system-ui, sans-serif; word-break: break-word; }
-  .ref { margin: 1.5mm 0 0; font: 400 9.5pt/1 ui-monospace, monospace; letter-spacing: .02em; }
+  /* 11.5pt, not 13: at 13pt "Amandeep" does not fit the 28mm the text column has once the
+     code has taken its 30mm, and the wrap lands mid-word — "Amandee p S." on a slip a
+     volunteer is reading off a table. 'word-break: normal' keeps breaks at the space and
+     'overflow-wrap' is left as the fallback for a single unbroken word. */
+  .name { margin: 0; font: 700 11.5pt/1.2 system-ui, sans-serif; color: #000;
+          word-break: normal; overflow-wrap: break-word; hyphens: none; }
+  .ref { margin: 1.5mm 0 0; font: 400 9.5pt/1 ui-monospace, monospace; letter-spacing: .02em;
+         color: #000; }
   .ev { margin: 1.5mm 0 0; font: 400 7pt/1 system-ui, sans-serif; color: #555; }
 
   @media print {
     .no-print { display: none !important; }
     @page { size: A4 portrait; margin: 10mm; }
-    html, body { background: #fff !important; }
+    /* 'color' as well as 'background': the instructions above the sheet are light grey for
+       a dark screen, and a stray one printing near-white is invisible rather than absent. */
+    html, body { background: #fff !important; color: #000 !important;
+                 color-scheme: light !important; }
     .sheet { width: auto; margin: 0; }
   }
 `;

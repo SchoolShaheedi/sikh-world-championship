@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { askGuardian } from "@/app/play/guardian-actions";
+import { copy } from "@/copy";
 
 export function AskGuardianButton({ status }: { status: string | null }) {
   const [state, setState] = useState<"idle" | "sending" | "sent">(
@@ -13,17 +14,16 @@ export function AskGuardianButton({ status }: { status: string | null }) {
     return (
       <div className="rounded-xl border border-ok/40 bg-ok/10 p-4">
         <p className="text-sm font-semibold text-body">
-          We&apos;ve emailed your parent or guardian.
+          {copy.play.askGuardianSentTitle}
         </p>
         <p className="mt-1 text-sm text-muted">
-          As soon as they say yes, the board opens up for you. Give them a nudge if
-          they haven&apos;t seen it.
+          {copy.play.askGuardianSentBody}
         </p>
         <button
           onClick={() => setState("idle")}
           className="mt-3 text-sm text-kesri hover:underline"
         >
-          Send it again
+          {copy.play.askGuardianSendAgain}
         </button>
       </div>
     );
@@ -38,13 +38,13 @@ export function AskGuardianButton({ status }: { status: string | null }) {
           const res = await askGuardian();
           if (res.ok) setState("sent");
           else {
-            setError(res.error ?? "Something went wrong.");
+            setError(res.error ?? copy.play.askGuardianError);
             setState("idle");
           }
         }}
         className="rounded-xl bg-kesri px-6 py-3 font-bold text-ink hover:bg-kesrisoft disabled:opacity-50"
       >
-        {state === "sending" ? "Sending…" : "Email my parent or guardian"}
+        {state === "sending" ? copy.common.sending : copy.play.askGuardianCta}
       </button>
       {error && <p className="mt-3 text-sm text-kesrisoft">{error}</p>}
     </div>

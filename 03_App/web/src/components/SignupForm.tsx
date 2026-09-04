@@ -11,41 +11,14 @@ import {
   MEDICAL_CONDITIONS,
   MEDICAL_NONE,
 } from "@/lib/guardian-rules";
+import { copy, fill } from "@/copy";
+import { Rich } from "@/copy/Rich";
 
 /**
  * Human names for the keys the server validates, used when a submission is rejected.
  * Anything missing falls back to the raw key rather than hiding the error.
  */
-const FIELD_LABELS: Record<string, string> = {
-  fullName: "Full name",
-  dob: "Date of birth",
-  email: "Email",
-  mobile: "Mobile",
-  region: "Region",
-  medicalConditions: "Medical conditions",
-  medical: "Medical detail",
-  accessibility: "Accessibility needs",
-  avatarId: "Avatar",
-  handle: "Name on the bracket",
-  guardianName: "Parent / guardian name",
-  guardianRelation: "Relationship to player",
-  guardianEmail: "Parent / guardian email",
-  guardianMobile: "Parent / guardian mobile",
-  guardianConsent: "Parent / guardian permission",
-  guardianOnSite: "Staying at the venue",
-  guardianIndependentConsent: "Permission to attend independently",
-  mayLeaveUnaccompanied: "Leaving unaccompanied",
-  dietarySelfManaged: "Dietary needs on the day",
-  emergencyName: "Emergency contact name",
-  emergencyRelation: "Emergency contact relationship",
-  emergencyPhone: "Emergency contact phone",
-  rulesAgreed: "Rules and code of conduct",
-  referralOrg: "How you heard about this",
-  referralDetail: "Which one",
-  skill: "Self-rating",
-  favouriteTeam: "Favourite team",
-  ownController: "Own controller",
-};
+const FIELD_LABELS: Record<string, string> = copy.fieldLabels;
 
 /** Age on a given date (or today if the event date isn't confirmed yet). */
 function ageOn(dob: string, on: string | null): number | null {
@@ -209,9 +182,9 @@ export function SignupForm({
    */
   const referralDetailLabel =
     values.referralOrg === "Uni Sikh Society"
-      ? "Which university?"
+      ? copy.signupForm.referralDetailUni
       : values.referralOrg === REFERRAL_OTHER
-        ? "Which organisation?"
+        ? copy.signupForm.referralDetailOther
         : null;
 
   /**
@@ -264,7 +237,7 @@ export function SignupForm({
       const data = await res.json();
       if (!res.ok) {
         setFailure({
-          error: data?.error ?? "Something went wrong. Please try again.",
+          error: data?.error ?? copy.signupForm.genericError,
           fieldErrors: data?.fieldErrors,
         });
         return;
@@ -272,8 +245,7 @@ export function SignupForm({
       setResult(data);
     } catch {
       setFailure({
-        error:
-          "We couldn't reach the server. Check your connection and try again — nothing has been submitted.",
+        error: copy.signupForm.networkError,
       });
     } finally {
       setSubmitting(false);
@@ -285,8 +257,10 @@ export function SignupForm({
       <div className="rounded-3xl border border-line bg-surface/70 p-8 text-center">
         {result.demo && (
           <p className="mx-auto mb-5 max-w-md rounded-xl border-2 border-dashed border-kesri/60 bg-kesri/[0.08] px-4 py-3 text-sm text-kesrisoft">
-            <strong className="font-bold">Preview only — nothing was saved.</strong> This is
-            what an applicant would see. No application has been recorded.
+            <strong className="font-bold">
+              {copy.signupForm.successDemoStrong}
+            </strong>{" "}
+            {copy.signupForm.successDemoRest}
           </p>
         )}
 
@@ -294,37 +268,41 @@ export function SignupForm({
             there are more applications than places and they are decided by a draw. Saying
             anything warmer here would be a promise we cannot keep, and the person who
             reads it is often a parent. */}
-        <h2 className="font-display text-3xl">Interest registered</h2>
+        <h2 className="font-display text-3xl">
+          {copy.signupForm.successTitle}
+        </h2>
 
         <p className="mx-auto mt-3 max-w-md text-muted">
-          Thanks {String(values.fullName ?? "").split(" ")[0] || "—"}. This is a
-          registration of interest, not a place yet: there are {event.capacity} places and
-          we expect more interest than that.
+          {fill(copy.signupForm.successBody1, {
+            firstName: String(values.fullName ?? "").split(" ")[0] || "—",
+            capacity: event.capacity,
+          })}
         </p>
         <p className="mx-auto mt-3 max-w-md text-muted">
-          Applications close{" "}
-          {event.applicationsCloseAt
-            ? new Date(event.applicationsCloseAt).toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "long",
-              })
-            : "shortly"}
-          , then places are drawn. <span className="text-body">We&apos;ll email you either
-          way</span> — you don&apos;t need to do anything until then.
+          <Rich
+            text={fill(copy.signupForm.successBody2, {
+              closeDate: event.applicationsCloseAt
+                ? new Date(event.applicationsCloseAt).toLocaleDateString(
+                    "en-GB",
+                    { day: "numeric", month: "long" },
+                  )
+                : copy.signupForm.successCloseDateTbc,
+            })}
+          />
         </p>
 
         {!result.demo && (
           <p className="mt-5 text-sm text-muted">
-            Reference <span className="font-mono text-kesri">{result.reference}</span>
+            {copy.signupForm.successReference}{" "}
+            <span className="font-mono text-kesri">{result.reference}</span>
           </p>
         )}
 
         {!result.demo && (
           <p className="mx-auto mt-6 max-w-md text-sm text-muted">
-            We&apos;ve emailed you a copy{isMinor && " and told your parent or guardian"}.
-            Your Sikh World Championships profile is set up with this email address — you
-            can sign in any time, and it carries over to every future event. If you get a
-            place we&apos;ll send a check-in code for the day.
+            {isMinor
+              ? copy.signupForm.successEmailedMinor
+              : copy.signupForm.successEmailedAdult}
           </p>
         )}
       </div>
@@ -335,7 +313,9 @@ export function SignupForm({
     <form onSubmit={onSubmit} className="space-y-10">
       {/* 1. Player */}
       <fieldset className="rounded-3xl border border-line bg-surface/60 p-6">
-        <legend className="font-display px-2 text-lg text-kesri">1. About you</legend>
+        <legend className="font-display px-2 text-lg text-kesri">
+          {copy.signupForm.section1}
+        </legend>
 
         {/* Said once, at the top of the first fieldset a returning player reads. The
             point is not the reassurance — it is that they should CHECK rather than skim:
@@ -343,15 +323,16 @@ export function SignupForm({
             matters on the day. */}
         {prefill?.fullName && (
           <p className="mb-5 rounded-xl border border-line bg-ink/20 p-4 text-sm text-muted">
-            <span className="text-body">Filled in from your profile.</span> Change anything
-            that has changed — especially a phone number. Your medical answers and the
-            consents below are asked again for every event, on purpose.
+            <span className="text-body">
+              {copy.signupForm.prefillNoticeStrong}
+            </span>{" "}
+            {copy.signupForm.prefillNoticeRest}
           </p>
         )}
 
         <div className="grid gap-5 sm:grid-cols-2">
           <label className="block sm:col-span-2">
-            <Label>Full name</Label>
+            <Label>{copy.signupForm.fullName}</Label>
             <input
               required
               className={inputCx}
@@ -361,9 +342,7 @@ export function SignupForm({
           </label>
 
           <label className="block">
-            <Label hint="Checks you're old enough to compete. We never show your exact age publicly.">
-              Date of birth
-            </Label>
+            <Label hint={copy.signupForm.dobHint}>{copy.signupForm.dob}</Label>
             <input
               required
               type="date"
@@ -374,10 +353,12 @@ export function SignupForm({
           </label>
 
           <label className="block">
-            <Label hint="Region only — never your full address.">Area you&apos;re from</Label>
+            <Label hint={copy.signupForm.regionHint}>
+              {copy.signupForm.region}
+            </Label>
             <input
               required
-              placeholder="e.g. Birmingham"
+              placeholder={copy.signupForm.regionPlaceholder}
               className={inputCx}
               value={(values.region as string) ?? ""}
               onChange={(e) => set("region", e.target.value)}
@@ -385,7 +366,7 @@ export function SignupForm({
           </label>
 
           <label className="block">
-            <Label>Email</Label>
+            <Label>{copy.signupForm.email}</Label>
             <input
               required
               type="email"
@@ -396,7 +377,7 @@ export function SignupForm({
           </label>
 
           <label className="block">
-            <Label>Mobile</Label>
+            <Label>{copy.signupForm.mobile}</Label>
             <input
               required
               type="tel"
@@ -412,22 +393,25 @@ export function SignupForm({
           <p className="mt-5 rounded-xl border border-ok/40 bg-ok/10 p-4 text-sm text-body">
             {event.divisions.length === 1 ? (
               <>
-                <strong className="font-bold text-ok">You&apos;re eligible.</strong>{" "}
-                Everyone aged 12 to 25 competes in the same open bracket.
+                <strong className="font-bold text-ok">
+                  {copy.signupForm.eligibleStrong}
+                </strong>{" "}
+                {copy.signupForm.eligibleRest}
               </>
             ) : (
               <>
-                You&apos;ll compete in the{" "}
-                <strong className="font-bold text-ok">{division.name}</strong> division.
+                {copy.signupForm.eligibleDivisionPrefix}{" "}
+                <strong className="font-bold text-ok">{division.name}</strong>{" "}
+                {copy.signupForm.eligibleDivisionSuffix}
               </>
             )}
           </p>
         )}
         {tooYoung && (
           <p className="mt-5 rounded-xl border border-kesri/40 bg-kesri/10 p-4 text-sm text-kesrisoft">
-            You need to be at least {Math.min(...event.divisions.map((d) => d.minAge))} on
-            the day of the event to compete. Come along and support anyway — and keep an
-            eye out, we&apos;ll be running younger age groups at future events.
+            {fill(copy.signupForm.tooYoung, {
+              minAge: Math.min(...event.divisions.map((d) => d.minAge)),
+            })}
           </p>
         )}
       </fieldset>
@@ -435,7 +419,7 @@ export function SignupForm({
       {/* 2. Event-specific questions */}
       <fieldset className="rounded-3xl border border-line bg-surface/60 p-6">
         <legend className="font-display px-2 text-lg text-kesri">
-          2. Your game
+          {copy.signupForm.section2}
         </legend>
         <div className="grid gap-5 sm:grid-cols-2">
           {event.formFields
@@ -450,12 +434,9 @@ export function SignupForm({
       {isMinor && (
         <fieldset className="rounded-3xl border border-kesri/40 bg-kesri/[0.06] p-6">
           <legend className="font-display px-2 text-lg text-kesri">
-            3. Parent or guardian
+            {copy.signupForm.section3Guardian}
           </legend>
-          <p className="text-sm text-muted">
-            You&apos;re under 18, so we need a parent or guardian&apos;s details and their
-            permission. This is how we keep everyone safe on the day.
-          </p>
+          <p className="text-sm text-muted">{copy.signupForm.guardianIntro}</p>
           {tier && tier !== "none" && (
             <p className="mt-3 rounded-xl border border-kesri/30 bg-kesri/[0.08] p-3 text-sm text-body">
               {TIER_EXPLANATION[tier]}
@@ -464,7 +445,7 @@ export function SignupForm({
 
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <label className="block">
-              <Label>Parent / guardian name</Label>
+              <Label>{copy.signupForm.guardianName}</Label>
               <input
                 required
                 className={inputCx}
@@ -473,17 +454,17 @@ export function SignupForm({
               />
             </label>
             <label className="block">
-              <Label>Their relationship to you</Label>
+              <Label>{copy.signupForm.guardianRelation}</Label>
               <input
                 required
-                placeholder="e.g. mother, father, uncle"
+                placeholder={copy.signupForm.guardianRelationPlaceholder}
                 className={inputCx}
                 value={(values.guardianRelation as string) ?? ""}
                 onChange={(e) => set("guardianRelation", e.target.value)}
               />
             </label>
             <label className="block">
-              <Label>Their email</Label>
+              <Label>{copy.signupForm.guardianEmail}</Label>
               <input
                 required
                 type="email"
@@ -493,7 +474,7 @@ export function SignupForm({
               />
             </label>
             <label className="block">
-              <Label>Their mobile</Label>
+              <Label>{copy.signupForm.guardianMobile}</Label>
               <input
                 required
                 type="tel"
@@ -506,14 +487,14 @@ export function SignupForm({
 
           <div className="mt-6 space-y-4">
             <p className="text-xs tracking-[0.16em] text-muted uppercase">
-              To be completed by the parent or guardian
+              {copy.signupForm.guardianByHeading}
             </p>
 
             <Check
               required
               checked={!!values.guardianConsent}
               onChange={(v) => set("guardianConsent", v)}
-              label="I am this player's parent or guardian, and I give permission for them to take part."
+              label={copy.signupForm.guardianConsent}
             />
 
             {/* Supervision promise — one per tier, so nobody answers a question that
@@ -523,8 +504,8 @@ export function SignupForm({
                 required
                 checked={!!values.guardianOnSite}
                 onChange={(v) => set("guardianOnSite", v)}
-                label="I will stay at the venue for the whole event."
-                hint="Required for players under 16. You don't need to sit with them — there's seating, langar and the bracket on the big screen — but we need you in the building."
+                label={copy.signupForm.guardianOnSite}
+                hint={copy.signupForm.guardianOnSiteHint}
               />
             )}
 
@@ -534,14 +515,14 @@ export function SignupForm({
                   required
                   checked={!!values.guardianIndependentConsent}
                   onChange={(v) => set("guardianIndependentConsent", v)}
-                  label="I'm happy for them to come to the event on their own, and I'll be reachable on the number above."
-                  hint="For players aged 16 and 17. Under 16s need a parent or guardian at the venue."
+                  label={copy.signupForm.guardianIndependent}
+                  hint={copy.signupForm.guardianIndependentHint}
                 />
                 <Check
                   checked={!!values.mayLeaveUnaccompanied}
                   onChange={(v) => set("mayLeaveUnaccompanied", v)}
-                  label="They may leave the venue unaccompanied at the end of the day."
-                  hint="Optional. If you leave this, we'll expect them to be collected."
+                  label={copy.signupForm.mayLeaveUnaccompanied}
+                  hint={copy.signupForm.mayLeaveUnaccompaniedHint}
                 />
                 {/* The form no longer asks for dietary needs. For 12–15 a parent is in
                     the building all day; 18+ are adults. A 16 or 17-year-old may be here
@@ -551,8 +532,8 @@ export function SignupForm({
                   required
                   checked={!!values.dietarySelfManaged}
                   onChange={(v) => set("dietarySelfManaged", v)}
-                  label="They'll tell the team about any dietary needs when they arrive."
-                  hint="Langar is served on the day. We don't hold a dietary list, so anything that matters — an allergy especially — needs saying at the counter. Put anything a first aider would need in the medical box below as well."
+                  label={copy.signupForm.dietarySelfManaged}
+                  hint={copy.signupForm.dietarySelfManagedHint}
                 />
               </>
             )}
@@ -564,15 +545,17 @@ export function SignupForm({
       {/* 5. On the day + consent */}
       <fieldset className="rounded-3xl border border-line bg-surface/60 p-6">
         <legend className="font-display px-2 text-lg text-kesri">
-          {isMinor ? "4." : "3."} On the day
+          {isMinor
+            ? copy.signupForm.sectionOnTheDayMinor
+            : copy.signupForm.sectionOnTheDayAdult}
         </legend>
 
         {/* Referral. Its only use is draw order — referred applicants are drawn first.
             Deliberately NOT a religion question: "Another organisation" and "Nobody" are
             real answers, and nothing infers anything from the choice. */}
         <label className="mb-6 block">
-          <Label hint="Places are limited. Applicants referred by a partner organisation are drawn first.">
-            How did you hear about this?
+          <Label hint={copy.signupForm.referralHint}>
+            {copy.signupForm.referral}
           </Label>
           <select
             required
@@ -580,7 +563,7 @@ export function SignupForm({
             value={(values.referralOrg as string) ?? ""}
             onChange={(e) => set("referralOrg", e.target.value)}
           >
-            <option value="">Choose…</option>
+            <option value="">{copy.signupForm.choose}</option>
             {REFERRAL_OPTIONS.map((o) => (
               <option key={o} value={o}>
                 {o}
@@ -595,7 +578,7 @@ export function SignupForm({
             not used for anything but knowing who to thank. */}
         {referralDetailLabel && (
           <label className="mb-6 block">
-            <Label hint="Just the name — it tells us which outreach is working.">
+            <Label hint={copy.signupForm.referralDetailHint}>
               {referralDetailLabel}
             </Label>
             <input
@@ -613,15 +596,14 @@ export function SignupForm({
         {!isMinor && (
           <div className="mb-6 rounded-2xl border border-line bg-ink/20 p-5">
             <p className="text-xs tracking-[0.16em] text-muted uppercase">
-              Emergency contact
+              {copy.signupForm.emergencyHeading}
             </p>
             <p className="mt-2 text-sm text-muted">
-              Someone we can call on the day if you&apos;re hurt or unwell. Not you —
-              someone who isn&apos;t at the event.
+              {copy.signupForm.emergencyIntro}
             </p>
             <div className="mt-4 grid gap-5 sm:grid-cols-3">
               <label className="block">
-                <Label>Their name</Label>
+                <Label>{copy.signupForm.emergencyName}</Label>
                 <input
                   required
                   className={inputCx}
@@ -630,17 +612,17 @@ export function SignupForm({
                 />
               </label>
               <label className="block">
-                <Label>Relationship to you</Label>
+                <Label>{copy.signupForm.emergencyRelation}</Label>
                 <input
                   required
-                  placeholder="partner, brother, friend…"
+                  placeholder={copy.signupForm.emergencyRelationPlaceholder}
                   className={inputCx}
                   value={(values.emergencyRelation as string) ?? ""}
                   onChange={(e) => set("emergencyRelation", e.target.value)}
                 />
               </label>
               <label className="block">
-                <Label>Their phone number</Label>
+                <Label>{copy.signupForm.emergencyPhone}</Label>
                 <input
                   required
                   type="tel"
@@ -655,8 +637,10 @@ export function SignupForm({
 
         {isMinor && (
           <p className="mb-6 rounded-2xl border border-line bg-ink/20 p-4 text-sm text-muted">
-            <span className="text-body">Emergency contact:</span> we&apos;ll use the parent
-            or guardian details above, so there&apos;s nothing extra to fill in here.
+            <span className="text-body">
+              {copy.signupForm.emergencyMinorLabel}
+            </span>{" "}
+            {copy.signupForm.emergencyMinorRest}
           </p>
         )}
 
@@ -671,8 +655,8 @@ export function SignupForm({
             that only the kitchen reads. 16- and 17-year-olds acknowledge in the guardian
             section that telling us on the day is theirs to do. */}
             <div>
-            <Label hint="Tick anything that applies. Our first aider reads this, so 'None' is a real answer we need.">
-              Medical conditions
+            <Label hint={copy.signupForm.medicalConditionsHint}>
+              {copy.signupForm.medicalConditions}
             </Label>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               {MEDICAL_CONDITIONS.map((c) => {
@@ -697,8 +681,8 @@ export function SignupForm({
             </div>
           </div>
           <label className="mt-5 block">
-            <Label hint="Which inhaler, which allergy, what to do — the detail a first aider would actually need. Leave blank if nothing applies.">
-              Anything else our first aider should know
+            <Label hint={copy.signupForm.medicalDetailHint}>
+              {copy.signupForm.medicalDetail}
             </Label>
             <textarea
               rows={2}
@@ -709,8 +693,8 @@ export function SignupForm({
           </label>
 
         <label className="mt-5 block">
-          <Label hint="Wheelchair access, quiet space, anything else — just ask.">
-            Accessibility needs
+          <Label hint={copy.signupForm.accessibilityHint}>
+            {copy.signupForm.accessibility}
           </Label>
           <input
             className={inputCx}
@@ -724,7 +708,7 @@ export function SignupForm({
             required
             checked={!!values.rulesAgreed}
             onChange={(v) => set("rulesAgreed", v)}
-            label="I've read the rules and the code of conduct, and I'll play by them."
+            label={copy.signupForm.rulesAgreed}
           />
           {/* STATEMENTS, NOT CHECKBOXES.
               Each of these is a condition of registering rather than a choice, so
@@ -735,60 +719,62 @@ export function SignupForm({
               is why it names the way out.
               See 04_Legal/PHOTOGRAPHY-CONSENT.md and DPIA risk 18. */}
           <div className="space-y-3 rounded-xl border border-line bg-ink/20 p-4 text-sm text-muted">
-            <p className="font-semibold text-body">What registering means</p>
-            <p>
-              <span className="text-body">This registers your interest — it is not a
-              place.</span>{" "}
-              All {event.capacity} places are decided by a random draw after entries
-              close. We email you either way, and we email you now to confirm we have
-              this form.
-            </p>
-            <p>
-              <span className="text-body">If you get a place, we&apos;ll create your SWC
-              profile.</span>{" "}
-              It saves your results and trophies across every event you play in, and you
-              sign in with this email address — no password. If you don&apos;t get a place
-              this time, no profile is created.
+            <p className="font-semibold text-body">
+              {copy.signupForm.termsHeading}
             </p>
             <p>
               <span className="text-body">
-                Photos and video are taken at the event.
+                {copy.signupForm.termsNotAPlaceStrong}
               </span>{" "}
-              By registering{" "}
+              {fill(copy.signupForm.termsNotAPlaceRest, {
+                capacity: event.capacity,
+              })}
+            </p>
+            <p>
+              <span className="text-body">
+                {copy.signupForm.termsProfileStrong}
+              </span>{" "}
+              {copy.signupForm.termsProfileRest}
+            </p>
+            <p>
+              <span className="text-body">
+                {copy.signupForm.termsPhotoStrong}
+              </span>{" "}
               {isMinor
-                ? "you agree your child may appear in them"
-                : "you agree you may appear in them"}
-              , on our website, our social media, and in material promoting future
-              events. Not for sale, not for sponsors&apos; own advertising. If
-              you&apos;d rather{" "}
-              {isMinor ? "they were not filmed" : "not be filmed"}, tell us before
-              the day and our photographers are told.
+                ? copy.signupForm.termsPhotoMinor
+                : copy.signupForm.termsPhotoAdult}
             </p>
             <p>
               <span className="text-body">
-                {isMinor ? "They must bring" : "You must bring"} proof of{" "}
-                {isMinor ? "their" : "your"} date of birth on the day.
+                {isMinor
+                  ? copy.signupForm.termsIdMinorStrong
+                  : copy.signupForm.termsIdAdultStrong}
               </span>{" "}
-              Anything that shows it — a birth certificate, a passport, an NHS card, a
-              school or college letter or card that carries the date of birth.{" "}
-              <span className="text-body">A photo of it on a phone is fine</span>, so
-              nothing has to leave the house. It is checked at the door to collect{" "}
-              {isMinor ? "their" : "your"} slip, then handed straight back: we write down
-              nothing from it, only that we saw a date of birth. Age decides the bracket
-              and the supervision rules, so this is the one thing we check rather than
-              take on trust.
+              <Rich
+                text={
+                  isMinor
+                    ? copy.signupForm.termsIdMinorRest
+                    : copy.signupForm.termsIdAdultRest
+                }
+              />
             </p>
             <p>
-              <span className="text-body">We contact you by email.</span> Your
-              confirmation, the result of the draw, and news about future events all come
-              by email — there is nothing else to sign up to.
+              <span className="text-body">{copy.signupForm.termsEmailStrong}</span>{" "}
+              {copy.signupForm.termsEmailRest}
             </p>
             <p className="text-xs">
-              Anything here can be stopped at any time — before the day or after it — at{" "}
-              <a href="/support" className="text-kesri hover:underline">
-                sikhchampionships.com/support
-              </a>
-              , with no effect on your place.
+              <Rich
+                text={copy.signupForm.termsOptOut}
+                em={(s, i) => (
+                  <a
+                    key={i}
+                    href="/support"
+                    className="text-kesri hover:underline"
+                  >
+                    {s}
+                  </a>
+                )}
+              />
             </p>
           </div>
         </div>
@@ -814,29 +800,30 @@ export function SignupForm({
             </ul>
           )}
           <p className="mt-3 text-sm text-muted">
-            Nothing has been submitted yet. Fix the above and press the button again.
+            {copy.signupForm.failureFooter}
           </p>
         </div>
       )}
 
       {testFill && (
         <div className="rounded-2xl border border-dashed border-kesri/60 bg-kesri/[0.06] p-5">
-          <p className="font-display text-kesri">Rehearsal shortcut</p>
+          <p className="font-display text-kesri">
+            {copy.signupForm.rehearsalTitle}
+          </p>
           <p className="mt-1 text-sm text-muted">
-            Fills every box with made-up details for a 13-year-old — the longest path
-            through the form, so it exercises the guardian section and the guardian email.
+            {copy.signupForm.rehearsalBody1}
             <span className="text-body">
               {" "}
-              Your own email address is left blank on purpose
+              {copy.signupForm.rehearsalBody2}
             </span>{" "}
-            — type one you can actually read, in both boxes, or the emails go nowhere.
+            {copy.signupForm.rehearsalBody3}
           </p>
           <button
             type="button"
             onClick={fillWithTestData}
             className="mt-4 rounded-xl border border-kesri bg-kesri/20 px-5 py-2.5 text-sm font-bold text-kesri transition-colors hover:bg-kesri/30"
           >
-            Fill with test data
+            {copy.signupForm.rehearsalButton}
           </button>
         </div>
       )}
@@ -847,10 +834,14 @@ export function SignupForm({
           disabled={submitting || !division || handleProblem !== null}
           className="rounded-xl bg-kesri px-8 py-4 font-bold text-ink transition-colors hover:bg-kesrisoft disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {submitting ? "Sending…" : demo ? "Submit (preview — saves nothing)" : "Register interest"}
+          {submitting
+            ? copy.common.sending
+            : demo
+              ? copy.signupForm.submitDemo
+              : copy.signupForm.submit}
         </button>
         <p className="text-sm text-muted">
-          Free to enter. {event.capacity} places, more applications than places expected.
+          {fill(copy.signupForm.submitNote, { capacity: event.capacity })}
         </p>
       </div>
     </form>
@@ -892,7 +883,7 @@ function EventField({
           value={(values[field.name] as string) ?? ""}
           onChange={(e) => set(field.name, e.target.value)}
         >
-          <option value="">Choose…</option>
+          <option value="">{copy.signupForm.choose}</option>
           {field.options?.map((o) => (
             <option key={o} value={o}>
               {o}

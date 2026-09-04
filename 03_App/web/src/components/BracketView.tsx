@@ -1,5 +1,6 @@
 import type { KnockoutBracket, Match } from "@/lib/bracket";
 import { roundName, winnerOf } from "@/lib/bracket";
+import { copy, fill } from "@/copy";
 
 /**
  * The live bracket. Two jobs, and they pull in different directions:
@@ -56,7 +57,10 @@ function MatchCard({
     >
       {live && (
         <p className="bg-kesri px-3 py-1 text-[10px] font-bold tracking-[0.16em] text-ink uppercase">
-          Live{match.station ? ` · Station ${match.station}` : ""}
+          {copy.bracket.live}
+          {match.station
+            ? ` · ${fill(copy.bracket.station, { n: match.station })}`
+            : ""}
         </p>
       )}
       <Side

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { SupportForm } from "@/components/SupportForm";
+import { copy } from "@/copy";
+import { Rich } from "@/copy/Rich";
 
 export const metadata: Metadata = {
-  title: "Contact us",
-  description:
-    "Ask us anything, raise a safety concern, or tell us you want your details deleted. Open to players, parents and guardians — no account needed.",
+  title: copy.support.metaTitle,
+  description: copy.support.metaDescription,
 };
 
 /**
@@ -37,27 +38,31 @@ export default async function SupportPage({
   const { about } = await searchParams;
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="display-xl text-[clamp(2.2rem,5vw,3.6rem)]">Contact us</h1>
-      <p className="mt-3 text-lg text-muted">
-        Ask us anything, raise a safety concern, or tell us to delete your details. You
-        don&apos;t need an account, and you don&apos;t have to give your name.
-      </p>
+      <h1 className="display-xl text-[clamp(2.2rem,5vw,3.6rem)]">
+        {copy.support.title}
+      </h1>
+      <p className="mt-3 text-lg text-muted">{copy.support.intro}</p>
 
       {/* Emergency route out. This has to be the first thing on the page — if someone is
           in real danger, a support form is the wrong tool and we should say so. */}
       <div className="mt-8 rounded-2xl border border-kesri/50 bg-kesri/[0.08] p-5">
         <h2 className="font-display text-lg text-kesri">
-          If someone is in immediate danger
+          {copy.support.emergencyTitle}
         </h2>
         <p className="mt-2 text-sm text-body">
-          Call <strong className="font-bold">999</strong>. If you&apos;re worried about a
-          child&apos;s safety and it isn&apos;t an emergency, the NSPCC helpline is{" "}
-          <strong className="font-bold">0808 800 5000</strong>, and Childline is{" "}
-          <strong className="font-bold">0800 1111</strong> — both free, and Childline is
-          confidential.
+          {/* The three phone numbers are the marked runs — bold, so they are the thing
+              somebody scanning this box in a hurry actually sees. */}
+          <Rich
+            text={copy.support.emergencyBody}
+            em={(s, i) => (
+              <strong key={i} className="font-bold">
+                {s}
+              </strong>
+            )}
+          />
         </p>
         <p className="mt-2 text-sm text-muted">
-          Please still tell us as well, so we can act on our side.
+          {copy.support.emergencyFootnote}
         </p>
       </div>
 
@@ -66,9 +71,7 @@ export default async function SupportPage({
       </div>
 
       <p className="mt-12 rounded-2xl border border-line bg-surface/50 p-5 text-sm text-muted">
-        This form is the way to reach us. Anything about a young person&apos;s safety jumps
-        to the top of the queue and is read by a moderator. You can send it without an
-        account and without giving your name.
+        {copy.support.footnote}
       </p>
     </div>
   );

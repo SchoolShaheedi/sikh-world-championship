@@ -1,4 +1,5 @@
 import type { AwardTier } from "@/lib/types";
+import { copy } from "@/copy";
 
 export interface CabinetEntry {
   id: string;
@@ -28,7 +29,7 @@ export function TrophyCabinet({ trophies }: { trophies: CabinetEntry[] }) {
   if (trophies.length === 0) {
     return (
       <p className="rounded-2xl border border-dashed border-line p-10 text-center text-muted">
-        No trophies yet. Enter an event.
+        {copy.players.cabinetEmpty}
       </p>
     );
   }

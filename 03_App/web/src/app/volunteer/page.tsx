@@ -1,26 +1,37 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { copy } from "@/copy";
 
-export const metadata: Metadata = { title: "Volunteer" };
+export const metadata: Metadata = { title: copy.volunteer.title };
+
+/**
+ * The jobs on the day. Name and detail are separate so the em dash is not part of the
+ * copy — a role with no detail (langar, photography) renders as just the name.
+ */
+const ROLES = [
+  { name: copy.volunteer.role1Name, detail: copy.volunteer.role1Detail },
+  { name: copy.volunteer.role2Name, detail: copy.volunteer.role2Detail },
+  { name: copy.volunteer.role3Name, detail: copy.volunteer.role3Detail },
+  { name: copy.volunteer.role4Name, detail: copy.volunteer.role4Detail },
+  { name: copy.volunteer.role5Name, detail: copy.volunteer.role5Detail },
+  { name: copy.volunteer.role6Name, detail: copy.volunteer.role6Detail },
+  { name: copy.volunteer.role7Name, detail: copy.volunteer.role7Detail },
+];
 
 export default function VolunteerPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-14">
-      <h1 className="font-display text-4xl">Volunteer with us</h1>
-      <p className="mt-5 text-lg text-muted">
-        A 64-player event needs roughly 15 people to run properly. If you can give a day,
-        we&apos;d be glad to have you.
-      </p>
+      <h1 className="font-display text-4xl">{copy.volunteer.title}</h1>
+      <p className="mt-5 text-lg text-muted">{copy.volunteer.intro}</p>
 
-      <h2 className="font-display mt-12 text-2xl">Roles on the day</h2>
+      <h2 className="font-display mt-12 text-2xl">{copy.volunteer.rolesTitle}</h2>
       <ul className="mt-4 space-y-3 text-muted">
-        <li><strong className="text-body">Check-in desk</strong> — scanning QR codes, handing out wristbands</li>
-        <li><strong className="text-body">Referees</strong> — one per few stations, settling disputes, starting matches</li>
-        <li><strong className="text-body">Score entry</strong> — keeping the live bracket up to date (one dedicated person)</li>
-        <li><strong className="text-body">Setup and pack-down</strong> — consoles, screens, cabling, tables</li>
-        <li><strong className="text-body">Langar and refreshments</strong></li>
-        <li><strong className="text-body">Photography and social</strong></li>
-        <li><strong className="text-body">Safeguarding leads</strong> — DBS check required</li>
+        {ROLES.map((r) => (
+          <li key={r.name}>
+            <strong className="text-body">{r.name}</strong>
+            {r.detail ? ` — ${r.detail}` : ""}
+          </li>
+        ))}
       </ul>
 
       {/* Deep-links to the support form with "I'd like to volunteer" already selected.
@@ -32,16 +43,15 @@ export default function VolunteerPage() {
           src/lib/types.ts FormField). It needs the DBS question, availability and a
           reference, none of which belong in a general support message. */}
       <div className="mt-10 rounded-2xl border border-line bg-surface/60 p-6">
-        <h2 className="font-display text-xl text-kesri">How to volunteer</h2>
-        <p className="mt-3 text-muted">
-          Tell us which role suits you and whether you can give the whole day. No account
-          needed.
-        </p>
+        <h2 className="font-display text-xl text-kesri">
+          {copy.volunteer.howTitle}
+        </h2>
+        <p className="mt-3 text-muted">{copy.volunteer.howBody}</p>
         <Link
           href="/support?about=volunteer"
           className="mt-5 inline-block rounded-xl bg-kesri px-6 py-3 font-bold text-ink transition-colors hover:bg-kesrisoft"
         >
-          Volunteer with us
+          {copy.volunteer.cta}
         </Link>
       </div>
     </div>

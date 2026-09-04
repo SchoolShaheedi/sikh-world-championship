@@ -4,6 +4,7 @@ import { registerInterest } from "@/lib/interest";
 import { validateRegistration } from "@/lib/registration-schema";
 import { registrationDemo } from "@/lib/features";
 import { registrationLive } from "@/lib/testing-access";
+import { copy } from "@/copy";
 
 /**
  * Register for an event.
@@ -27,9 +28,7 @@ export async function POST(
   if (!live && !registrationDemo()) {
     return NextResponse.json(
       {
-        error:
-          "Entries aren't open yet. We're finishing the guardian notifications and the " +
-          "systems that hold players' details properly before we take any entries.",
+        error: copy.api.entriesClosed,
       },
       { status: 503 },
     );

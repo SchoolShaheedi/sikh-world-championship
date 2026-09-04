@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { currentPlayer } from "@/lib/session";
 import { SignInForm } from "@/components/SignInForm";
+import { copy } from "@/copy";
 
-export const metadata: Metadata = { title: "Sign in" };
+export const metadata: Metadata = { title: copy.signin.title };
 export const dynamic = "force-dynamic";
 
 const REASONS: Record<string, string> = {
-  expired: "That link had expired — they only last 15 minutes. Here's a fresh one.",
-  used: "That link had already been used. Ask for a new one.",
-  invalid: "That link wasn't valid. Ask for a new one.",
+  expired: copy.signin.errorExpired,
+  used: copy.signin.errorUsed,
+  invalid: copy.signin.errorInvalid,
 };
 
 export default async function SignInPage({
@@ -23,7 +24,7 @@ export default async function SignInPage({
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">
-      <h1 className="font-display text-3xl">Sign in</h1>
+      <h1 className="font-display text-3xl">{copy.signin.title}</h1>
       {error && REASONS[error] && (
         <p
           role="alert"
@@ -32,17 +33,11 @@ export default async function SignInPage({
           {REASONS[error]}
         </p>
       )}
-      <p className="mt-4 text-muted">
-        No password. Put in the email address you used when you entered an event, and
-        we&apos;ll send you a link.
-      </p>
+      <p className="mt-4 text-muted">{copy.signin.intro}</p>
       <div className="mt-8">
         <SignInForm />
       </div>
-      <p className="mt-8 text-sm text-muted">
-        Haven&apos;t entered an event yet? You get an account automatically when you do —
-        there&apos;s no separate sign-up to do first.
-      </p>
+      <p className="mt-8 text-sm text-muted">{copy.signin.footnote}</p>
     </div>
   );
 }

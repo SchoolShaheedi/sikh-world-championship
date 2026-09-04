@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { BracketView } from "./BracketView";
 import type { KnockoutBracket } from "@/lib/bracket";
+import { copy, fill } from "@/copy";
 
 interface Payload {
   bracket: KnockoutBracket | null;
@@ -75,19 +76,17 @@ export function LiveBracket({
 
   if (!data) {
     return (
-      <p className="text-muted">Loading the bracket…</p>
+      <p className="text-muted">{copy.bracket.loading}</p>
     );
   }
 
   if (!data.bracket) {
     return (
       <div className="rounded-3xl border border-line bg-surface/60 p-8">
-        <h2 className="font-display text-2xl text-kesri">The bracket goes live on the day</h2>
-        <p className="mt-4 text-muted">
-          Once places are drawn and the first round is set, it appears here and updates as
-          scores come in — on the big screen in the hall, and on this page for anyone
-          following from home.
-        </p>
+        <h2 className="font-display text-2xl text-kesri">
+          {copy.bracket.emptyTitle}
+        </h2>
+        <p className="mt-4 text-muted">{copy.bracket.emptyBody}</p>
       </div>
     );
   }
@@ -102,11 +101,17 @@ export function LiveBracket({
         <p className="mt-4 text-xs text-muted">
           {stale ? (
             <span className="text-kesri">
-              Reconnecting — showing the last bracket we had
+              {copy.bracket.reconnecting}
               {lastOk ? `, from ${lastOk.toLocaleTimeString("en-GB")}` : ""}.
             </span>
           ) : (
-            <>Updated {lastOk ? lastOk.toLocaleTimeString("en-GB") : "just now"}.</>
+            <>
+              {fill(copy.bracket.updated, {
+                time: lastOk
+                  ? lastOk.toLocaleTimeString("en-GB")
+                  : copy.bracket.updatedJustNow,
+              })}
+            </>
           )}
         </p>
       )}

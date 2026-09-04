@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Avatar } from "@/components/Avatar";
 import { PRESET_NOTES, REPORT_REASONS, type LfgPost } from "@/lib/play-types";
 import { sendRequest, reportPlayer, blockAndHide } from "@/app/play/actions";
+import { copy, fill } from "@/copy";
 
 /**
  * One post on the board.
@@ -27,10 +28,10 @@ export function PostCard({ post }: { post: LfgPost }) {
             <p className="text-sm text-muted">{post.region}</p>
             {post.eventVerified && (
               <span
-                title="Came to an SWC event and was checked in by a volunteer"
+                title={copy.play.postVerifiedTitle}
                 className="rounded-md bg-ok/15 px-2 py-0.5 text-[10px] font-bold tracking-wider text-ok uppercase"
               >
-                ✓ Met at an event
+                {copy.play.postVerifiedBadge}
               </span>
             )}
           </div>
@@ -57,8 +58,7 @@ export function PostCard({ post }: { post: LfgPost }) {
 
       {panel === "sent" && (
         <p className="mt-4 rounded-xl border border-ok/40 bg-ok/10 p-3 text-sm text-body">
-          Request sent. If {post.displayName} accepts, you&apos;ll both get each
-          other&apos;s gamertag and can play.
+          {fill(copy.play.postRequestSent, { name: post.displayName })}
         </p>
       )}
 
@@ -68,13 +68,13 @@ export function PostCard({ post }: { post: LfgPost }) {
             onClick={() => setPanel("request")}
             className="rounded-xl bg-kesri px-4 py-2.5 text-sm font-bold text-ink hover:bg-kesrisoft"
           >
-            Request a game
+            {copy.play.postRequestCta}
           </button>
           <button
             onClick={() => setPanel("report")}
             className="rounded-xl border border-line px-4 py-2.5 text-sm text-muted hover:border-muted hover:text-body"
           >
-            Report
+            {copy.play.postReportCta}
           </button>
           <form action={blockAndHide}>
             <input type="hidden" name="targetPlayerId" value={post.playerId} />
@@ -82,7 +82,7 @@ export function PostCard({ post }: { post: LfgPost }) {
               type="submit"
               className="rounded-xl border border-line px-4 py-2.5 text-sm text-muted hover:border-muted hover:text-body"
             >
-              Block
+              {copy.play.postBlockCta}
             </button>
           </form>
         </div>
@@ -105,7 +105,7 @@ export function PostCard({ post }: { post: LfgPost }) {
 
           <label className="block">
             <span className="text-sm font-semibold text-body">
-              Which time suits you?
+              {copy.play.postWhichTime}
             </span>
             <select
               name="window"
@@ -119,7 +119,9 @@ export function PostCard({ post }: { post: LfgPost }) {
           </label>
 
           <label className="mt-4 block">
-            <span className="text-sm font-semibold text-body">Say something</span>
+            <span className="text-sm font-semibold text-body">
+              {copy.play.postSaySomething}
+            </span>
             <select
               name="note"
               defaultValue={PRESET_NOTES[5]}
@@ -138,14 +140,14 @@ export function PostCard({ post }: { post: LfgPost }) {
               type="submit"
               className="rounded-lg bg-kesri px-4 py-2 text-sm font-bold text-ink"
             >
-              Send request
+              {copy.play.postSendRequest}
             </button>
             <button
               type="button"
               onClick={() => setPanel("none")}
               className="rounded-lg border border-line px-4 py-2 text-sm text-body"
             >
-              Cancel
+              {copy.play.composerCancel}
             </button>
           </div>
         </form>
@@ -165,12 +167,9 @@ export function PostCard({ post }: { post: LfgPost }) {
           <input type="hidden" name="context" value={`post:${post.id}`} />
 
           <p className="text-sm font-semibold text-body">
-            Report {post.displayName}
+            {fill(copy.play.postReportTitle, { name: post.displayName })}
           </p>
-          <p className="mt-1 text-xs text-muted">
-            A moderator reads every report. You won&apos;t be named to the person
-            you&apos;re reporting.
-          </p>
+          <p className="mt-1 text-xs text-muted">{copy.play.postReportHint}</p>
 
           <select
             name="reason"
@@ -185,7 +184,7 @@ export function PostCard({ post }: { post: LfgPost }) {
           <textarea
             name="detail"
             rows={2}
-            placeholder="Anything else we should know? (optional)"
+            placeholder={copy.play.postReportPlaceholder}
             className="mt-3 w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-body placeholder:text-muted/60"
           />
 
@@ -194,14 +193,14 @@ export function PostCard({ post }: { post: LfgPost }) {
               type="submit"
               className="rounded-lg bg-kesri px-4 py-2 text-sm font-bold text-ink"
             >
-              Send report
+              {copy.play.postSendReport}
             </button>
             <button
               type="button"
               onClick={() => setPanel("none")}
               className="rounded-lg border border-line px-4 py-2 text-sm text-body"
             >
-              Cancel
+              {copy.play.composerCancel}
             </button>
           </div>
         </form>

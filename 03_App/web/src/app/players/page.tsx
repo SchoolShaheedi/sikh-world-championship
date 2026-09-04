@@ -3,8 +3,9 @@ import Link from "next/link";
 import { PlayerCard } from "@/components/PlayerCard";
 import { TrophyCabinet } from "@/components/TrophyCabinet";
 import { showDemoData } from "@/lib/features";
+import { copy } from "@/copy";
 
-export const metadata: Metadata = { title: "Players" };
+export const metadata: Metadata = { title: copy.players.title };
 
 /**
  * PREVIEW — never rendered in production, see `showDemoData()`. An invented player with
@@ -21,17 +22,14 @@ const demoTrophies = [
 export default function PlayersPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-14">
-      <h1 className="font-display text-4xl">Players</h1>
-      <p className="mt-3 max-w-2xl text-muted">
-        Every player who enters an event gets a Sikh World Championships profile — a player
-        card, and a trophy cabinet that follows them across every sport and every year.
-      </p>
+      <h1 className="font-display text-4xl">{copy.players.title}</h1>
+      <p className="mt-3 max-w-2xl text-muted">{copy.players.intro}</p>
 
       {showDemoData() ? (
         <div className="mt-12 grid gap-12 lg:grid-cols-[300px_1fr]">
           <div>
             <h2 className="mb-4 text-xs font-bold tracking-[0.18em] text-muted uppercase">
-              Player card
+              {copy.players.demoCardHeading}
             </h2>
             <PlayerCard
               name="Jagdeep Singh"
@@ -47,26 +45,25 @@ export default function PlayersPage() {
 
           <div>
             <h2 className="mb-4 text-xs font-bold tracking-[0.18em] text-muted uppercase">
-              Trophy cabinet
+              {copy.players.demoCabinetHeading}
             </h2>
             <TrophyCabinet trophies={demoTrophies} />
             <p className="mt-6 text-sm text-muted">
-              Demo data, shown outside production only.
+              {copy.players.demoNote}
             </p>
           </div>
         </div>
       ) : (
         <div className="mt-12 rounded-3xl border border-line bg-surface/60 p-8">
-          <h2 className="font-display text-2xl text-kesri">Nobody has competed yet</h2>
-          <p className="mt-4 max-w-2xl text-muted">
-            Player cards and trophy cabinets fill up as events are held. The first ones go
-            out at Sikh FC 27 in Leicester.
-          </p>
+          <h2 className="font-display text-2xl text-kesri">
+            {copy.players.emptyTitle}
+          </h2>
+          <p className="mt-4 max-w-2xl text-muted">{copy.players.emptyBody}</p>
           <Link
             href="/join"
             className="mt-6 inline-block rounded-xl bg-kesri px-6 py-3 font-bold text-ink transition-colors hover:bg-kesrisoft"
           >
-            Create your profile
+            {copy.players.emptyCta}
           </Link>
         </div>
       )}

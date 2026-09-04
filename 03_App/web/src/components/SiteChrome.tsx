@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Wordmark } from "./Logo";
 import { BrandLockup } from "./BrandLockup";
 import { ORG } from "@/data/org";
+import { copy } from "@/copy";
 import { upcomingEvents } from "@/data/events";
 
 /**
@@ -17,8 +18,8 @@ import { upcomingEvents } from "@/data/events";
  * need a mission statement it has to keep true. The story is the events list.
  */
 const NAV = [
-  { href: "/events", label: "Events" },
-  { href: "/support", label: "Contact" },
+  { href: "/events", label: copy.nav.events },
+  { href: "/support", label: copy.nav.contact },
 ];
 
 /**
@@ -71,7 +72,7 @@ export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {
             href="/join"
             className="pill ml-2 bg-kesri px-5 py-2 text-sm font-bold text-ink transition-colors hover:bg-kesrisoft"
           >
-            Register interest
+            {copy.nav.cta}
           </Link>
         </nav>
 
@@ -79,10 +80,10 @@ export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          aria-label="Menu"
+          aria-label={copy.nav.menuAria}
           className="pill border border-line px-4 py-2 text-sm sm:hidden"
         >
-          {open ? "Close" : "Menu"}
+          {open ? copy.nav.menuClose : copy.nav.menuOpen}
         </button>
       </div>
 
@@ -103,7 +104,7 @@ export function SiteHeader({ logoSrc = null }: { logoSrc?: string | null }) {
             onClick={() => setOpen(false)}
             className="mt-4 block rounded-full bg-kesri px-4 py-3 text-center font-bold text-ink"
           >
-            Register interest
+            {copy.nav.cta}
           </Link>
         </nav>
       )}
@@ -127,9 +128,11 @@ export function SiteFooter({ logoSrc = null }: { logoSrc?: string | null }) {
           <p className="mt-3 max-w-xs text-sm text-muted">{ORG.tagline}</p>
         </div>
         <div>
-          <h3 className="text-xs font-bold tracking-[0.18em] text-muted">EVENTS</h3>
+          <h3 className="text-xs font-bold tracking-[0.18em] text-muted">
+            {copy.footer.eventsHeading}
+          </h3>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/events" className="text-body hover:text-kesri">All events</Link></li>
+            <li><Link href="/events" className="text-body hover:text-kesri">{copy.footer.allEvents}</Link></li>
             {upcomingEvents().map((e) => (
               <li key={e.slug}>
                 <Link href={`/events/${e.slug}`} className="text-body hover:text-kesri">
@@ -137,19 +140,21 @@ export function SiteFooter({ logoSrc = null }: { logoSrc?: string | null }) {
                 </Link>
               </li>
             ))}
-            <li><Link href="/volunteer" className="text-body hover:text-kesri">Volunteer with us</Link></li>
+            <li><Link href="/volunteer" className="text-body hover:text-kesri">{copy.footer.volunteer}</Link></li>
           </ul>
         </div>
         <div>
-          <h3 className="text-xs font-bold tracking-[0.18em] text-muted">ORGANISATION</h3>
+          <h3 className="text-xs font-bold tracking-[0.18em] text-muted">
+            {copy.footer.orgHeading}
+          </h3>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/sponsors" className="text-body hover:text-kesri">Sponsors</Link></li>
+            <li><Link href="/sponsors" className="text-body hover:text-kesri">{copy.footer.sponsors}</Link></li>
             {/* In the footer rather than the header: signing in is for the handful of
                 people who already have an account, and the header's one call to action
                 should stay on creating a profile. */}
-            <li><Link href="/join" className="text-body hover:text-kesri">Create a profile</Link></li>
-            <li><Link href="/signin" className="text-body hover:text-kesri">Sign in</Link></li>
-            <li><Link href="/support" className="text-body hover:text-kesri">Contact us</Link></li>
+            <li><Link href="/join" className="text-body hover:text-kesri">{copy.footer.createProfile}</Link></li>
+            <li><Link href="/signin" className="text-body hover:text-kesri">{copy.footer.signIn}</Link></li>
+            <li><Link href="/support" className="text-body hover:text-kesri">{copy.footer.contact}</Link></li>
             <li>
               <a
                 href={ORG.socials.instagram}
@@ -157,7 +162,7 @@ export function SiteFooter({ logoSrc = null }: { logoSrc?: string | null }) {
                 rel="noreferrer"
                 className="text-body hover:text-kesri"
               >
-                Instagram
+                {copy.footer.instagram}
               </a>
             </li>
           </ul>

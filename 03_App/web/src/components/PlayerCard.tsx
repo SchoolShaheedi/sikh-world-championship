@@ -2,6 +2,7 @@ import { Avatar } from "./Avatar";
 import { Logo } from "./Logo";
 import { HoloCard } from "./HoloCard";
 import { qualityFor, type Quality } from "@/data/qualities";
+import { copy } from "@/copy";
 
 /**
  * FIFA-Ultimate-Team-style player card, generated the moment someone registers.
@@ -104,7 +105,7 @@ export function PlayerCard({
                 className="text-[10px] font-bold tracking-[0.2em]"
                 style={{ color: t.sub }}
               >
-                QUALITY
+                {copy.players.cardQualityLabel}
               </p>
               <p
                 className="mt-1.5 text-[19px] leading-tight"
@@ -155,7 +156,7 @@ export function PlayerCard({
                 className="text-[9px] font-bold tracking-[0.16em]"
                 style={{ color: t.sub }}
               >
-                DIVISION
+                {copy.players.cardDivisionLabel}
               </p>
               <p
                 className="font-display mt-0.5 text-[15px]"
@@ -169,7 +170,7 @@ export function PlayerCard({
                 className="text-[9px] font-bold tracking-[0.16em]"
                 style={{ color: t.sub }}
               >
-                FROM
+                {copy.players.cardFromLabel}
               </p>
               <p
                 className="font-display mt-0.5 truncate text-[15px]"

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { SPONSORS } from "@/data/sponsors";
+import { copy } from "@/copy";
 
-export const metadata: Metadata = { title: "Sponsors" };
+export const metadata: Metadata = { title: copy.sponsors.title };
 
 /**
  * What a sponsor is told they get. Trimmed on 2026-09-01 when the award list was cut to
@@ -10,10 +11,10 @@ export const metadata: Metadata = { title: "Sponsors" };
  * exists any more. Nothing on this page may promise something the event does not have.
  */
 const WHAT_A_SPONSOR_GETS = [
-  "Logo on this page, on the event page, and on the big screen beside the live bracket",
-  "An offer to every profile holder — a discount only our players can use, reaching them directly rather than through an advert they scroll past",
-  "Presence at the event, and mentions across the day",
-  "Association with a community event that is free to enter, by design",
+  copy.sponsors.whatYouGet1,
+  copy.sponsors.whatYouGet2,
+  copy.sponsors.whatYouGet3,
+  copy.sponsors.whatYouGet4,
 ];
 
 /**
@@ -22,24 +23,23 @@ const WHAT_A_SPONSOR_GETS = [
  * or no, and without the third the offer cannot go on the site.
  */
 const WHAT_TO_TELL_US = [
-  "Who you are, and what you do",
-  "What you would like to give — money, equipment, prizes, food, or an offer for our players",
-  "If it is an offer: what it is, the code, and how long it lasts",
-  "Whether you want your logo on the screen on the day",
-  "Whether anyone from your team wants to be there",
-  "Anything you need from us in return, so we can say yes or no honestly",
+  copy.sponsors.tellUs1,
+  copy.sponsors.tellUs2,
+  copy.sponsors.tellUs3,
+  copy.sponsors.tellUs4,
+  copy.sponsors.tellUs5,
+  copy.sponsors.tellUs6,
 ];
 
 export default function SponsorsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-14">
-      <h1 className="font-display text-4xl">Sponsors</h1>
-      <p className="mt-5 text-lg text-muted">
-        Sponsorship is what keeps entry free. It pays for the venue, the consoles, the
-        prizes and the langar — so that no young person is priced out of competing.
-      </p>
+      <h1 className="font-display text-4xl">{copy.sponsors.title}</h1>
+      <p className="mt-5 text-lg text-muted">{copy.sponsors.intro}</p>
 
-      <h2 className="font-display mt-12 text-2xl">Backing the championship</h2>
+      <h2 className="font-display mt-12 text-2xl">
+        {copy.sponsors.backingTitle}
+      </h2>
       <div className="mt-5 space-y-4">
         {SPONSORS.map((s) => (
           <div key={s.name} className="rounded-2xl border border-line bg-surface/60 p-6">
@@ -55,15 +55,15 @@ export default function SponsorsPage() {
             </a>
             {s.offer && (
               <div className="mt-4 rounded-xl border border-kesri/40 bg-kesri/10 p-4 text-sm text-body">
-                <strong className="font-bold">{s.offer.detail}</strong> for Sikh World
-                Championships players.
+                <strong className="font-bold">{s.offer.detail}</strong>{" "}
+                {copy.sponsors.offerSuffix}
                 <a
                   href={s.offer.href}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-2 block font-semibold text-kesri hover:underline"
                 >
-                  See the range →
+                  {copy.sponsors.offerLink}
                 </a>
               </div>
             )}
@@ -71,7 +71,9 @@ export default function SponsorsPage() {
         ))}
       </div>
 
-      <h2 className="font-display mt-14 text-2xl">What a sponsor gets</h2>
+      <h2 className="font-display mt-14 text-2xl">
+        {copy.sponsors.whatYouGetTitle}
+      </h2>
       <ul className="mt-4 space-y-3 text-muted">
         {WHAT_A_SPONSOR_GETS.map((item) => (
           <li key={item}>{item}</li>
@@ -79,13 +81,11 @@ export default function SponsorsPage() {
       </ul>
 
       <div className="mt-14 rounded-3xl border border-line bg-surface/60 p-8">
-        <h2 className="font-display text-2xl text-kesri">Sponsor the championship</h2>
-        <p className="mt-4 text-muted">
-          Sixty-four players aged 12 to 25, their families in the room with them, and a
-          free day out built by volunteers. It is the first event of its kind for Sikh
-          youth in the UK, and the people in that hall are the ones you want to reach.
-        </p>
-        <p className="mt-4 text-muted">Tell us:</p>
+        <h2 className="font-display text-2xl text-kesri">
+          {copy.sponsors.pitchTitle}
+        </h2>
+        <p className="mt-4 text-muted">{copy.sponsors.pitchBody}</p>
+        <p className="mt-4 text-muted">{copy.sponsors.tellUsIntro}</p>
         <ul className="mt-3 space-y-2 text-sm text-muted">
           {WHAT_TO_TELL_US.map((q) => (
             <li key={q}>— {q}</li>
@@ -95,7 +95,7 @@ export default function SponsorsPage() {
           href="/support?about=sponsor"
           className="mt-6 inline-block rounded-xl bg-kesri px-6 py-3 font-bold text-ink transition-colors hover:bg-kesrisoft"
         >
-          Get in touch
+          {copy.sponsors.cta}
         </Link>
       </div>
     </div>

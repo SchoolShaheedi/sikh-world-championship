@@ -140,10 +140,43 @@ Committing either one **creates accounts and emails everybody**. Locally the ema
 (no key) and their full text appears in the dev-server terminal — read the offer email and
 the guardian notice there.
 
+## Who applied, and one person's record
+
+`/admin` → **Who applied**, or `/admin/entries`.
+
+| Where | What to check |
+|---|---|
+| The four charts | Referring organisation, city, self-rating, age group. Counts only — nothing here identifies anybody, which is what makes it safe to leave on a screen. |
+| The table | Click any name. Email is shown partly, so a row is recognisable without a screen full of children's addresses. |
+| A person's page | Referral, city, self-rating, favourite team, age **on the day of the event**, and the supervision line for an under-18. |
+| **Show contact details** | Email, mobile, date of birth, guardian and emergency contact, and the medical notes. Press it again to put them away. |
+| View source before pressing it | The real values are **not there**. The masking is done on the server, so a masked field is genuinely absent rather than hidden with CSS — which is the difference between a screen that is tidy and one that is safe to project. |
+| `LOCAL-000` vs `LOCAL-040` | One is 12 with a medical note and a guardian who stays; the other is an adult. Both render their own supervision line. |
+| Sign in as `local-desk@example.com` | Refused. This is moderator-only; desk staff get the door and nothing else. |
+
+## Two people with the same name
+
+`LOCAL-012` and `LOCAL-034` are both **Aman S.** — the same first name and the same last
+initial, which is the normal case rather than an edge one when the surnames are Singh and
+Kaur.
+
+They show as **Aman S. (1)** and **Aman S. (2)** in three places that must agree: the
+printed slip, the desk list and the bracket. Check all three. Then withdraw somebody else
+(`UPDATE registrations SET status='withdrawn' WHERE reference='LOCAL-020'`) and confirm the
+numbers have **not** moved — they are keyed on the reference, because a printed slip that
+stops matching the projector is worse than an ambiguous one.
+
 ## The arrival desk
 
 `/admin/checkin/slips` → one slip per player with a place, 18 to an A4 sheet. Print them,
 or just hold the **screen** up to the laptop's own camera.
+
+**Print them to a PDF and look at it**, rather than trusting the screen. The sheet declares
+`color-scheme: light`, `forced-color-adjust: none` and `print-color-adjust: exact`, and
+states a colour on every text element instead of inheriting one — because Chrome's auto-dark
+mode, macOS "Increase contrast" and Windows High Contrast each override author colours, and
+the failure mode is three blank pages discovered at a door with a queue behind it. Names
+wrap at the space, never mid-word.
 
 `/admin/checkin`:
 

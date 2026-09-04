@@ -36,7 +36,7 @@
  *   unknown      one of ours, not recognised. This is the one to escalate
  */
 import { getDb } from "./db";
-import { publicName, markEventVerified } from "./players";
+import { publicName, uniquePublicNames, markEventVerified } from "./players";
 import { defaultHandle } from "./handle";
 import { tokenFromScan, checkInPayload } from "./qr";
 import { ageOnEventDay } from "./registration-schema";
@@ -108,17 +108,30 @@ function leavingNote(row: Row, under18: boolean): string | null {
   return "Must be collected by an adult";
 }
 
-function toEntry(row: Row, eventDate: string | null): RosterEntry {
+/**
+ * The public name for one row, before disambiguation.
+ *
+ * LEFT JOIN, because the retention job unlinks a dormant profile and leaves the
+ * registration behind. A row with no player still has a name to show at a desk.
+ */
+function baseName(row: Row): string {
+  return row.display_name
+    ? publicName({ handle: row.handle, displayName: row.display_name })
+    : defaultHandle(row.full_name);
+}
+
+/** Numbered where two people share a name. Keyed on the reference, which never moves. */
+function namesFor(rows: Row[]): string[] {
+  return uniquePublicNames(rows, (r) => ({ name: baseName(r), stable: r.reference }));
+}
+
+function toEntry(row: Row, eventDate: string | null, publicNameOverride?: string): RosterEntry {
   const age = ageOnEventDay(row.dob, eventDate);
   const under18 = age !== null && age < 18;
   return {
     reference: row.reference,
     fullName: row.full_name,
-    // LEFT JOIN, because the retention job unlinks a dormant profile and leaves the
-    // registration behind. A row with no player still has a name to show at a desk.
-    publicName: row.display_name
-      ? publicName({ handle: row.handle, displayName: row.display_name })
-      : defaultHandle(row.full_name),
+    publicName: publicNameOverride ?? baseName(row),
     status: row.status,
     checkedInAt: row.checked_in_at,
     dobVerifiedAt: row.dob_verified_at,
@@ -159,7 +172,8 @@ export async function checkInRoster(
     )
     .bind(eventSlug)
     .all<Row>();
-  return results.map((r) => toEntry(r, eventDate));
+  const names = namesFor(results);
+  return results.map((r, i) => toEntry(r, eventDate, names[i]));
 }
 
 export interface Slip {
@@ -187,11 +201,12 @@ export async function checkInSlips(eventSlug: string): Promise<Slip[]> {
     .bind(eventSlug)
     .all<Row>();
 
-  return results.map((r) => ({
+  // Same numbering as the desk list and the bracket. A slip whose name did not match the
+  // screen would be worse than no number at all.
+  const names = namesFor(results);
+  return results.map((r, i) => ({
     reference: r.reference,
-    publicName: r.display_name
-      ? publicName({ handle: r.handle, displayName: r.display_name })
-      : defaultHandle(r.full_name),
+    publicName: names[i],
     payload: checkInPayload(r.check_in_token as string),
   }));
 }

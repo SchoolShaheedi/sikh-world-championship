@@ -7,8 +7,9 @@ import { signOut } from "./actions";
 import { boardOpen } from "@/lib/features";
 import { PROFILE_BENEFITS } from "@/data/profile-benefits";
 import { publicName } from "@/lib/players";
+import { copy, fill } from "@/copy";
 
-export const metadata: Metadata = { title: "Your profile" };
+export const metadata: Metadata = { title: copy.profile.title };
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
@@ -22,10 +23,13 @@ export default async function ProfilePage() {
         <div>
           <h1 className="font-display text-3xl">{me.displayName}</h1>
           <p className="mt-1 text-muted">
-            {me.region || "Region not set"} · {me.ageBand === "U16" ? "Under 16" : "16 and over"}
+            {me.region || copy.profile.regionNotSet} ·{" "}
+            {me.ageBand === "U16"
+              ? copy.profile.ageBandU16
+              : copy.profile.ageBandAdult}
             {me.eventVerified && (
               <span className="ml-2 rounded-full border border-ok/50 bg-ok/10 px-2 py-0.5 text-xs text-ok">
-                Met at an event
+                {copy.profile.eventVerified}
               </span>
             )}
           </p>
@@ -35,43 +39,64 @@ export default async function ProfilePage() {
       {/* What other players can see. Stated plainly because the whole safeguarding case
           rests on it being true, and a player should be able to check it themselves. */}
       <section className="mt-10 rounded-2xl border border-line bg-surface/60 p-6">
-        <h2 className="font-display text-lg text-kesri">What other players can see</h2>
+        <h2 className="font-display text-lg text-kesri">
+          {copy.profile.visibilityTitle}
+        </h2>
         <ul className="mt-4 space-y-2 text-sm text-muted">
           <li>
-            — Your name on the bracket:{" "}
+            — {copy.profile.visibilityBracket}{" "}
             <span className="text-body">{publicName(me)}</span>
           </li>
-          <li>— Your first name: <span className="text-body">{me.displayName}</span></li>
-          <li>— Your avatar: <span className="text-body">{getAvatar(me.avatarId).label}</span></li>
-          <li>— Your region: <span className="text-body">{me.region || "not set"}</span></li>
-          <li>— Your age group: <span className="text-body">{me.ageBand === "U16" ? "under 16" : "16 and over"}</span></li>
+          <li>
+            — {copy.profile.visibilityFirstName}{" "}
+            <span className="text-body">{me.displayName}</span>
+          </li>
+          <li>
+            — {copy.profile.visibilityAvatar}{" "}
+            <span className="text-body">{getAvatar(me.avatarId).label}</span>
+          </li>
+          <li>
+            — {copy.profile.visibilityRegion}{" "}
+            <span className="text-body">
+              {me.region || copy.profile.visibilityRegionUnset}
+            </span>
+          </li>
+          <li>
+            — {copy.profile.visibilityAgeGroup}{" "}
+            <span className="text-body">
+              {me.ageBand === "U16"
+                ? copy.profile.visibilityAgeU16
+                : copy.profile.visibilityAgeAdult}
+            </span>
+          </li>
         </ul>
-        <p className="mt-4 text-sm text-muted">
-          Never your surname, your school, your address, your exact age or your email. Your
-          PlayStation ID is only shared with someone once you have both agreed to a game —
-          it is never on the bracket or the big screen, because anyone could then look you
-          up on PlayStation.
-        </p>
+        <p className="mt-4 text-sm text-muted">{copy.profile.visibilityNever}</p>
       </section>
 
       {me.ageBand === "U16" && (
         <section className="mt-6 rounded-2xl border border-line bg-surface/60 p-6">
-          <h2 className="font-display text-lg text-kesri">Your parent or guardian</h2>
+          <h2 className="font-display text-lg text-kesri">
+            {copy.profile.guardianTitle}
+          </h2>
           <p className="mt-3 text-sm text-muted">
             {me.guardianEmail
-              ? `We contact ${me.guardianEmail} about your account.`
-              : "We don't have a parent or guardian's email for you. Get in touch through Support and we'll add one."}
+              ? fill(copy.profile.guardianContact, {
+                  email: me.guardianEmail,
+                })
+              : copy.profile.guardianMissing}
           </p>
           {/* Only while the board exists. Telling a child that a feature nobody can reach
               is "switched off for you" invites them to ask a parent to switch on something
               that is not there. */}
           {boardOpen() && (
             <p className="mt-2 text-sm text-muted">
-              Find a game is{" "}
+              {copy.profile.boardOnPrefix}{" "}
               <span className="text-body">
-                {me.guardianApprovedForBoard ? "switched on" : "switched off"}
+                {me.guardianApprovedForBoard
+                  ? copy.profile.boardOn
+                  : copy.profile.boardOff}
               </span>{" "}
-              for you. They can change that at any time.
+              {copy.profile.boardOnSuffix}
             </p>
           )}
         </section>
@@ -80,14 +105,16 @@ export default async function ProfilePage() {
       {/* What the profile is for, in the same words as /join — so what someone was told
           when they registered is what they see once they have one. */}
       <section className="mt-6 rounded-2xl border border-line bg-surface/60 p-6">
-        <h2 className="font-display text-lg text-kesri">What your profile gives you</h2>
+        <h2 className="font-display text-lg text-kesri">
+          {copy.profile.benefitsTitle}
+        </h2>
         <ul className="mt-4 space-y-3">
           {PROFILE_BENEFITS.map((b) => (
             <li key={b.title} className="text-sm">
               <span className="font-semibold text-body">{b.title}</span>
               {!b.live && (
                 <span className="ml-2 rounded-full border border-line px-2 py-0.5 text-[11px] tracking-wide text-muted uppercase">
-                  coming
+                  {copy.join.benefitComing}
                 </span>
               )}
               <span className="mt-0.5 block text-muted">{b.detail}</span>
@@ -97,11 +124,10 @@ export default async function ProfilePage() {
       </section>
 
       <section className="mt-6 rounded-2xl border border-line bg-surface/60 p-6">
-        <h2 className="font-display text-lg text-kesri">Your trophies</h2>
-        <p className="mt-3 text-sm text-muted">
-          Nothing yet — the first event hasn&apos;t happened. Trophies you win are saved
-          here across every SWC event.
-        </p>
+        <h2 className="font-display text-lg text-kesri">
+          {copy.profile.trophiesTitle}
+        </h2>
+        <p className="mt-3 text-sm text-muted">{copy.profile.trophiesEmpty}</p>
       </section>
 
       <form action={signOut} className="mt-10">
@@ -109,7 +135,7 @@ export default async function ProfilePage() {
           type="submit"
           className="rounded-xl border border-line px-6 py-3 font-semibold text-body transition-colors hover:border-kesri/60"
         >
-          Sign out
+          {copy.profile.signOut}
         </button>
       </form>
     </div>

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EVENTS, getEvent } from "@/data/events";
 import { formatEventDate, statusLabel, venueAddressLine } from "@/lib/format";
+import { copy, fill } from "@/copy";
+import { Rich } from "@/copy/Rich";
 
 export function generateStaticParams() {
   return EVENTS.map((e) => ({ slug: e.slug }));
@@ -36,7 +38,7 @@ export default async function EventPage({
         </span>
         {event.entryFee === 0 && (
           <span className="rounded-md bg-ok/15 px-2.5 py-1 text-[11px] font-bold tracking-wider text-ok uppercase">
-            Free entry
+            {copy.common.freeEntry}
           </span>
         )}
       </div>
@@ -46,9 +48,8 @@ export default async function EventPage({
 
       {!event.detailsConfirmed && (
         <p className="mt-6 rounded-xl border border-kesri/40 bg-kesri/10 p-4 text-sm text-kesrisoft">
-          <strong className="font-bold">Date and venue are being finalised.</strong>{" "}
-          Register your place now — everyone who signs up gets the details by email as soon
-          as they&apos;re confirmed.
+          <strong className="font-bold">{copy.event.unconfirmedStrong}</strong>{" "}
+          {copy.event.unconfirmedRest}
         </p>
       )}
 
@@ -57,31 +58,43 @@ export default async function EventPage({
           href={`/events/${event.slug}/register-interest`}
           className="rounded-xl bg-kesri px-6 py-3 font-bold text-ink transition-colors hover:bg-kesrisoft"
         >
-          Register interest — it&apos;s free
+          {copy.event.ctaRegister}
         </Link>
         <Link
           href={`/events/${event.slug}/bracket`}
           className="rounded-xl border border-line px-6 py-3 font-semibold text-body transition-colors hover:border-kesri/60"
         >
-          Live bracket
+          {copy.event.ctaBracket}
         </Link>
       </div>
 
       {/* Key facts */}
       <dl className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          ["When", formatEventDate(event.date), event.times ?? "Times to be confirmed"],
           [
-            "Where",
-            event.venue?.name ?? "Venue to be announced",
+            copy.event.factWhen,
+            formatEventDate(event.date),
+            event.times ?? copy.common.timesTbc,
+          ],
+          [
+            copy.event.factWhere,
+            event.venue?.name ?? copy.common.venueTbc,
             // The full address, not just the postcode, once the venue is confirmed —
             // this card is where somebody works out how they are getting there.
             (event.detailsConfirmed ? venueAddressLine(event) : null) ??
               event.venue?.postcode ??
-              "United Kingdom",
+              copy.event.factWhereFallback,
           ],
-          ["Format", "Straight knockout", "Win and you go through, lose and you are out"],
-          ["Platform", "PlayStation 5", "Consoles and screens provided"],
+          [
+            copy.event.factFormat,
+            copy.event.factFormatValue,
+            copy.event.factFormatSub,
+          ],
+          [
+            copy.event.factPlatform,
+            copy.event.factPlatformValue,
+            copy.event.factPlatformSub,
+          ],
         ].map(([k, v, sub]) => (
           <div key={k} className="rounded-2xl border border-line bg-surface/60 p-5">
             <dt className="micro">{k}</dt>
@@ -95,8 +108,10 @@ export default async function EventPage({
       <section className="mt-14">
         <h2 className="font-display text-2xl">
           {event.divisions.length === 1
-            ? "One division, one champion"
-            : `${event.divisions.length} divisions, ${event.divisions.length} champions`}
+            ? copy.event.divisionsOneTitle
+            : fill(copy.event.divisionsManyTitle, {
+                n: event.divisions.length,
+              })}
         </h2>
         <div
           className={`mt-5 grid gap-4 ${
@@ -108,11 +123,15 @@ export default async function EventPage({
               <h3 className="font-display text-2xl text-kesri">{d.name}</h3>
               <p className="mt-1 text-sm text-muted">
                 {d.maxAge === 99
-                  ? `Open to everyone aged ${d.minAge} and over on the day`
-                  : `Ages ${d.minAge}–${d.maxAge} on the day of the event`}
+                  ? fill(copy.event.divisionOpenAges, { min: d.minAge })
+                  : fill(copy.event.divisionAgeRange, {
+                      min: d.minAge,
+                      max: d.maxAge,
+                    })}
               </p>
               <p className="mt-4 text-sm text-body">
-                <strong className="font-bold">{d.capacity}</strong> places
+                <strong className="font-bold">{d.capacity}</strong>{" "}
+                {copy.event.divisionPlaces}
               </p>
             </div>
           ))}
@@ -122,7 +141,7 @@ export default async function EventPage({
       {/* Rules + prizes */}
       <div className="mt-14 grid gap-10 lg:grid-cols-2">
         <section>
-          <h2 className="font-display text-2xl">Rules</h2>
+          <h2 className="font-display text-2xl">{copy.event.rulesTitle}</h2>
           <ol className="mt-5 space-y-3">
             {event.rules.map((r, i) => (
               <li key={i} className="flex gap-3 text-sm">
@@ -134,7 +153,7 @@ export default async function EventPage({
         </section>
 
         <section>
-          <h2 className="font-display text-2xl">Prizes</h2>
+          <h2 className="font-display text-2xl">{copy.event.prizesTitle}</h2>
           <ul className="mt-5 space-y-3">
             {event.prizes.map((p) => (
               <li key={p} className="flex gap-3 text-sm text-muted">
@@ -144,9 +163,14 @@ export default async function EventPage({
             ))}
           </ul>
           <p className="mt-6 rounded-xl border border-line bg-surface/60 p-4 text-sm text-muted">
-            Every award also lands in your{" "}
-            <span className="text-kesri">SWC trophy cabinet</span> — a permanent record on
-            your profile, across every event you ever enter.
+            <Rich
+              text={copy.event.prizesNote}
+              em={(s, i) => (
+                <span key={i} className="text-kesri">
+                  {s}
+                </span>
+              )}
+            />
           </p>
         </section>
       </div>

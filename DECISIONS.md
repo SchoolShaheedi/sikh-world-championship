@@ -3059,3 +3059,108 @@ email with `http://localhost:3000/signin/<token>`, calls Resend zero times, and 
 that link redirects to `/profile` with a session that reaches `/admin`.
 
 423 tests (was 420).
+
+---
+
+## Round 55 — 2026-09-04 — Slips that print, names that differ, and a record you can read
+
+Three reports. One was a bug, one was a decision, one was a feature that should have existed
+since the form did.
+
+### The slips printed blank
+
+Reported with a screenshot: the preview said "3 pages" and showed nothing. Three pages is
+the *right* number for 48 slips at 18 to a sheet, so the layout was correct and the ink was
+missing.
+
+Diagnosed by printing the page to a PDF headlessly and looking at it, which produced a
+perfect sheet — twice, with and without hydration. So the page is right and the difference
+is the viewer. The screenshot shows the sheet rendering **dark**, and it is declared white:
+that only happens when something outside the stylesheet is overriding author colours, and
+there are three such things on an ordinary laptop — Chrome's auto-dark mode, macOS
+"Increase contrast", Windows High Contrast. Under any of them, black ink becomes near-white,
+and near-white ink on white paper is a blank sheet.
+
+The fix is to make the sheet immune rather than to guess which one it was:
+
+* `color-scheme: light` — opts the region out of auto-dark inversion.
+* `forced-color-adjust: none` on the sheet, the slips and the QR itself — high-contrast
+  modes *replace* author colours, and a code repainted in a system palette has no quiet zone.
+* `print-color-adjust: exact` — stops the browser "optimising" colour, which is also what
+  drops the white ground under a code when Background graphics is off.
+* **A stated colour on every text element.** `color` on `.sheet` alone reached the names by
+  INHERITANCE, and inheritance loses to any direct rule from anywhere — a global stylesheet,
+  an extension, a user stylesheet. This was the actual hole.
+
+Found while looking: the names wrapped **mid-word** — "Amandee p S." on a slip a volunteer
+reads off a table. 13pt bold does not fit the 28mm the text column has once the code has
+taken its 30mm. Now 11.5pt with `word-break: normal`, so breaks land at the space. Verified
+by rasterising the PDF and reading it.
+
+A code that scans on screen and prints blank is discovered at a door with a queue behind
+it, so this page is worth being paranoid about.
+
+### Two people called Aman S.
+
+A public name is a first name plus a last initial, and Sikh surnames are overwhelmingly
+Singh and Kaur — so the initial does almost no work and common first names collide as a
+matter of course, not as an edge case. Untreated, the hall is told "Aman S. to station
+three" and two people stand up.
+
+**Decided 2026-09-04 by the team: a number suffix.** "Aman S. (1)" and "Aman S. (2)".
+
+The city was the other candidate and is genuinely more useful to a spectator — it was
+rejected because a child's town on a projector and on paper lying on a table is a new
+identifying field, bought to solve a display problem. More of the surname was rejected
+because it distinguishes nothing in the common case.
+
+Two implementation choices worth recording:
+
+* **Every member of a clash is numbered, including the first.** Leaving one bare would give
+  its holder no reason to suspect there is another, and an unnumbered name beside a numbered
+  one reads as the real entrant beside an afterthought.
+* **The number is keyed on the registration reference, not on position.** Numbering by
+  position in a query result changes when somebody withdraws, and then the slip in a child's
+  hand stops matching the projector — which is worse than ambiguous, because it is wrong.
+  There is a test that withdraws an unrelated person and asserts nobody's number moved.
+
+`uniquePublicNames()` is used by the slips, the desk list and the bracket, so the three
+cannot disagree. It distinguishes the SCREEN, not the person: two identically named rows at
+the desk still need the reference and the date-of-birth conversation.
+
+### Everything collected and nothing readable
+
+Referring organisation, city, self-rating, favourite team, whether they are bringing a
+controller — all of it went into a form, into a column, and nowhere else. The entries list
+gave a name, an email and a status, which is enough to delete a row and not enough to
+understand a field of seventy-five people. There was no way to answer "is the outreach
+working" or "who is travelling furthest".
+
+`/admin/entries` now answers both with counts and no names, and links to a page per person.
+The age groups are the ones the day turns on rather than demographic bands: 12–15 means a
+parent stays, 16–17 means a leaving permission to check.
+
+**Masked by default, and masked on the server.** Contact routes, the date of birth and
+everything medical are hidden until a moderator presses a button. This grants nobody
+anything — a moderator could always read all of it — it stops a child's mobile number being
+on screen while somebody projects /admin or shares a call. It is only worth something
+because the value is genuinely absent: hiding with CSS leaves it in the page source, so
+`entryDetail()` never returns an unmasked personal field and `entryContact()` is a separate
+gated call. A test asserts none of the real values appears in the serialised page data, and
+it was verified against the rendered page as well.
+
+Masks are **fixed-width**, changed mid-round: the first version used one bullet per hidden
+character, and "R•••••••• K•••" narrows a Sikh first name to a short list. Two values of
+different lengths now mask to the same string.
+
+**The reveal is deliberately not audited.** It needs a table, and a table of "which
+moderator read which child's medical notes" needs its own retention rule and its own answer
+to a subject access request. Worth building when there is a rota; not for two or three named
+people who can already see everything. DPIA risk 24 records that as a decision rather than
+an omission.
+
+The seed gained a deliberate name clash, because without one the numbering could not be seen
+locally — the only collision in the data was the bogus duplicate row the instructions tell
+you to delete.
+
+449 tests (was 423).

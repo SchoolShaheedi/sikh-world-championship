@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { deleteAccountAndEntry, deleteEntryOnly } from "@/app/admin/actions";
 
 export interface EntryRow {
@@ -75,6 +76,14 @@ export function EntryAdminPanel({ entries }: { entries: EntryRow[] }) {
     <div className="mt-8">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h3 className="font-display text-lg text-kesri">Entries</h3>
+        {/* This panel exists to DELETE. Reading an entry belongs somewhere calmer, so the
+            link out is here rather than a second mode on a destructive control. */}
+        <Link
+          href="/admin/entries"
+          className="text-sm text-muted underline decoration-dotted hover:text-body"
+        >
+          Read them instead →
+        </Link>
         <button
           type="button"
           onClick={() => {

@@ -6,11 +6,11 @@ import { registrationDemo } from "@/lib/features";
 import { registrationLive } from "@/lib/testing-access";
 import { PROFILE_BENEFITS } from "@/data/profile-benefits";
 import { venueLocality } from "@/lib/format";
+import { copy } from "@/copy";
 
 export const metadata: Metadata = {
-  title: "Create your profile",
-  description:
-    "One Sikh World Championships profile, every event. Register interest in an event and your profile is created with it.",
+  title: copy.join.metaTitle,
+  description: copy.join.metaDescription,
 };
 
 /**
@@ -35,32 +35,29 @@ export default async function JoinPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-14">
       <h1 className="font-display text-4xl">
-        {me ? "Your profile" : "Create your profile"}
+        {me ? copy.join.titleSignedIn : copy.join.titleSignedOut}
       </h1>
 
       {me ? (
         <p className="mt-4 text-lg text-muted">
-          You&apos;re signed in as{" "}
-          <span className="text-body">{me.displayName}</span>. You don&apos;t need to make
-          another profile — register interest in the events you want and they all attach to
-          this one.
+          {copy.join.introSignedInPrefix}{" "}
+          <span className="text-body">{me.displayName}</span>
+          {copy.join.introSignedInRest}
         </p>
       ) : (
         <p className="mt-4 text-lg text-muted">
-          One profile, every Sikh World Championships event.{" "}
-          <span className="text-body">
-            There is no separate sign-up — registering interest in an event below is what
-            creates it.
-          </span>{" "}
-          After that, entering a new event is confirming details we already hold, not
-          typing them again.
+          {copy.join.introSignedOut1}{" "}
+          <span className="text-body">{copy.join.introSignedOut2}</span>{" "}
+          {copy.join.introSignedOut3}
         </p>
       )}
 
       {/* What a profile is actually for. Every line here has to stay true; see
           src/data/profile-benefits.ts for why the sponsor perks are marked as coming. */}
       <section className="mt-10 rounded-3xl border border-line bg-surface/60 p-6">
-        <h2 className="font-display text-2xl text-kesri">What a profile gives you</h2>
+        <h2 className="font-display text-2xl text-kesri">
+          {copy.join.benefitsTitle}
+        </h2>
         <ul className="mt-5 space-y-4">
           {PROFILE_BENEFITS.map((b) => (
             <li key={b.title} className="flex gap-3">
@@ -71,7 +68,7 @@ export default async function JoinPage() {
                 <span className="font-semibold text-body">{b.title}</span>
                 {!b.live && (
                   <span className="ml-2 rounded-full border border-line px-2 py-0.5 text-[11px] tracking-wide text-muted uppercase">
-                    coming
+                    {copy.join.benefitComing}
                   </span>
                 )}
                 <span className="mt-0.5 block text-sm text-muted">{b.detail}</span>
@@ -83,12 +80,10 @@ export default async function JoinPage() {
 
       <section className="mt-10">
         <h2 className="font-display text-2xl">
-          {me ? "Register interest" : "Start here"}
+          {me ? copy.join.startTitleSignedIn : copy.join.startTitleSignedOut}
         </h2>
         <p className="mt-3 text-muted">
-          {me
-            ? "Your name, contact details and — if you're under 18 — your parent or guardian's details are already with us, so they're filled in for you. What's left is the questions about the event, your medical answers, and the consents. Those are asked every time, on purpose."
-            : "Registering interest in your first event is what creates your profile — there is no separate sign-up form, and no details to enter twice. Places are drawn, so registering interest is not a place; we'll email you either way."}
+          {me ? copy.join.startBodySignedIn : copy.join.startBodySignedOut}
         </p>
 
         <div className="mt-6 space-y-4">
@@ -107,13 +102,13 @@ export default async function JoinPage() {
                       month: "long",
                       year: "numeric",
                     })
-                  : "Date being finalised"}
+                  : copy.common.dateBeingFinalised}
               </p>
               <Link
                 href={`/events/${event.slug}/register-interest`}
                 className="mt-4 inline-block rounded-xl bg-kesri px-6 py-3 font-bold text-ink transition-colors hover:bg-kesrisoft"
               >
-                {open ? "Register interest" : "See this event"}
+                {open ? copy.join.eventCtaOpen : copy.join.eventCtaClosed}
               </Link>
             </div>
           ))}
@@ -123,18 +118,18 @@ export default async function JoinPage() {
       {me && (
         <p className="mt-10 text-sm text-muted">
           <Link href="/profile" className="text-kesri hover:underline">
-            View your profile
+            {copy.join.viewProfile}
           </Link>
         </p>
       )}
 
       {!me && (
         <p className="mt-10 text-sm text-muted">
-          Already registered for something?{" "}
+          {copy.join.alreadyRegistered}{" "}
           <Link href="/signin" className="text-kesri hover:underline">
-            Sign in
+            {copy.join.alreadyRegisteredLink}
           </Link>{" "}
-          — no password, we email you a link.
+          {copy.join.alreadyRegisteredAfter}
         </p>
       )}
     </div>

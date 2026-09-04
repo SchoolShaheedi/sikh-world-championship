@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SUPPORT_CATEGORIES } from "@/lib/support-types";
 import { submitTicket } from "@/app/support/actions";
+import { copy } from "@/copy";
 
 const field =
   "mt-2 w-full rounded-xl border border-line bg-surface px-4 py-3 text-body placeholder:text-muted/60 focus:border-kesri focus:outline-none";
@@ -29,21 +30,19 @@ export function SupportForm({ initialCategory }: { initialCategory?: string } = 
   if (done) {
     return (
       <div className="rounded-3xl border border-ok/40 bg-ok/[0.07] p-8 text-center">
-        <h2 className="font-display text-2xl">Message received.</h2>
+        <h2 className="font-display text-2xl">{copy.support.doneTitle}</h2>
         <p className="mx-auto mt-3 max-w-md text-muted">
-          {done.urgent
-            ? "This has gone straight to the top of our moderators' queue. Someone will look at it within 24 hours."
-            : "We'll come back to you as soon as we can — usually within a few days."}
+          {done.urgent ? copy.support.doneUrgent : copy.support.doneNormal}
         </p>
         <p className="mt-4 text-sm text-muted">
-          Your reference is{" "}
+          {copy.support.doneReference}{" "}
           <span className="font-mono text-kesri">{done.reference}</span>
         </p>
         <button
           onClick={() => setDone(null)}
           className="mt-6 rounded-xl border border-line px-5 py-2.5 text-sm text-body"
         >
-          Send another
+          {copy.support.doneAnother}
         </button>
       </div>
     );
@@ -63,7 +62,7 @@ export function SupportForm({ initialCategory }: { initialCategory?: string } = 
     >
       <fieldset className="rounded-3xl border border-line bg-surface/60 p-6">
         <legend className="font-display px-2 text-lg text-kesri">
-          What&apos;s it about?
+          {copy.support.formAboutLegend}
         </legend>
 
         <div className="space-y-2.5">
@@ -89,7 +88,7 @@ export function SupportForm({ initialCategory }: { initialCategory?: string } = 
                   {c.label}
                   {c.urgent && (
                     <span className="ml-2 rounded bg-kesri/20 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-kesri uppercase">
-                      Priority
+                      {copy.support.formPriority}
                     </span>
                   )}
                 </span>
@@ -102,18 +101,27 @@ export function SupportForm({ initialCategory }: { initialCategory?: string } = 
 
       <fieldset className="rounded-3xl border border-line bg-surface/60 p-6">
         <legend className="font-display px-2 text-lg text-kesri">
-          Tell us what happened
+          {copy.support.formDetailLegend}
         </legend>
 
         <label className="block">
           <span className="text-sm font-semibold text-body">
-            Subject <span className="font-normal text-muted">(optional)</span>
+            {copy.support.formSubject}{" "}
+            <span className="font-normal text-muted">
+              {copy.support.formOptional}
+            </span>
           </span>
-          <input name="subject" className={field} placeholder="One line summary" />
+          <input
+            name="subject"
+            className={field}
+            placeholder={copy.support.formSubjectPlaceholder}
+          />
         </label>
 
         <label className="mt-5 block">
-          <span className="text-sm font-semibold text-body">Your message</span>
+          <span className="text-sm font-semibold text-body">
+            {copy.support.formMessage}
+          </span>
           <textarea
             name="message"
             rows={6}
@@ -121,8 +129,8 @@ export function SupportForm({ initialCategory }: { initialCategory?: string } = 
             className={field}
             placeholder={
               category.urgent
-                ? "What happened, who was involved, and when. Include anything you can — names, dates, what was said."
-                : "As much detail as you can give us."
+                ? copy.support.formMessagePlaceholderUrgent
+                : copy.support.formMessagePlaceholder
             }
           />
         </label>
@@ -130,24 +138,26 @@ export function SupportForm({ initialCategory }: { initialCategory?: string } = 
 
       <fieldset className="rounded-3xl border border-line bg-surface/60 p-6">
         <legend className="font-display px-2 text-lg text-kesri">
-          How we reach you
+          {copy.support.formReachLegend}
         </legend>
-        <p className="text-sm text-muted">
-          You can leave these blank and send it anonymously. We&apos;d rather hear from
-          you anonymously than not hear from you at all — but without an email we
-          can&apos;t come back to you.
-        </p>
+        <p className="text-sm text-muted">{copy.support.formReachIntro}</p>
 
         <div className="mt-5 grid gap-5 sm:grid-cols-2">
           <label className="block">
             <span className="text-sm font-semibold text-body">
-              Your name <span className="font-normal text-muted">(optional)</span>
+              {copy.support.formName}{" "}
+              <span className="font-normal text-muted">
+                {copy.support.formOptional}
+              </span>
             </span>
             <input name="name" className={field} />
           </label>
           <label className="block">
             <span className="text-sm font-semibold text-body">
-              Email <span className="font-normal text-muted">(optional)</span>
+              {copy.support.formEmail}{" "}
+              <span className="font-normal text-muted">
+                {copy.support.formOptional}
+              </span>
             </span>
             <input name="email" type="email" className={field} />
           </label>
@@ -161,10 +171,10 @@ export function SupportForm({ initialCategory }: { initialCategory?: string } = 
           />
           <span>
             <span className="block text-sm text-body">
-              I&apos;m a parent or guardian
+              {copy.support.formGuardian}
             </span>
             <span className="mt-0.5 block text-xs text-muted">
-              So we know to reply to you rather than to a young person.
+              {copy.support.formGuardianHint}
             </span>
           </span>
         </label>
@@ -180,7 +190,7 @@ export function SupportForm({ initialCategory }: { initialCategory?: string } = 
         type="submit"
         className="rounded-xl bg-kesri px-8 py-4 font-bold text-ink hover:bg-kesrisoft"
       >
-        Send message
+        {copy.support.formSubmit}
       </button>
     </form>
   );

@@ -6,6 +6,7 @@ import { BracketView } from "@/components/BracketView";
 import { generateKnockout, advanceWinners, type Entrant } from "@/lib/bracket";
 import { showDemoData } from "@/lib/features";
 import { LiveBracket } from "@/components/LiveBracket";
+import { copy } from "@/copy";
 
 export function generateStaticParams() {
   return EVENTS.map((e) => ({ slug: e.slug }));
@@ -65,14 +66,14 @@ export default async function BracketPage({
     <div className="mx-auto max-w-6xl px-4 py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-4xl">Live bracket</h1>
+          <h1 className="font-display text-4xl">{copy.bracket.title}</h1>
           <p className="mt-2 text-kesri">{event.title}</p>
         </div>
         <Link
           href={`/events/${event.slug}`}
           className="text-sm font-semibold text-muted hover:text-kesri"
         >
-          ← Back to event
+          {copy.bracket.backToEvent}
         </Link>
       </div>
 
@@ -88,8 +89,8 @@ export default async function BracketPage({
 
       {showDemoData() && (
         <p className="mt-8 rounded-xl border border-kesri/40 bg-kesri/10 p-4 text-sm text-kesrisoft">
-          <strong>Below: demo data — not real players.</strong> Shown outside production
-          only, so the layout can be checked before anyone has registered.
+          <strong>{copy.bracket.demoNoticeStrong}</strong>{" "}
+          {copy.bracket.demoNoticeRest}
         </p>
       )}
 
@@ -102,10 +103,11 @@ export default async function BracketPage({
           return (
             <section key={d.id}>
               <h2 className="font-display mb-5 text-2xl">
-                <span className="text-kesri">{d.name}</span> division
+                <span className="text-kesri">{d.name}</span>{" "}
+                {copy.bracket.demoDivisionSuffix}
               </h2>
               <p className="mb-5 text-sm text-muted">
-                Straight knockout — all 64 players, first round to final.
+                {copy.bracket.demoDivisionSub}
               </p>
               <BracketView
                 bracket={bracket}

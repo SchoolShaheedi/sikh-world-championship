@@ -180,8 +180,19 @@ const NO_DOB_CHECK = new Set([3, 11, 19, 27]);
 
 const COUNT = 72;
 
+/**
+ * Two entrants who genuinely share a public name.
+ *
+ * Both even, so both are Singh, so both are "Aman S." — and both are inside the first 48,
+ * so both get places and both appear on the slips, the desk list and the bracket. Without
+ * this the numbering added on 2026-09-04 is never exercised locally: the invented first
+ * names are all distinct, and the only clash in the data was the bogus duplicate row that
+ * the instructions tell you to delete.
+ */
+const SAME_NAME = { 12: "Aman", 34: "Aman" };
+
 function person(i) {
-  const first = FIRST[i % FIRST.length];
+  const first = SAME_NAME[i] ?? FIRST[i % FIRST.length];
   // Alternating rather than chosen per name: this is invented data and guessing which of
   // Singh or Kaur belongs to a first name is a guess with nothing riding on it.
   const last = i % 2 === 0 ? "Singh" : "Kaur";
@@ -793,6 +804,10 @@ A DRAW HAS RUN — ${SELECTED} of ${CAPACITY} places filled, ${remaining} still 
                             doors open — first name plus last initial, built from the
                             registration rather than typed by anybody. Correct one and it
                             reaches the projector and the slips.
+                            TWO of them are both "Aman S." (LOCAL-012 and LOCAL-034), so
+                            they show as "Aman S. (1)" and "Aman S. (2)" here, on the
+                            slips and on the bracket. Numbers are keyed on the reference,
+                            so they do not move when somebody else withdraws.
 
   /admin                    Lock a list again. ${remaining} seeded entrants are still waiting
                             for ${CAPACITY - SELECTED} places and ${referredWaiting} of them are referred, so this
@@ -824,6 +839,12 @@ EVERYTHING ELSE.
                             last. One has never signed in and is flagged amber.
                             Sign in as local-desk@example.com to see the desk-only role:
                             /admin and /moderation refuse it, /admin/checkin does not.
+  /admin/entries            Everyone who applied, with counts by referring organisation,
+                            by city, by self-rating and by age group — and a page per
+                            person. Contact details and medical notes are masked until you
+                            press "Show contact details"; the real values are not in the
+                            page source until you do.
+
   /moderation               Five tickets and two reports. Two are safeguarding and sort
                             first. One is an erasure request. One is a photography
                             objection — the thing with no field of its own, which has to

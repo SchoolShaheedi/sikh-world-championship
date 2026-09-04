@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ChampionshipEvent } from "@/lib/types";
 import { formatEventDate, statusLabel } from "@/lib/format";
+import { copy } from "@/copy";
 
 export function EventCard({ event }: { event: ChampionshipEvent }) {
   return (
@@ -14,7 +15,7 @@ export function EventCard({ event }: { event: ChampionshipEvent }) {
         </span>
         {event.entryFee === 0 && (
           <span className="pill inline-block bg-ok/15 px-3 py-1 text-[11px] font-bold tracking-[0.14em] text-ok uppercase">
-            Free entry
+            {copy.common.freeEntry}
           </span>
         )}
       </div>
@@ -26,11 +27,15 @@ export function EventCard({ event }: { event: ChampionshipEvent }) {
 
       <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-line/70 pt-4 text-sm">
         <div>
-          <dt className="text-[11px] tracking-wider text-muted uppercase">Date</dt>
+          <dt className="text-[11px] tracking-wider text-muted uppercase">
+            {copy.common.date}
+          </dt>
           <dd className="mt-0.5 text-body">{formatEventDate(event.date)}</dd>
         </div>
         <div>
-          <dt className="text-[11px] tracking-wider text-muted uppercase">Places</dt>
+          <dt className="text-[11px] tracking-wider text-muted uppercase">
+            {copy.common.places}
+          </dt>
           <dd className="mt-0.5 text-body">{event.capacity}</dd>
         </div>
       </dl>

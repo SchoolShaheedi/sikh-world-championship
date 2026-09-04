@@ -22,6 +22,7 @@ profile and then registers interest in each event. The routes follow that shape:
 | `/signin` | Magic link, for anyone who already has a profile. |
 | `/profile` | Their own record. |
 | `/admin` | Counts, the draw, and running the bracket. Moderators only. |
+| `/admin/entries` | Who applied, counted by referral, city, self-rating and age group, plus a page per person. Moderators only. |
 | `/events/<slug>/tv` | The big screen in the hall. No chrome, polls, not indexed. |
 | `/moderation` | Reports and the support queue. Moderators only. |
 
@@ -78,7 +79,15 @@ medical notes. That single fact drives most of the rules below.
    refused if it contains the entrant's surname, in the browser and again in
    `validateRegistration`. `checkHandle` also refuses a PSN ID when one is passed; nothing
    passes one now, and that arm is kept rather than deleted because opening the Looking
-   For Game board would need IDs again.
+   For Game board would need IDs again. **Two entrants with the same public name are
+   numbered** — "Aman S. (1)" and "Aman S. (2)" — by `uniquePublicNames()`, because a last
+   initial does almost no work when the surnames are Singh and Kaur. All members of a clash
+   are numbered, not just the later ones: a slip reading plain "Aman S." gives its holder no
+   reason to suspect there is another. The number is keyed on the registration reference, so
+   it cannot move when somebody else withdraws — a printed slip that stops matching the
+   projector is worse than an ambiguous one. The city was considered and rejected on
+   2026-09-04: more useful to a spectator, but a child's town on a projector is a new
+   identifying field bought for a display problem.
 9. **A retention duration is decided before the code that enforces it is written**, and
    only the team decides it. Every rule in `src/lib/retention.ts` matches a figure in
    `04_Legal/RETENTION-POLICY.md` with the brackets taken off. What runs automatically:
@@ -147,6 +156,18 @@ medical notes. That single fact drives most of the rules below.
     `scripts/secrets-to-keychain.sh` writes it. Two leaks came from that file being read
     aloud into a transcript; git was never involved. `.claude/hooks/deny-secret-reads.py`
     refuses the commands that would print one.
+
+17. **A masked field is masked on the SERVER, not in CSS.** Invariant 5 applied to reading.
+    `src/lib/entry-detail.ts`: `/admin/entries/<ref>` exists so a moderator can read a whole
+    record, and it hides every contact route, the date of birth and everything medical until
+    asked. That is worth something only if the value is genuinely absent — `entryDetail()`
+    never returns an unmasked personal field, and `entryContact()` is a separate call behind
+    its own gate. A test asserts none of the real values appears in the serialised page
+    data, because CSS-hidden text on a projected screen is precisely the false comfort this
+    is meant to avoid. Masks are fixed-width so they do not leak the length of what they
+    hide. Nobody gains access: a moderator could always read all of it, and this stops it
+    being on a screen by accident. DPIA risk 24 records why the reveal is deliberately
+    **not** audited.
 
 ## The registration lifecycle
 
@@ -362,7 +383,7 @@ saves nothing, in tester mode it saves a real child's details to the live databa
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 423 tests
+npm test                         # 449 tests
 node scripts/seed-local.mjs      # 75 invented people, local database only. Stages:
                                  #   entries | places | gameday | (default: everything)
                                  # --clear removes every trace. Refuses --remote.

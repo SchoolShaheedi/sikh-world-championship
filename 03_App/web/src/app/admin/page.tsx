@@ -141,6 +141,11 @@ export default async function AdminPage() {
             blank: true,
           },
           {
+            href: "/admin/entries",
+            label: "Who applied",
+            hint: "the whole list, and where they are travelling from",
+          },
+          {
             href: "/moderation",
             label: "Messages & reports",
             hint: "everything sent through the contact form",

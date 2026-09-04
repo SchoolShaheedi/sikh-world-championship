@@ -9,8 +9,9 @@ import { takeDownMyPost, answerRequest } from "./actions";
 import { approvalFor } from "@/lib/guardian-store";
 import { AskGuardianButton } from "@/components/play/AskGuardianButton";
 import { boardOpen } from "@/lib/features";
+import { copy, fill } from "@/copy";
 
-export const metadata: Metadata = { title: "Find a game" };
+export const metadata: Metadata = { title: copy.play.title };
 
 export default async function PlayPage() {
   // Checked before touching the store, which is the thing that cannot work on a host
@@ -20,26 +21,25 @@ export default async function PlayPage() {
   if (!boardOpen()) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-20">
-        <h1 className="font-display text-3xl">Find a game</h1>
-        <p className="mt-4 text-muted">
-          This is built, but it isn&apos;t switched on yet. It lets you find another Sikh
-          player to practise against — you pick a game, a platform and when you&apos;re
-          free, and other players send you a request.
-        </p>
+        <h1 className="font-display text-3xl">{copy.play.title}</h1>
+        <p className="mt-4 text-muted">{copy.play.closedBody}</p>
         <div className="mt-8 rounded-2xl border border-line bg-surface/60 p-6">
-          <h2 className="font-display text-lg text-kesri">How it will work</h2>
+          <h2 className="font-display text-lg text-kesri">
+            {copy.play.closedHowTitle}
+          </h2>
           <ul className="mt-4 space-y-2.5 text-sm text-muted">
-            <li>— No messaging and no typing, for anyone. Everything is built from set options.</li>
-            <li>— Under-16s and over-16s never mix, and adults cannot reach an under-16.</li>
-            <li>— Under-16s need a parent or guardian to switch it on, and they can switch it off again at any time.</li>
-            <li>— Gamertags are only shared once two players have both agreed to a game.</li>
-            <li>— Report and block on every post, with real moderators behind them.</li>
+            {[
+              copy.play.closedHow1,
+              copy.play.closedHow2,
+              copy.play.closedHow3,
+              copy.play.closedHow4,
+              copy.play.closedHow5,
+            ].map((line) => (
+              <li key={line}>— {line}</li>
+            ))}
           </ul>
         </div>
-        <p className="mt-6 text-sm text-muted">
-          We&apos;re waiting on the parent and guardian notification emails before this
-          opens. That promise has to work before anyone under 16 is here, not after.
-        </p>
+        <p className="mt-6 text-sm text-muted">{copy.play.closedFootnote}</p>
       </div>
     );
   }
@@ -51,22 +51,18 @@ export default async function PlayPage() {
   if (!me) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-20">
-        <h1 className="font-display text-3xl">Find a game</h1>
-        <p className="mt-4 text-muted">
-          Sign in to see the board. It shows other players&apos; first names and regions, so
-          it isn&apos;t public.
-        </p>
+        <h1 className="font-display text-3xl">{copy.play.title}</h1>
+        <p className="mt-4 text-muted">{copy.play.signedOutBody}</p>
         <div className="mt-8">
           <Link
             href="/signin"
             className="rounded-xl bg-kesri px-6 py-3 font-bold text-ink transition-colors hover:bg-kesrisoft"
           >
-            Sign in
+            {copy.play.signedOutCta}
           </Link>
         </div>
         <p className="mt-6 text-sm text-muted">
-          You get an account automatically when you enter an event — there&apos;s no separate
-          sign-up.
+          {copy.play.signedOutFootnote}
         </p>
       </div>
     );
@@ -78,27 +74,27 @@ export default async function PlayPage() {
     const approval = await approvalFor(me.id);
     return (
       <div className="mx-auto max-w-2xl px-4 py-20">
-        <h1 className="font-display text-3xl">Find a game</h1>
-        <p className="mt-4 text-muted">
-          You&apos;re under 16, so a parent or guardian needs to switch this on for you
-          first. We&apos;ll email them and they can turn it on in one click.
-        </p>
+        <h1 className="font-display text-3xl">{copy.play.title}</h1>
+        <p className="mt-4 text-muted">{copy.play.needsGuardianBody}</p>
         <div className="mt-8 rounded-2xl border border-line bg-surface/60 p-6">
           <h2 className="font-display text-lg text-kesri">
-            What they&apos;ll be agreeing to
+            {copy.play.needsGuardianTitle}
           </h2>
           <ul className="mt-4 space-y-2.5 text-sm text-muted">
-            <li>— You&apos;ll only ever see, and be seen by, other under-16 players. Adults cannot reach you here at all.</li>
-            <li>— There&apos;s no messaging and no typing. Posts and requests are built from set options.</li>
-            <li>— Your gamertag is only shared when you both agree to a game.</li>
-            <li>— They&apos;ll get an email telling them each time you connect with someone.</li>
-            <li>— They can switch it off again whenever they want.</li>
+            {[
+              copy.play.needsGuardian1,
+              copy.play.needsGuardian2,
+              copy.play.needsGuardian3,
+              copy.play.needsGuardian4,
+              copy.play.needsGuardian5,
+            ].map((line) => (
+              <li key={line}>— {line}</li>
+            ))}
           </ul>
         </div>
         {(approval?.status === "declined" || approval?.status === "revoked") && (
           <p className="mt-8 rounded-xl border border-line bg-surface p-4 text-sm text-muted">
-            Your parent or guardian has said no for now. Talk to them — they can
-            change their mind at any time using the link we sent them.
+            {copy.play.guardianDeclined}
           </p>
         )}
 
@@ -125,30 +121,30 @@ export default async function PlayPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12">
-      <h1 className="font-display text-4xl">Find a game</h1>
-      <p className="mt-3 max-w-2xl text-muted">
-        Sikh players looking for someone to play with. Say what you play and when
-        you&apos;re free, send a request, and swap gamertags once you both agree.
-      </p>
+      <h1 className="font-display text-4xl">{copy.play.title}</h1>
+      <p className="mt-3 max-w-2xl text-muted">{copy.play.boardIntro}</p>
 
       {me.ageBand === "U16" && (
         <p className="mt-6 rounded-xl border border-ok/40 bg-ok/[0.08] p-4 text-sm text-body">
-          <strong className="font-bold">You&apos;re in the under-16 board.</strong> Everyone
-          here is under 16 too — adults can&apos;t see you or contact you. Your parent or
-          guardian gets an email whenever you connect with someone.
+          <strong className="font-bold">{copy.play.u16NoticeStrong}</strong>{" "}
+          {copy.play.u16NoticeRest}
         </p>
       )}
 
       {/* Accepted — the payoff. Gamertags appear only here. */}
       {accepted.length > 0 && (
         <section className="mt-10">
-          <h2 className="font-display text-xl text-ok">Ready to play</h2>
+          <h2 className="font-display text-xl text-ok">
+            {copy.play.readyTitle}
+          </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {accepted.map((r) => {
               const theirTag =
                 r.fromPlayerId === me.id ? r.toGamertag : r.fromGamertag;
               const theirName =
-                r.fromPlayerId === me.id ? "Your opponent" : r.fromDisplayName;
+                r.fromPlayerId === me.id
+                  ? copy.play.readyOpponent
+                  : r.fromDisplayName;
               return (
                 <div
                   key={r.id}
@@ -162,7 +158,7 @@ export default async function PlayPage() {
                     </p>
                   )}
                   <p className="mt-3 text-xs text-muted">
-                    Add each other on PlayStation and play from there.
+                    {copy.play.readyFootnote}
                   </p>
                 </div>
               );
@@ -175,7 +171,7 @@ export default async function PlayPage() {
       {pending.length > 0 && (
         <section className="mt-10">
           <h2 className="font-display text-xl text-kesri">
-            Requests for you ({pending.length})
+            {fill(copy.play.requestsTitle, { n: pending.length })}
           </h2>
           <div className="mt-4 space-y-3">
             {pending.map((r) => (
@@ -194,14 +190,14 @@ export default async function PlayPage() {
                     <input type="hidden" name="requestId" value={r.id} />
                     <input type="hidden" name="answer" value="accept" />
                     <button className="rounded-xl bg-kesri px-4 py-2.5 text-sm font-bold text-ink">
-                      Accept
+                      {copy.play.requestAccept}
                     </button>
                   </form>
                   <form action={answerRequest}>
                     <input type="hidden" name="requestId" value={r.id} />
                     <input type="hidden" name="answer" value="decline" />
                     <button className="rounded-xl border border-line px-4 py-2.5 text-sm text-muted">
-                      Decline
+                      {copy.play.requestDecline}
                     </button>
                   </form>
                 </div>
@@ -217,13 +213,13 @@ export default async function PlayPage() {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-kesri/40 bg-kesri/[0.06] p-5">
             <div>
               <p className="text-xs tracking-[0.16em] text-kesri uppercase">
-                Your post is up
+                {copy.play.myPostLabel}
               </p>
               <p className="mt-1.5 text-body">
                 {mine.game} · {mine.platform} · {mine.windows.join(", ")}
               </p>
               <p className="mt-1 text-xs text-muted">
-                Expires{" "}
+                {copy.play.myPostExpires}{" "}
                 {new Date(mine.expiresAt).toLocaleDateString("en-GB", {
                   day: "numeric",
                   month: "long",
@@ -233,7 +229,7 @@ export default async function PlayPage() {
             <form action={takeDownMyPost}>
               <input type="hidden" name="postId" value={mine.id} />
               <button className="rounded-xl border border-line px-4 py-2.5 text-sm text-muted">
-                Take it down
+                {copy.play.myPostTakeDown}
               </button>
             </form>
           </div>
@@ -243,10 +239,10 @@ export default async function PlayPage() {
 
       {/* The board */}
       <section className="mt-12">
-        <h2 className="font-display text-xl">Players looking for a game</h2>
+        <h2 className="font-display text-xl">{copy.play.boardTitle}</h2>
         {posts.length === 0 ? (
           <p className="mt-4 rounded-2xl border border-dashed border-line p-10 text-center text-muted">
-            Nobody&apos;s posted yet. Put yours up and you&apos;ll be first.
+            {copy.play.boardEmpty}
           </p>
         ) : (
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -258,11 +254,8 @@ export default async function PlayPage() {
       </section>
 
       <p className="mt-12 rounded-2xl border border-line bg-surface/50 p-5 text-sm text-muted">
-        <strong className="text-body">How we keep this safe:</strong> under-16s and over-16s
-        are kept completely separate, there&apos;s no free typing at strangers, and
-        gamertags are only shared once you both agree to a game. Report and block are on
-        every post, a moderator reads every report, and under-16s need a guardian&apos;s
-        permission to be here at all.
+        <strong className="text-body">{copy.play.safetyStrong}</strong>{" "}
+        {copy.play.safetyRest}
       </p>
     </div>
   );

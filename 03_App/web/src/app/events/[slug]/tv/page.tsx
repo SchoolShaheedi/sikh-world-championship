@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EVENTS, getEvent } from "@/data/events";
 import { LiveBracket } from "@/components/LiveBracket";
+import { copy } from "@/copy";
 
 export function generateStaticParams() {
   return EVENTS.map((e) => ({ slug: e.slug }));
@@ -57,7 +58,7 @@ export default async function TvPage({
       <div className="mb-6 flex items-baseline justify-between gap-6">
         <h1 className="font-display text-3xl text-kesri">{event.title}</h1>
         <p className="text-sm tracking-[0.18em] text-muted uppercase">
-          Live bracket
+          {copy.tv.label}
         </p>
       </div>
       {/* Six seconds rather than four: on a screen nobody is interacting with, half the
