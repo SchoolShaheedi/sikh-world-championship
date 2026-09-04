@@ -24,10 +24,20 @@ indistinguishable from a broken mailer. The seed script now checks and says so, 
 dev-server terminal prints `no account for you@example.com`, but the cheapest fix is to run
 it first.
 
-Then sign in at `/signin`. **No email is sent locally** — there is no `RESEND_API_KEY` — so
-the magic link is printed in the terminal running `npm run dev`, along with the full text
-of every email that would have gone out. That terminal is the only place the wording of an
-offer or a guardian notice can be read without sending one to somebody.
+Then sign in at `/signin`. **Nothing is emailed under `npm run dev`** — and not because
+the key is missing. `.envrc` loads it from the Keychain, so a laptop *can* reach the live
+Resend account, which is worse than useless: a seeded `@example.com` address gets a 422 and
+a real one gets a real email sent to a real person from our verified domain, about a child
+who does not exist.
+
+So `next dev` prints instead of sending. The magic link and the full text of every email
+appear in the terminal running the dev server — which is also the only place the wording of
+an offer or a guardian notice can be read without sending one to somebody. Each one is
+still recorded as a **failed** send, because it was not delivered; only a 200 from Resend
+records `sent`.
+
+`SWC_EMAIL_DEV_SEND=true npm run dev` sends for real, for anyone who means it. Any address
+works for `grant-moderator` — it never has to receive anything.
 
 The link points at `http://localhost:3000`, because the base URL is taken from the request
 rather than from a constant. Nothing needs setting for that: there is no `.env.local` to

@@ -117,7 +117,17 @@ medical notes. That single fact drives most of the rules below.
     the first rather than succeeding again, and the nightly job blanks every token the day
     after the event. What a slip may carry is what the projector already shows: the public
     name and the reference, never a surname, a date of birth, a phone number or an email.
-14. **A URL in an email comes from the request, and the Host header is trusted only when
+14. **`next dev` prints email, it does not send it.** `src/lib/email.ts`. The Resend key is
+    loaded from the Keychain by `.envrc`, so a laptop reaches the live account — which meant
+    a rehearsal either got a 422 (Resend rejects `@example.com`) or, with a real address,
+    put an actual guardian notice in an actual inbox from our verified domain about a child
+    who does not exist. Held on `NODE_ENV === "development"` specifically, because vitest
+    runs as `test` and the suite asserts the real send path against a mocked fetch;
+    `SWC_EMAIL_DEV_SEND=true` is the way out. Every held email is still recorded as
+    **failed** — only a 200 from Resend records `sent`, and "we chose not to send it" is
+    not delivered. The body is printed off production only: a child's details are in that
+    text.
+15. **A URL in an email comes from the request, and the Host header is trusted only when
     it is localhost.** `src/lib/site-url.ts`. Three places used to build this string
     themselves and two were wrong in opposite directions: the sign-in link fell back to the
     production domain, so a link generated on a laptop pointed at a site where the token
@@ -132,7 +142,7 @@ medical notes. That single fact drives most of the rules below.
     fetch spec — so under `cf:preview` this resolves to the production constant and a
     sign-in link generated there points at the live site. Production is unaffected, since
     the constant is the right answer there. Test sign-in with `npm run dev`.
-15. **No secret is ever a literal in a file in this tree.** API keys live in the macOS
+16. **No secret is ever a literal in a file in this tree.** API keys live in the macOS
     Keychain and are loaded by `.envrc.local`, which contains lookups and no values —
     `scripts/secrets-to-keychain.sh` writes it. Two leaks came from that file being read
     aloud into a transcript; git was never involved. `.claude/hooks/deny-secret-reads.py`
@@ -352,7 +362,7 @@ saves nothing, in tester mode it saves a real child's details to the live databa
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 420 tests
+npm test                         # 423 tests
 node scripts/seed-local.mjs      # 75 invented people, local database only. Stages:
                                  #   entries | places | gameday | (default: everything)
                                  # --clear removes every trace. Refuses --remote.

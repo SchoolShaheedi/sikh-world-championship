@@ -859,10 +859,12 @@ SIGNING IN
   node scripts/grant-moderator.mjs you@example.com "Your Name"
   npm run dev    ->   http://localhost:3000/signin
 
-  No email is sent locally (no RESEND_API_KEY). The magic link is printed in the terminal
-  running the dev server, along with the full text of every email that would have gone out
-  — which is the only place the wording of an offer or a guardian notice can be read
-  without sending one.
+  NOTHING IS EMAILED under npm run dev — not because the key is missing (.envrc loads it
+  from the Keychain) but because sending real email from a laptop is not what a rehearsal
+  is for. Every email is printed in full in the terminal running the dev server instead,
+  magic links included, which is also the only place the wording of an offer or a guardian
+  notice can be read without sending one to somebody. SWC_EMAIL_DEV_SEND=true if you
+  really want a local send.
 
   The camera needs HTTPS or localhost. http://<your-ip>:3000 from a phone will not get
   one; use the laptop's own camera, or npm run cf:preview on localhost.

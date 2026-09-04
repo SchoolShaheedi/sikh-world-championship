@@ -150,18 +150,46 @@ export async function sendEmail(input: EmailInput): Promise<SendResult> {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    const error = "RESEND_API_KEY is not set — nothing was sent.";
+
+  /**
+   * `next dev` does not send. It prints.
+   *
+   * WHY THIS IS NOT CONDITIONAL ON THE KEY BEING ABSENT. The key is loaded from the
+   * Keychain by `.envrc`, so it IS present on the developer's machine — which meant a
+   * rehearsal on a laptop called the live Resend account. Two consequences, both bad. A
+   * seeded address is `@example.com` and Resend rejects it with a 422, so the sign-in link
+   * was never printed and never delivered and the failure read as a bug in this app. And
+   * with a REAL address in the form, a rehearsal would have put actual email in an actual
+   * inbox — a guardian notice about a child who does not exist, sent from our verified
+   * domain, from somebody's laptop.
+   *
+   * Delivery is tested on the deployed site with a real address, deliberately and once —
+   * see 00_Docs/TESTING-REGISTRATION.md. It is not what a laptop is for.
+   *
+   * `development` and not `!== "production"`, because vitest runs as `test` and the suite
+   * asserts real send behaviour against a mocked fetch. `SWC_EMAIL_DEV_SEND=true` is the
+   * way out for anyone who genuinely wants a local send.
+   */
+  const holdLocally =
+    process.env.NODE_ENV === "development" && process.env.SWC_EMAIL_DEV_SEND !== "true";
+
+  if (!apiKey || holdLocally) {
+    const error = holdLocally
+      ? "Not sent: local development. Printed below instead. SWC_EMAIL_DEV_SEND=true to send for real."
+      : "RESEND_API_KEY is not set — nothing was sent.";
     console.warn(`[email] ${input.kind} -> ${input.to}: ${error}`);
     /**
-     * Locally, print what WOULD have gone out.
+     * Print what WOULD have gone out.
      *
-     * The failure above is still a failure and still recorded as one — see the header; an
-     * email that looks sent and was not is the bug this whole function is shaped around.
-     * This only makes the content readable. `email_sends` keeps the kind, the recipient
-     * and the subject but not the body, so before this the wording of an offer or a
-     * guardian notice could not be checked anywhere except production, which for a
-     * safeguarding email sent to a parent is the wrong place to first read it.
+     * Recorded as a FAILURE either way, and that is deliberate: only a 200 from Resend
+     * records `sent`. An email that looks sent and was not is the bug this whole function
+     * is shaped around, and "we chose not to send it" is still not delivered. So the local
+     * moderation queue shows these as failed, which is exactly what happened.
+     *
+     * `email_sends` keeps the kind, the recipient and the subject but NOT the body, so
+     * without this the wording of an offer or a guardian notice could not be read anywhere
+     * except production — the wrong place to first read a safeguarding email to a parent.
+     * It is also where the sign-in link comes from on a laptop.
      *
      * Guarded on NODE_ENV rather than on a flag: a real child's details are in this text,
      * and the one environment where it must never reach a log is the one that has them.

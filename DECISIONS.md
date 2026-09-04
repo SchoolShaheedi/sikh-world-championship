@@ -3016,3 +3016,46 @@ Verified end to end rather than by inspection: `GET /signin/<token>` on `next de
 with `Host: evil.example` returns `https://sikhchampionships.com/profile`.
 
 420 tests (was 410).
+
+### Second addendum — the key was there all along, and that was the problem
+
+The account existed and the base URL was right, and it still did not work:
+
+```
+[email] sign-in-link -> you@example.com: Resend returned 422:
+  "Invalid `to` field. Please use our testing email address instead of domains like
+   `example.com`."
+```
+
+Both of yesterday's fixes assumed the local case was **no key**. It is not. `.envrc` loads
+`RESEND_API_KEY` from the Keychain, so a laptop reaches the live Resend account, and the
+print-the-body branch — guarded on the key being absent — never ran. Two ways that is
+wrong, and the 422 is the milder one:
+
+* A seeded address is `@example.com`, which Resend rejects outright. So the link was never
+  printed *and* never delivered, and the failure read as a bug in this app.
+* With a **real** address in the form, a rehearsal on a laptop would have put actual email
+  in an actual inbox — a guardian notice about a child who does not exist, sent from our
+  verified domain. That is the one worth fixing.
+
+So `next dev` no longer sends. It prints. Held on `NODE_ENV === "development"`
+specifically, not `!== "production"`, because vitest runs as `test` and the suite asserts
+the real send path against a mocked fetch — a test that stops exercising the code it is
+about is worse than no test. `SWC_EMAIL_DEV_SEND=true` sends for real, for anyone who means
+it, and there is a test for that arm too.
+
+**Still recorded as a failed send**, deliberately. Only a 200 from Resend records `sent`,
+and "we chose not to send it" is not delivered. An email that looks sent and was not is the
+bug this module has always been shaped around, and a convenience for developers is not a
+reason to put the first crack in it. The local moderation queue therefore shows these as
+failed, which is exactly what happened.
+
+Delivery is still tested the way `00_Docs/TESTING-REGISTRATION.md` describes: once, on the
+deployed site, with a real address. That is not what a laptop is for.
+
+Verified end to end through the real function, the real database and the real email layer:
+an unknown address logs `no account for …` and sends nothing; a known one logs the whole
+email with `http://localhost:3000/signin/<token>`, calls Resend zero times, and following
+that link redirects to `/profile` with a session that reaches `/admin`.
+
+423 tests (was 420).

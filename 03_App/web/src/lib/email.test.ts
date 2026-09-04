@@ -45,6 +45,63 @@ function mockResend(status: number, body: unknown) {
  * offer or a guardian notice could not be read anywhere but production — which for a
  * safeguarding email to a parent is the wrong place to read it first.
  */
+/**
+ * A key IS configured on the developer's machine — `.envrc` loads it from the Keychain —
+ * so "no key" was never the local case. These pin the case that actually happens.
+ */
+describe("running under next dev, with a key present", () => {
+  it("does NOT call Resend, and prints the email instead", async () => {
+    process.env.RESEND_API_KEY = "test-key";
+    const fetchSpy = vi.fn(async () => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchSpy);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const before = process.env.NODE_ENV;
+    vi.stubEnv("NODE_ENV", "development");
+
+    const r = await sendEmail(
+      mail({ text: "Here is your sign-in link:\n\nhttp://localhost:3000/signin/abc" }),
+    );
+
+    // The whole point: a rehearsal on a laptop must not put real email in a real inbox.
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(r.ok).toBe(false);
+    expect(warn.mock.calls.flat().join(" ")).toContain("http://localhost:3000/signin/abc");
+
+    // Recorded as failed, because it was not delivered. Only a 200 records 'sent'.
+    const rows = await failedSends();
+    expect(rows).toHaveLength(1);
+
+    vi.stubEnv("NODE_ENV", before ?? "test");
+    warn.mockRestore();
+  });
+
+  it("sends for real when SWC_EMAIL_DEV_SEND is set, for anyone who means it", async () => {
+    process.env.RESEND_API_KEY = "test-key";
+    process.env.SWC_EMAIL_DEV_SEND = "true";
+    const fetchSpy = vi.fn(async () => new Response(JSON.stringify({ id: "e9" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchSpy);
+    const before = process.env.NODE_ENV;
+    vi.stubEnv("NODE_ENV", "development");
+
+    const r = await sendEmail(mail({ idempotencyKey: "key-dev-send" }));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(r.ok).toBe(true);
+
+    vi.stubEnv("NODE_ENV", before ?? "test");
+    delete process.env.SWC_EMAIL_DEV_SEND;
+  });
+
+  it("still sends under `test`, so the suite keeps testing the real path", async () => {
+    // The guard is on `development` and not on `!== "production"` for exactly this reason.
+    process.env.RESEND_API_KEY = "test-key";
+    const fetchSpy = vi.fn(async () => new Response(JSON.stringify({ id: "e8" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchSpy);
+    const r = await sendEmail(mail({ idempotencyKey: "key-test-env" }));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(r.ok).toBe(true);
+  });
+});
+
 describe("no API key configured", () => {
   it("records a FAILURE and prints the body, in development", async () => {
     delete process.env.RESEND_API_KEY;
