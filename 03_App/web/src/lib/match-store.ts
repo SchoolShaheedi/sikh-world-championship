@@ -275,9 +275,15 @@ export async function recordScore(
   }
 
   const now = new Date().toISOString();
+  // `station = NULL` is what frees the console for the next match. A finished game holding
+  // its station would leave "Fill the stations" with nothing to give out while four
+  // screens stood empty — and the number on the projector would still be pointing a
+  // player at a station somebody else is already sitting at.
   await db
     .prepare(
-      `UPDATE matches SET home_score = ?, away_score = ?, status = 'complete', updated_at = ?
+      `UPDATE matches
+          SET home_score = ?, away_score = ?, status = 'complete', station = NULL,
+              updated_at = ?
         WHERE id = ?`,
     )
     .bind(homeScore, awayScore, now, matchId)
@@ -297,5 +303,122 @@ export async function recordScore(
       .run();
   }
 
+  return { ok: true };
+}
+
+/* ------------------------------------------------------------------ stations */
+
+/**
+ * Which console a match is being played on.
+ *
+ * WHY THIS IS NOT COSMETIC. Rule 9 of the event is "report to your station within 5
+ * minutes of being called, or the match is forfeited", and until now nothing in the app
+ * could say which station that was — the column existed on `matches` from migration 0009
+ * and nothing ever wrote to it. A forfeit rule enforced against information the player
+ * was never given is not a rule, it is a trap. It is also the difference between a
+ * bracket, which says who plays whom, and a running order, which says where to go.
+ *
+ * A STATION IS WHAT MAKES A MATCH LIVE. `status = 'live'` had no writer either. Rather
+ * than two facts that can disagree — a match marked live on no station, a station holding
+ * a pending match — assigning one sets the other, clearing it unsets it, and a score
+ * completes the match and frees the station. One action, one meaning.
+ *
+ * THE ASSIGNMENT IS NOT CLEVER, ON PURPOSE. Free stations, lowest number first, given to
+ * the matches that can be played, in bracket order. No attempt to balance the field or
+ * keep a round together: on the day the person running this can see the room, and a
+ * scheduler that thinks it knows better than they do is a thing to fight at 11am.
+ */
+
+/** More than this and the number stops being something anybody shouts across a hall. */
+export const MAX_STATIONS = 32;
+
+export interface StationPlan {
+  assigned: { matchId: string; station: number }[];
+  /** Ready to play but there was no free console. Said out loud; it is the normal state. */
+  waiting: number;
+}
+
+export async function assignStations(
+  eventSlug: string,
+  stationCount: number,
+): Promise<{ ok: true; plan: StationPlan } | { ok: false; error: string }> {
+  if (!Number.isInteger(stationCount) || stationCount < 1 || stationCount > MAX_STATIONS) {
+    return { ok: false, error: `How many stations? A number from 1 to ${MAX_STATIONS}.` };
+  }
+
+  const stored = await storedBracket(eventSlug);
+  if (!stored) return { ok: false, error: "No bracket has been generated yet." };
+
+  const occupied = new Set(
+    stored.bracket.matches
+      .filter((m) => m.status === "live" && m.station !== null)
+      .map((m) => m.station as number),
+  );
+  const free: number[] = [];
+  for (let n = 1; n <= stationCount; n++) if (!occupied.has(n)) free.push(n);
+
+  // Ready to play: both players known, nobody has entered a score, not already out there.
+  const ready = stored.bracket.matches
+    .filter(
+      (m) =>
+        m.status === "pending" &&
+        m.homeId !== null &&
+        m.awayId !== null &&
+        m.homeScore === null &&
+        m.awayScore === null,
+    )
+    .sort((a, b) => a.round - b.round || a.position - b.position);
+
+  const db = await getDb();
+  const now = new Date().toISOString();
+  const assigned: { matchId: string; station: number }[] = [];
+
+  for (const m of ready) {
+    const station = free.shift();
+    if (station === undefined) break;
+    await db
+      .prepare(
+        "UPDATE matches SET station = ?, status = 'live', updated_at = ? WHERE id = ?",
+      )
+      .bind(station, now, m.id)
+      .run();
+    assigned.push({ matchId: m.id, station });
+  }
+
+  return { ok: true, plan: { assigned, waiting: ready.length - assigned.length } };
+}
+
+/**
+ * Put one match on a station by hand, or take it off.
+ *
+ * The manual override exists because a console breaks. Deliberately does NOT refuse a
+ * station that is already in use: the person pressing this is standing in the room and
+ * can see the screens, and refusing them would mean arguing with the only source of truth
+ * there is. Two matches on one station shows up on the projector, which is where somebody
+ * would notice.
+ */
+export async function setStation(
+  eventSlug: string,
+  matchId: string,
+  station: number | null,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (station !== null && (!Number.isInteger(station) || station < 1 || station > MAX_STATIONS)) {
+    return { ok: false, error: `A station is a number from 1 to ${MAX_STATIONS}.` };
+  }
+
+  const db = await getDb();
+  const row = await db
+    .prepare("SELECT status FROM matches WHERE id = ? AND event_slug = ?")
+    .bind(matchId, eventSlug)
+    .first<{ status: string }>();
+  if (!row) return { ok: false, error: "No such match." };
+  if (row.status === "complete") {
+    return { ok: false, error: "That match is finished. Clear the score first." };
+  }
+
+  await db
+    .prepare("UPDATE matches SET station = ?, status = ?, updated_at = ? WHERE id = ?")
+    .bind(station, station === null ? "pending" : "live", new Date().toISOString(), matchId)
+    .run();
   return { ok: true };
 }

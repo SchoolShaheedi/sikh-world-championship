@@ -23,6 +23,8 @@ profile and then registers interest in each event. The routes follow that shape:
 | `/profile` | Their own record. |
 | `/admin` | Counts, the draw, and running the bracket. Moderators only. |
 | `/admin/entries` | Who applied, counted by referral, city, self-rating and age group, plus a page per person. Moderators only. |
+| `/admin/volunteers` | Who offered to help, and the two decisions about each. Moderators only. |
+| `/volunteer` | The seven jobs, and a public sign-up form. No account needed. |
 | `/events/<slug>/tv` | The big screen in the hall. No chrome, polls, not indexed. |
 | `/moderation` | Reports and the support queue. Moderators only. |
 
@@ -193,6 +195,31 @@ medical notes. That single fact drives most of the rules below.
     on `/admin` count everyone with a place, carry a line saying what they count, and the
     totals underneath add up in public.
 
+20. **A photography objection is recorded, and it is not a consent field.** Photography is
+    a condition of entering (invariant 12), so `photo_consent` is true on every row and is
+    useless to a photographer — the only list that means anything is the opposite one.
+    `photo_objected_at` / `photo_objected_by` hold that an objection was recorded, when,
+    and by which moderator; `doNotPhotographList()` produces the names read out before the
+    doors open, narrowed to people who will actually be in the hall. **There is deliberately
+    no column for the reason or the scope.** A free-text note about a child, written by a
+    volunteer and read by whoever is holding a camera, would have no retention rule of its
+    own — and a scope somebody has to interpret at twenty metres is not a control. Anything
+    narrower than "do not photograph this person" stays in the support ticket it arrived
+    in. A moderator records it, never the person: a self-service tick box turns a stated
+    condition back into a consent field, which is what invariant 12 is about. Clearing an
+    objection removes it completely rather than leaving a marker, because the likely reason
+    to clear one is that it went against the wrong person.
+
+21. **This app does not invent a retention rule** — invariant 9 read the other way round.
+    The `volunteers` table (round 57) holds adults' contact details and, for each one, a
+    THIRD PARTY's name and contact route: the referee, who never visited this site. No
+    duration for volunteer records has been decided, so **nothing purges them**,
+    `RETENTION-POLICY.md` carries the figure in brackets, and `/admin/volunteers` says on
+    the page that nothing expires, next to the button that is the only thing that removes
+    one. Writing a purge with a plausible number would be exactly the mistake invariant 9
+    exists to prevent. Do not add one until the brackets come off. The same rule is why
+    `staff_grants` has a stated six years and no code enforcing it.
+
 ## The registration lifecycle
 
 ```
@@ -260,6 +287,14 @@ confirmSelection() issues check_in_token
   `PRAGMA table_info(registrations)` asserting no such column exists. "Passport" against a
   child's name is a nationality signal with no use here. Adding any of it needs a DPIA
   amendment, not a migration.
+* **The reminder email is a button, not a cron job** (round 57, `src/lib/reminders.ts`).
+  Every offer email has promised "we will email again with the venue address and what to
+  bring" since it was written, and nothing sent it. It goes to everybody with a place, and
+  an under-18's guardian gets a *separate* one carrying the collection rule — not a CC,
+  because the guardian address comes from the registration record and the two people need
+  different sentences. Idempotent on the reference, so pressing it again after backfilling
+  three drop-outs emails the three. Not scheduled: a cron job cannot be told the hall
+  changed, and the address is the whole point of the email.
 * No contact details on the desk list, deliberately. A guardian's mobile is exactly what
   you want if a child arrives alone and exactly what should not be on a screen facing a
   queue. `under18` and a one-line `leaving` note are decision support with no contact route
@@ -318,6 +353,16 @@ the `version` differs. Three things that are load-bearing rather than incidental
 - **A corrected score recomputes the whole board** through `advanceWinners`, rather than
   writing the winner into the next match. A score typed wrong and fixed two minutes later
   is the thing that will actually happen.
+- **A station is what makes a match live** (round 57). `matches.station` existed from
+  migration 0009 and nothing ever wrote to it, while rule 9 forfeits a player who does not
+  reach their station within five minutes of being called — a forfeit rule enforced against
+  information nobody was given. `assignStations()` fills the free consoles, lowest number
+  first, in bracket order; `recordScore()` sets `station = NULL`, which is what frees one
+  for the next match; `setStation()` is the manual move for when a console breaks, and it
+  deliberately does not refuse a station already in use, because the person pressing it can
+  see the room. `status = 'live'` and a station are set and cleared together rather than
+  being two facts that can disagree. The count of working consoles is typed in on the day
+  and stored nowhere: eight were promised, one has a dead HDMI port, so it is seven.
 
 To see it working without real registrations: `node scripts/seed-local.mjs gameday`
 (local database only, refuses `--remote`). The bracket is built from everyone with a
@@ -424,12 +469,13 @@ Two conventions in those strings, both rendered rather than literal:
 **What is deliberately NOT in en.json**, and must not be moved there: copy that is already
 single-sourced in a typed module — `src/data/org.ts`, `src/data/events/<slug>.ts`,
 `profile-benefits`, `sponsors`, `qualities`, `id-check`, `referral-orgs`, `avatars`,
-`lib/support-types`, `lib/guardian-types`, `lib/guardian-rules`, `lib/play-types`,
+`lib/support-types`, `lib/volunteer-types`, `lib/guardian-types`, `lib/guardian-rules`,
+`lib/play-types`,
 `lib/registration-schema`, `lib/email-templates`. Several of those are `as const` tuples
 that the validation schema is built from: a medical condition or a support category is a
 permitted value, not just a label, and JSON would lose the union.
 
-`npm run copy:desk` writes `copy-desk.html` — one page listing all 785 public strings from
+`npm run copy:desk` writes `copy-desk.html` — one page listing all 820 public strings from
 BOTH sources with an editable box beside each, and an export naming the file and key for
 every change. Regenerate it after a copy change; it reads the real files, so it cannot
 silently go stale. It excludes /admin, /moderation, the desk, and the email templates.
@@ -438,7 +484,7 @@ silently go stale. It excludes /admin, /moderation, the desk, and the email temp
 
 ```bash
 npm run dev                      # http://localhost:3000
-npm test                         # 467 tests
+npm test                         # 509 tests
 node scripts/seed-local.mjs      # 75 invented people, local database only. Stages:
                                  #   entries | places | gameday | (default: everything)
                                  # --clear removes every trace. Refuses --remote.

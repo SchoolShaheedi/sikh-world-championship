@@ -257,7 +257,28 @@ const sections = [
   },
   {
     id: "volunteer", title: "Volunteer", route: "/volunteer",
-    entries: restOf("volunteer", []),
+    note: "The roles moved out of en.json in round 57 — a role id is a permitted value the sign-up form is validated against, so the words live in a typed module like the support categories do.",
+    entries: [
+      ...restOf("volunteer", []).map((e) => ({
+        ...e,
+        multiline: (e.value ?? "").length > 90,
+      })),
+      ...DATA.VOLUNTEER_ROLES.flatMap((r, i) => [
+        d("src/lib/volunteer-types.ts", `VOLUNTEER_ROLES[${i}].name`, r.name, { where: `Role ${i + 1}` }),
+        ...(r.detail
+          ? [d("src/lib/volunteer-types.ts", `VOLUNTEER_ROLES[${i}].detail`, r.detail, { where: `Role ${i + 1} — hint`, multiline: true })]
+          : []),
+      ]),
+      ...DATA.VOLUNTEER_AVAILABILITY.flatMap((a, i) => [
+        d("src/lib/volunteer-types.ts", `VOLUNTEER_AVAILABILITY[${i}].label`, a.label, { where: "When can you be there?" }),
+        d("src/lib/volunteer-types.ts", `VOLUNTEER_AVAILABILITY[${i}].help`, a.help, { where: "When can you be there? — hint" }),
+      ]),
+      ...DATA.VOLUNTEER_DBS.map((x, i) =>
+        d("src/lib/volunteer-types.ts", `VOLUNTEER_DBS[${i}].label`, x.label, {
+          where: "DBS answers",
+          note: "Three answers and no fourth. \"Not sure\" is the true answer for most people, and a form that forces a guess gets a wrong yes.",
+        })),
+    ],
   },
   {
     id: "support", title: "Contact us", route: "/support",

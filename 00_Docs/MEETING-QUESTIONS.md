@@ -40,7 +40,27 @@ Applications close **26 September**. Entries are **open to the public** as of 1 
 
 6. **The day's running order.** Timings were discussed and 09:30–16:30 is on the site. When
    the round-by-round order is fixed it goes on the reminder email and the day sheet, not
-   on the website.
+   on the website. **The reminder email itself is now built** (`/admin` → The reminder
+   email) and carries the venue address, the times and what to bring — so anything settled
+   about the running order has somewhere to go.
+
+7. **How long do we keep a volunteer's details, and do we actually take up the reference?**
+   New on 2026-09-05, with the sign-up form on `/volunteer`. Two answers needed and the
+   app is waiting on both.
+   - **A retention period.** Nothing deletes a volunteer record automatically and nothing
+     will until a figure is agreed — the app does not invent retention rules. The proposal
+     in `RETENTION-POLICY.md` is 12 months after the event, the same clock as an entry.
+     Say yes to that or say a different number.
+   - **The referee.** The form asks every volunteer for one person who will vouch for them
+     — a name, how they know each other, and one contact route. That person has not
+     visited the site and has not agreed to anything, and the form promises we will
+     contact them before the day. **Either somebody does that, or the question comes off
+     the form.** A third party's phone number collected for a check nobody performs is the
+     worst of both: the intrusion without the safeguard.
+
+8. **How many stations will there actually be?** The app asks for the number on the day
+   rather than storing it, so nothing is blocked — but the answer decides how many matches
+   run at once and therefore whether 63 matches fit between 09:30 and 16:30.
 
 ---
 

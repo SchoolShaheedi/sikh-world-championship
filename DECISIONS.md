@@ -3264,3 +3264,161 @@ are stated underneath, so the arithmetic is on the page instead of in somebody's
 selected" says it stays at zero until the emails are sent, which is why it was zero.
 
 467 tests (was 449).
+
+---
+
+## Round 57 — 2026-09-05 — Four things off the backlog: a station number, an email that was promised, a list of names, and a form that asks the three questions
+
+No bug reports this round. The instruction was to build the code items I had listed as
+outstanding, and the four of them turned out to share a shape: each was a promise the app
+had already made in words and could not keep in code.
+
+### Stations: a forfeit rule enforced against information nobody was given
+
+Rule 9 of the event reads *"report to your station within 5 minutes of being called, or the
+match is forfeited"*. The `matches` table has had a `station` column since migration 0009
+and **nothing has ever written to it**. So the rule threatened a player with a forfeit for
+failing to reach a place the system had no way of telling them about.
+
+`/admin` → The bracket now has a **Working stations** box and a *Call the next matches*
+button. It fills whatever consoles are free, lowest number first, in bracket order.
+
+Three decisions inside that are worth recording:
+
+- **A station is what makes a match live.** `status = 'live'` had no writer either, and two
+  facts that can disagree — a match marked live on no station, a station holding a pending
+  match — is a worse problem than the one being solved. Assigning sets both, clearing unsets
+  both, and a score completes the match and **frees the station**, which is the line that
+  makes pressing the button a second time do the right thing.
+- **The assignment is not clever, on purpose.** No balancing, no keeping a round together.
+  On the day the person pressing this can see the room, and a scheduler that thinks it knows
+  better is a thing to fight at 11am.
+- **The number of stations is typed in, not stored on the event.** Eight were promised, one
+  has a dead HDMI port, so it is seven — discovered at 09:15, not at deploy time. A field
+  somebody has to remember to change in a data file before a deploy is a field that is wrong
+  on the morning.
+
+The manual override deliberately does **not** refuse a station already in use. The reason to
+touch it is a console breaking, and refusing the only person who can see the screens would
+be arguing with the source of truth.
+
+**Not on the slips, and that is settled rather than deferred.** The slips print the night
+before and a station is decided on the day. A printed number that has since moved sends a
+player to a console somebody else is sitting at, which is worse than no number.
+
+### The reminder email: a promise in every offer, kept by nobody
+
+`applicationOutcome` has said *"we will email again with the venue address and what to
+bring"* since it was written. Nothing sent it. That is a promise made to a child and their
+parent by a system that had no way of keeping it.
+
+`/admin` → The reminder email. Everybody with a place gets one; it is the **only** email
+that carries the street address, because everywhere else says the town (`venueLocality`) —
+an address in an email sent to whatever was typed into a form is a different thing from an
+address sent to somebody who has a place.
+
+- **Two emails per under-18, not one with a CC.** The guardian address comes from the
+  registration record and the child's does not (invariant 3), and the two people need
+  different sentences: a twelve-year-old does not need to be told they must be collected,
+  the person collecting them does. The guardian's copy states the collection rule that
+  actually applies to their child — stay at the venue, may leave alone, must be collected.
+- **A button, not a cron job.** A schedule cannot be told the hall changed, and the address
+  is the whole point of the email. It refuses to send at all while `detailsConfirmed` is
+  false.
+- **Idempotent on the reference**, so pressing it again after backfilling three drop-outs
+  emails the three and reports the rest as "already had it" — which is what the panel says,
+  rather than implying sixty-four emails just went out.
+
+What to bring is read from `src/data/id-check.ts` rather than retyped, so it cannot drift
+from what the desk is reading off the same file.
+
+One bug found by printing the thing and reading it: the plain-text builder filtered every
+empty string out of its line array to drop an absent venue line, and took **every paragraph
+break** with it. The half of the email some parents actually read was one unbroken wall. Now
+`null` is an absent line and `""` is a deliberate blank, with a test on it.
+
+### The do-not-photograph list: five promises resting on somebody's memory
+
+Photography is a condition of entering (round 47, invariant 12), so `photo_consent` is true
+on every row and tells a photographer nothing. The only useful list is the opposite one, and
+it did not exist: an objection arrived as a support message, and the on-the-day checklist
+said in as many words that the list *"has to be carried by hand"*. Meanwhile the form, the
+confirmation email, the guardian email, the new reminder and the privacy notice all promise
+the same thing — tell us and the photographers are told.
+
+A moderator now records it against the entry, and `/admin` shows a **Do not photograph**
+list of names under the event.
+
+- **No column for the reason or the scope.** Two arguments, same direction. A free-text note
+  about a child, written by a volunteer and read by whoever is holding a camera, would have
+  no retention rule of its own. And a scope somebody has to interpret at twenty metres is
+  not a control — what a photographer can act on is a name. Anything narrower stays in the
+  support ticket it arrived in, where a person answers it in words.
+- **A moderator presses it, never the person.** A self-service tick box turns a stated
+  condition back into a consent field, which is exactly what invariant 12 is about.
+- **`photo_consent` is untouched.** It records what the person was told when they entered;
+  an objection is what happened afterwards, and overwriting one with the other would lose
+  the fact that the condition was stated.
+- **Clearing removes it completely.** The likely reason to clear one is that it went against
+  the wrong person, and a tombstone would leave a child on a list of people who objected to
+  nothing.
+
+DPIA risk 18 moves from *"nothing in the app records an objection"* to a residual that is
+honestly about the briefing rather than the data.
+
+### The volunteer form: the three questions that were never asked
+
+`/volunteer` listed seven jobs and then sent people to the support form. An offer to work at
+an event for children arrived as a paragraph of prose, and the three things that decide
+whether somebody can be given a job — **DBS, availability, and does anybody vouch for them**
+— were never asked. The page had carried a TODO saying so since round 43.
+
+It now ends in a real form, and `/admin/volunteers` is the queue. The page names the roles
+nobody confirmed has taken, because in a rota of fifteen the useful question is which job has
+nobody in it, not how many people offered.
+
+Four decisions on the shape of it:
+
+- **Three words about DBS and nothing else.** Yes, no, or not sure — and no column for a
+  certificate number, an issue date, or anything a check found. That is criminal-records-
+  adjacent data stored for no purpose we can name, and the moment it has a column somebody
+  treats this table as the DBS register. It is not; the register lives with the safeguarding
+  lead. "Not sure" is on the list because it is the true answer for most people, and a form
+  that forces a guess gets a wrong yes — the only one of the three answers that is dangerous.
+- **18 or over, declared, and the refusal offers a way through.** This is an event for
+  twelve- to twenty-five-year-olds and a volunteer is somebody given a job near them. The
+  refusal points at `/support` so a willing seventeen-year-old is answered by a person
+  rather than by a validation message.
+- **No free text at all**, so invariant 1 does not have to be widened. Somebody with more to
+  say already has the support form, linked underneath.
+- **The referee is the intrusive part and it is treated that way.** A name, how they know
+  the volunteer, and **one** contact route — no address, no organisation, no second referee.
+  That person has not visited this site and has not agreed to anything, so the form says in
+  the box itself to tell them first and the acknowledgement email repeats that we will
+  contact them.
+
+**And what was deliberately not built: a purge.** Invariant 9 says a retention duration is
+decided by the team before the code that enforces it is written, and no figure for volunteer
+records exists. So nothing deletes them, `RETENTION-POLICY.md` carries the proposal in
+brackets, and `/admin/volunteers` states on the page that nothing expires — next to the
+Delete button that is currently the only thing that removes one. Writing a purge with a
+plausible-looking number would have been exactly the mistake that invariant exists to
+prevent. It is now **invariant 21**, and question 7 on the meeting list, together with the
+sharper half of the same question: either somebody actually takes up the reference, or the
+question comes off the form. A third party's phone number collected for a check nobody
+performs is the intrusion without the safeguard.
+
+### Housekeeping
+
+- The volunteer roles moved out of `en.json` into `src/lib/volunteer-types.ts`. A role id is
+  now a permitted value the server validates against, and a stored label is a copy change
+  that silently rewrites what somebody signed up for. The copy desk reads the new module, so
+  the words are still editable in one place: 820 strings across 19 sections.
+- Migration 0015: `photo_objected_at` / `photo_objected_by` on `registrations`, and the
+  `volunteers` table.
+- The seed grows two photography objections — one with a place, one without, so the
+  difference between the photographers' list and the entries marker is visible in a browser
+  — and five volunteers with a deliberate hole in the rota.
+- New invariants **20** (a photography objection is recorded, and is not a consent field)
+  and **21** (this app does not invent a retention rule).
+- 509 tests across 33 files, up from 467.

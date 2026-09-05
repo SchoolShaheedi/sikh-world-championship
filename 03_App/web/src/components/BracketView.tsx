@@ -55,12 +55,18 @@ function MatchCard({
         live ? "border-kesri shadow-[0_0_0_3px_rgba(242,132,43,0.15)]" : "border-line"
       }`}
     >
+      {/* THE STATION IS THE HALF OF THIS BAR THAT DOES A JOB. "Live" is decoration — the
+          scores tell you that. Rule 9 forfeits a match if a player does not reach their
+          station within five minutes of being called, so the number is what somebody is
+          scanning the screen for, and it gets the weight and its own end of the bar. */}
       {live && (
-        <p className="bg-kesri px-3 py-1 text-[10px] font-bold tracking-[0.16em] text-ink uppercase">
-          {copy.bracket.live}
-          {match.station
-            ? ` · ${fill(copy.bracket.station, { n: match.station })}`
-            : ""}
+        <p className="flex items-baseline justify-between gap-2 bg-kesri px-3 py-1 text-[10px] font-bold tracking-[0.16em] text-ink uppercase">
+          <span>{copy.bracket.live}</span>
+          {match.station !== null && (
+            <span className="text-xs tracking-[0.1em]">
+              {fill(copy.bracket.station, { n: match.station })}
+            </span>
+          )}
         </p>
       )}
       <Side

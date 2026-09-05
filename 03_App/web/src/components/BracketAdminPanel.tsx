@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { buildBracket, wipeBracket, enterScore } from "@/app/admin/actions";
+import {
+  buildBracket,
+  wipeBracket,
+  enterScore,
+  putOnStations,
+  moveStation,
+} from "@/app/admin/actions";
 import { roundName, type Match } from "@/lib/bracket";
 
 export interface BracketAdminData {
@@ -36,6 +42,14 @@ export function BracketAdminPanel({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmWipe, setConfirmWipe] = useState(false);
+  /**
+   * How many consoles are actually working, typed in on the day.
+   *
+   * Not stored on the event: eight were promised, one has a dead HDMI port, so it is
+   * seven — and that is discovered at 09:15, not at deploy time. A number somebody has to
+   * remember to change in a data file is a number that is wrong on the morning.
+   */
+  const [stations, setStations] = useState(8);
 
   async function run(fn: (fd: FormData) => Promise<{ ok?: true; message?: string; error?: string }>, fd: FormData) {
     setBusy(true);
@@ -101,6 +115,42 @@ export function BracketAdminPanel({
             — open it on the laptop plugged into the television and leave it.
           </p>
 
+          {/* CALLING MATCHES TO STATIONS.
+              The `station` column has existed since migration 0009 and nothing ever wrote
+              to it, while rule 9 forfeits a player who does not reach their station within
+              five minutes of being called. A forfeit rule enforced against information
+              nobody was given is a trap, so this is the button that gives it. */}
+          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-ink/20 p-3">
+            <label className="text-sm text-muted">
+              Working stations
+              <input
+                type="number"
+                min={1}
+                max={32}
+                value={stations}
+                onChange={(e) => setStations(Number(e.target.value))}
+                className="ml-2 w-16 rounded-lg border border-line bg-ink/40 px-2 py-1 text-center text-sm text-body"
+              />
+            </label>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                const fd = new FormData();
+                fd.set("slug", slug);
+                fd.set("stations", String(stations));
+                run(putOnStations, fd);
+              }}
+              className="rounded-lg bg-kesri px-3 py-1.5 text-xs font-bold text-ink transition-colors hover:bg-kesrisoft disabled:opacity-40"
+            >
+              Call the next matches
+            </button>
+            <span className="text-xs text-muted">
+              Fills whatever is free, lowest number first. A finished match frees its
+              station on its own.
+            </span>
+          </div>
+
           {playable.length > 0 ? (
             <div className="mt-4 space-y-2">
               <p className="text-xs tracking-[0.16em] text-muted uppercase">
@@ -118,7 +168,34 @@ export function BracketAdminPanel({
                   }}
                   className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-ink/20 p-3"
                 >
-                  <span className="w-28 shrink-0 text-[11px] text-muted">
+                  {/* One control that both assigns and clears, because the reason to
+                      touch it by hand is a console breaking and the answer is "move them
+                      to 5" or "take them off". A select cannot be typed wrong. */}
+                  <select
+                    aria-label={`Station for ${name(m.homeId)} against ${name(m.awayId)}`}
+                    value={m.station ?? ""}
+                    disabled={busy}
+                    onChange={(e) => {
+                      const fd = new FormData();
+                      fd.set("slug", slug);
+                      fd.set("matchId", m.id);
+                      fd.set("station", e.target.value);
+                      run(moveStation, fd);
+                    }}
+                    className={`w-16 shrink-0 rounded-lg border px-1.5 py-1 text-center text-xs ${
+                      m.station === null
+                        ? "border-line bg-ink/40 text-muted"
+                        : "border-kesri bg-kesri/15 font-bold text-kesri"
+                    }`}
+                  >
+                    <option value="">—</option>
+                    {Array.from({ length: stations }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="w-24 shrink-0 text-[11px] text-muted">
                     {roundName(m.round, data.rounds)}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm text-body">

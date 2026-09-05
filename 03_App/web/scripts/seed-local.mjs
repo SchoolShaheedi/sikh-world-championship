@@ -189,6 +189,12 @@ const ARRIVED = 31;
 /** Of those who arrived, the ones a volunteer has not yet checked a date of birth for. */
 const NO_DOB_CHECK = new Set([3, 11, 19, 27]);
 
+/**
+ * Who asked not to be photographed. One with a place (index 7) and one still waiting
+ * (index 60, beyond SELECTED) — see the block in the `places` stage for why both.
+ */
+const PHOTO_OBJECTIONS = [7, 60];
+
 const COUNT = 72;
 
 /**
@@ -467,6 +473,22 @@ if (wants("places")) {
        WHERE id = ${q(`local-r${p.i}`)};`,
     );
   }
+
+  /**
+   * Two people who asked not to be photographed, and one of them has no place.
+   *
+   * The second one is the point. `doNotPhotographList()` is narrowed to people who will
+   * be in the hall, so the list read to the photographers must show ONE name while the
+   * entries table shows the "no photos" marker on both — and that difference is only
+   * visible in a browser if the seed contains both cases.
+   */
+  for (const i of PHOTO_OBJECTIONS) {
+    sql.push(
+      `UPDATE registrations SET photo_objected_at = ${q(
+        new Date(Date.now() - 40 * 3600_000).toISOString(),
+      )}, photo_objected_by = 'local-staff-mod' WHERE id = ${q(`local-r${i}`)};`,
+    );
+  }
 }
 
 /* --- STAGE 3: gameday -------------------------------------------------------- */
@@ -713,6 +735,67 @@ if (wants("extras")) {
       last_seen_at: old,
     }),
   );
+
+  /**
+   * Volunteers, for /admin/volunteers.
+   *
+   * Five, chosen so the page has something to show in each state it can be in: one
+   * already accepted, one turned down, three unanswered — and between them a gap, because
+   * nobody has put themselves down for refereeing. That gap is the whole reason the page
+   * exists: fifteen people are needed and the interesting question is which job has
+   * nobody in it, not how many offered.
+   */
+  const VOLUNTEERS = [
+    {
+      n: 1, name: "Gurdeep Singh", roles: ["desk", "setup"], availability: "all-day",
+      dbs: "yes", status: "accepted",
+      referee: ["Manjit Kaur", "youth lead at our gurdwara", "manjit@example.com"],
+    },
+    {
+      n: 2, name: "Simran Kaur", roles: ["langar"], availability: "morning",
+      dbs: "not-sure", status: "new",
+      referee: ["Baljit Singh", "runs the langar sewa rota", "07700 900456"],
+    },
+    {
+      n: 3, name: "Arjan Dhillon", roles: ["photography", "scores"], availability: "afternoon",
+      dbs: "no", status: "new",
+      referee: ["Priya Sharma", "my manager at work", "priya@example.com"],
+    },
+    {
+      n: 4, name: "Harjit Kaur", roles: ["safeguarding", "desk"], availability: "all-day",
+      dbs: "yes", status: "new",
+      referee: ["Ranjit Singh", "school safeguarding lead", "ranjit@example.com"],
+    },
+    {
+      n: 5, name: "Tejinder Singh", roles: ["setup"], availability: "morning",
+      dbs: "no", status: "declined",
+      referee: ["Sukhi Bains", "played five-a-side with him for years", "07700 900789"],
+    },
+  ];
+  for (const v of VOLUNTEERS) {
+    const at = new Date(Date.now() - v.n * 36 * 3600_000).toISOString();
+    sql.push(
+      insert("volunteers", {
+        id: `local-v${v.n}`,
+        reference: `VOL-L0${v.n}`,
+        event_slug: SLUG,
+        full_name: v.name,
+        email: `local-vol${v.n}@example.com`,
+        mobile: `07700 9001${String(v.n).padStart(2, "0")}`,
+        roles: JSON.stringify(v.roles),
+        availability: v.availability,
+        dbs: v.dbs,
+        over_18: 1,
+        referee_name: v.referee[0],
+        referee_relation: v.referee[1],
+        referee_contact: v.referee[2],
+        status: v.status,
+        created_at: at,
+        decided_at: v.status === "new" ? null : at,
+        decided_by: v.status === "new" ? null : "local-staff-mod",
+      }),
+    );
+  }
 }
 
 /* ------------------------------------------------------------------ run it */
@@ -838,9 +921,16 @@ THE DESK HAS BEEN RUNNING AN HOUR — ${ARRIVED} of ${SELECTED} have arrived.
                             ${SELECTED} is not a power of two: you get a ${bracketSize(SELECTED)}-slot bracket and
                             ${bracketSize(SELECTED) - SELECTED} byes, resolved before anything is stored. That is the
                             answer to "can we start without 64".
+  /admin                    The bracket -> "Call the next matches". Set the number of
+                            working stations to 4 and press it: the first four playable
+                            matches go live on 1-4 and the panel says how many are still
+                            waiting. Enter a score on one and press it again — the
+                            station it frees is the one the next match gets.
   /events/${SLUG}/tv   The big screen. Enter a score on /admin and watch it move.
                             Enter a WRONG score, then correct it: the whole board is
-                            recomputed, so the right player ends up in the next round.`,
+                            recomputed, so the right player ends up in the next round.
+                            The station number is on the live match, which is what rule 9
+                            forfeits a player for not reaching.`,
 
   extras: `
 EVERYTHING ELSE.
@@ -856,10 +946,29 @@ EVERYTHING ELSE.
                             press "Show contact details"; the real values are not in the
                             page source until you do.
 
+  /admin/volunteers         Five people offered to help: one accepted, one turned down,
+                            three waiting for an answer. Nobody has put themselves down
+                            for refereeing, and the page says so — the useful question is
+                            which job has nobody in it. Nothing deletes these
+                            automatically and the page says that too.
+  /volunteer                The public form that writes them. Try submitting it without
+                            ticking "I am 18 or over": it is refused, and the refusal
+                            points at /support rather than just saying no.
+  /admin                    "Do not photograph" under the event: ONE name, the person with
+                            a place who objected. A second objector (LOCAL-060) has no
+                            place, so they carry the marker on /admin/entries and are
+                            correctly absent from the list read to the photographers.
+                            Record or clear an objection from /admin/entries -> a person.
+  /admin                    "The reminder email" — the venue address, the times and what
+                            to bring, to everybody with a place. Under-18s' guardians get
+                            their own with the collection rule on it. Nothing is sent
+                            under npm run dev; every one is printed in the terminal, which
+                            is the only way to read the wording. Press it twice: the
+                            second run reports "already had it" rather than sending again.
   /moderation               Five tickets and two reports. Two are safeguarding and sort
                             first. One is an erasure request. One is a photography
-                            objection — the thing with no field of its own, which has to
-                            be carried to the photographers by hand.
+                            objection — the message that a moderator now turns into a
+                            recorded fact on the entry, instead of remembering it.
   /play                     Four posts across both age bands, and one pending request.
                             Sign in as a U16 and an adult in turn: neither sees the other.
   /guardian/local-guardian-token

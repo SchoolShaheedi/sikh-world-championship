@@ -17,6 +17,9 @@ import {
   storedBracket,
   recordScore,
   clearBracket,
+  assignStations,
+  setStation,
+  MAX_STATIONS,
 } from "./match-store";
 
 beforeAll(useTempDataDir);
@@ -263,5 +266,151 @@ describe("a deleted account", () => {
     const same = after!.bracket.matches.find((m) => m.id === m0.id)!;
     expect(same.homeId).not.toBe(players[0].id);
     expect(same.awayId).not.toBe(players[0].id);
+  });
+});
+
+/**
+ * Stations.
+ *
+ * The column has existed since migration 0009 and nothing wrote to it, while rule 9
+ * forfeits a player who does not reach their station within five minutes of being called.
+ * Two things have to hold or the number on the screen is worse than no number: a finished
+ * match must free its console, and a station must never be handed out twice at once.
+ */
+describe("calling matches to stations", () => {
+  it("fills only the stations there are, and says how many are still waiting", async () => {
+    await field(8); // four first-round matches
+    await build();
+
+    const r = await assignStations(SLUG, 2);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.plan.assigned.map((a) => a.station)).toEqual([1, 2]);
+    expect(r.plan.waiting).toBe(2);
+  });
+
+  it("marks a called match live, which is what puts the number on the projector", async () => {
+    await field(4);
+    await build();
+    await assignStations(SLUG, 2);
+
+    const stored = await storedBracket(SLUG);
+    const live = stored!.bracket.matches.filter((m) => m.status === "live");
+    expect(live).toHaveLength(2);
+    expect(live.every((m) => m.station !== null)).toBe(true);
+  });
+
+  it("never hands out a station that is already in use", async () => {
+    await field(8);
+    await build();
+    await assignStations(SLUG, 2);
+    // Pressing it again with the same two consoles must not double-book them.
+    const again = await assignStations(SLUG, 2);
+    expect(again.ok).toBe(true);
+    if (!again.ok) return;
+    expect(again.plan.assigned).toHaveLength(0);
+    expect(again.plan.waiting).toBe(2);
+
+    const stored = await storedBracket(SLUG);
+    const inUse = stored!.bracket.matches
+      .filter((m) => m.station !== null)
+      .map((m) => m.station);
+    expect(new Set(inUse).size).toBe(inUse.length);
+  });
+
+  it("frees the station when a score is entered, and gives it to the next match", async () => {
+    await field(8);
+    await build();
+    await assignStations(SLUG, 1);
+
+    const first = (await storedBracket(SLUG))!.bracket.matches.find(
+      (m) => m.station === 1,
+    )!;
+    await recordScore(SLUG, first.id, 3, 1);
+
+    const after = (await storedBracket(SLUG))!.bracket.matches.find(
+      (m) => m.id === first.id,
+    )!;
+    // A finished match holding its console would leave the screen pointing two players at
+    // a station somebody else is sitting at.
+    expect(after.station).toBeNull();
+    expect(after.status).toBe("complete");
+
+    const next = await assignStations(SLUG, 1);
+    expect(next.ok).toBe(true);
+    if (!next.ok) return;
+    expect(next.plan.assigned).toHaveLength(1);
+    expect(next.plan.assigned[0].station).toBe(1);
+  });
+
+  it("only calls matches that have both players", async () => {
+    await field(4);
+    await build();
+    // Eight stations, but only two first-round matches can be played — round two is empty.
+    const r = await assignStations(SLUG, 8);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.plan.assigned).toHaveLength(2);
+  });
+
+  it("refuses a station count that is not a number of consoles", async () => {
+    await field(4);
+    await build();
+    for (const n of [0, -1, 1.5, MAX_STATIONS + 1]) {
+      const r = await assignStations(SLUG, n);
+      expect(r.ok).toBe(false);
+    }
+  });
+
+  it("says so rather than throwing when there is no bracket", async () => {
+    const r = await assignStations(SLUG, 4);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error).toMatch(/no bracket/i);
+  });
+});
+
+describe("moving one match by hand", () => {
+  it("moves it, and clearing it puts the match back in the queue", async () => {
+    await field(4);
+    await build();
+    await assignStations(SLUG, 1);
+
+    const called = (await storedBracket(SLUG))!.bracket.matches.find(
+      (m) => m.station === 1,
+    )!;
+
+    expect((await setStation(SLUG, called.id, 5)).ok).toBe(true);
+    let m = (await storedBracket(SLUG))!.bracket.matches.find((x) => x.id === called.id)!;
+    expect(m.station).toBe(5);
+    expect(m.status).toBe("live");
+
+    expect((await setStation(SLUG, called.id, null)).ok).toBe(true);
+    m = (await storedBracket(SLUG))!.bracket.matches.find((x) => x.id === called.id)!;
+    expect(m.station).toBeNull();
+    // Back to pending, so the next "call the matches" picks it up again.
+    expect(m.status).toBe("pending");
+  });
+
+  it("will not put a finished match back on a console", async () => {
+    await field(4);
+    await build();
+    await assignStations(SLUG, 1);
+    const called = (await storedBracket(SLUG))!.bracket.matches.find(
+      (m) => m.station === 1,
+    )!;
+    await recordScore(SLUG, called.id, 2, 0);
+
+    const r = await setStation(SLUG, called.id, 3);
+    expect(r.ok).toBe(false);
+  });
+
+  it("changes the version, so the television redraws", async () => {
+    await field(4);
+    await build();
+    const before = (await storedBracket(SLUG))!.version;
+    await assignStations(SLUG, 2);
+    const after = (await storedBracket(SLUG))!.version;
+    expect(after).not.toBe(before);
   });
 });

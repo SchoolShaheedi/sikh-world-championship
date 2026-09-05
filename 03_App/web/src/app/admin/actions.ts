@@ -14,7 +14,14 @@ import {
   deletionBlockers,
 } from "@/lib/account-delete";
 import { purgeDormantProfiles } from "@/lib/retention";
-import { generateBracket, clearBracket, recordScore } from "@/lib/match-store";
+import {
+  generateBracket,
+  clearBracket,
+  recordScore,
+  assignStations,
+  setStation,
+} from "@/lib/match-store";
+import { sendEventReminders } from "@/lib/reminders";
 import {
   lockBallot,
   clearBallot,
@@ -276,6 +283,100 @@ export async function enterScore(formData: FormData) {
   return { ok: true as const, message: "Score recorded." };
 }
 
+
+/* ------------------------------------------------------------------ *
+ * Stations — which console a match is on.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Put the matches that are ready onto whatever consoles are free.
+ *
+ * The number of stations is typed in on the day rather than stored on the event, because
+ * it is discovered on the day: eight were promised, one has a dead HDMI port, so it is
+ * seven. A field somebody has to remember to update in a data file before a deploy is a
+ * field that is wrong at 09:30.
+ */
+export async function putOnStations(formData: FormData) {
+  await gate();
+  const slug = String(formData.get("slug") ?? "");
+  const stations = Number(formData.get("stations"));
+
+  const r = await assignStations(slug, stations);
+  if (!r.ok) return { error: r.error };
+
+  revalidatePath("/admin");
+  revalidatePath(`/events/${slug}/bracket`);
+  const { assigned, waiting } = r.plan;
+  if (assigned.length === 0) {
+    return {
+      ok: true as const,
+      message:
+        waiting > 0
+          ? `Every station is busy. ${waiting} ${waiting === 1 ? "match is" : "matches are"} waiting.`
+          : "Nothing is ready to be called yet.",
+    };
+  }
+  return {
+    ok: true as const,
+    message:
+      `Called ${assigned.length} ${assigned.length === 1 ? "match" : "matches"} to ` +
+      `${assigned.map((a) => a.station).join(", ")}.` +
+      (waiting > 0 ? ` ${waiting} still waiting for a free station.` : ""),
+  };
+}
+
+/** Move one match by hand, or take it off a station. A console breaks; this is the answer. */
+export async function moveStation(formData: FormData) {
+  await gate();
+  const slug = String(formData.get("slug") ?? "");
+  const matchId = String(formData.get("matchId") ?? "");
+  const raw = String(formData.get("station") ?? "").trim();
+  const station = raw === "" ? null : Number(raw);
+
+  const r = await setStation(slug, matchId, station);
+  if (!r.ok) return { error: r.error };
+
+  revalidatePath("/admin");
+  revalidatePath(`/events/${slug}/bracket`);
+  return {
+    ok: true as const,
+    message: station === null ? "Taken off its station." : `Moved to station ${station}.`,
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * The reminder email.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Send the venue address and what to bring to everybody with a place.
+ *
+ * A BUTTON AND NOT A CRON JOB. A scheduled send cannot be told the hall has changed, and
+ * the one thing this email exists to carry is the address. Idempotent on the reference,
+ * so pressing it again after backfilling three drop-outs emails the three.
+ */
+export async function sendReminders(formData: FormData) {
+  await gate();
+  const slug = String(formData.get("slug") ?? "");
+  const event = getEvent(slug);
+  if (!event) return { error: "Unknown event" };
+  if (!event.detailsConfirmed || !event.venue) {
+    return {
+      error:
+        "The venue is not confirmed on this event, and the address is the whole point of " +
+        "this email. Fill it in first.",
+    };
+  }
+
+  const r = await sendEventReminders(event);
+  revalidatePath("/admin");
+
+  const parts = [`${r.sent} sent`];
+  if (r.guardians > 0) parts.push(`${r.guardians} to guardians`);
+  if (r.skipped > 0) parts.push(`${r.skipped} already had it`);
+  if (r.failed > 0) parts.push(`${r.failed} FAILED — see the email log`);
+  return { ok: true as const, message: `${parts.join(" · ")}.` };
+}
 
 /* ------------------------------------------------------------------ *
  * The draw, run by an outside service.

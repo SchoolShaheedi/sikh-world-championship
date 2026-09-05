@@ -15,6 +15,10 @@ import { storedBracket } from "@/lib/match-store";
 import { ON_THE_DAY } from "@/data/on-the-day";
 import { ExternalDrawPanel } from "@/components/ExternalDrawPanel";
 import { currentBallot, type Ballot } from "@/lib/external-draw";
+import { ReminderPanel } from "@/components/ReminderPanel";
+import { reminderSummary } from "@/lib/reminders";
+import { doNotPhotographList } from "@/lib/photo-objection";
+import { volunteerCounts } from "@/lib/volunteer-store";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -73,6 +77,9 @@ export default async function AdminPage() {
         event,
         ballot,
         bracketData,
+        reminders: await reminderSummary(event),
+        /** The do-not-photograph list, which until round 57 lived in somebody's memory. */
+        doNotPhotograph: await doNotPhotographList(event.slug),
         names: await bracketNames(event.slug),
         /**
          * Every entry, whatever its status, so a test entry can be deleted before the
@@ -109,6 +116,9 @@ export default async function AdminPage() {
    * a decision of its own.
    */
   const dormancy = await dormancySnapshot();
+
+  /** For the nav hint. One number, because "3 waiting" is what makes somebody click. */
+  const volunteers = await volunteerCounts(EVENTS[0]?.slug ?? "");
 
   const { results: runs } = await db
     .prepare("SELECT * FROM retention_runs ORDER BY ran_at DESC LIMIT 8")
@@ -154,6 +164,14 @@ export default async function AdminPage() {
             href: "/admin/people",
             label: "People",
             hint: "who can work the desk, who can do everything",
+          },
+          {
+            href: "/admin/volunteers",
+            label: "Volunteers",
+            hint:
+              volunteers.waiting > 0
+                ? `${volunteers.waiting} waiting for an answer`
+                : "who offered to help, and who is confirmed",
           },
           {
             href: `/events/${EVENTS[0]?.slug ?? ""}/tv`,
@@ -215,137 +233,194 @@ export default async function AdminPage() {
         </ul>
       </section>
 
-      {events.map(({ event, counts, draws, names, entries, bracketData, ballot }) => (
-        <section
-          key={event.slug}
-          className="mt-10 rounded-3xl border border-line bg-surface/60 p-6"
-        >
-          <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h2 className="font-display text-2xl">{event.title}</h2>
-            <p className="text-sm text-muted">
-              {event.capacity} places
-              {event.applicationsCloseAt && (
-                <>
-                  {" · "}applications close{" "}
-                  {new Date(event.applicationsCloseAt).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "long",
-                  })}
-                </>
-              )}
-            </p>
-          </div>
-
-          {/**
-           * FOUR NUMBERS THAT HAVE TO ADD UP, and for a while they did not.
-           *
-           * The third tile said "Selected" and counted `status = 'selected'` alone, so
-           * everybody who had already arrived — a third of the field on the day — dropped
-           * out of it. Meanwhile "places left" below was computed from selected AND
-           * checked-in, correctly. The result was a panel showing 17 selected, 64 places
-           * and 16 left, which is not arithmetic anybody can follow, and the honest
-           * reading of it ("we have barely filled a quarter") is wrong in the direction
-           * that matters.
-           *
-           * So the tile counts everyone WITH A PLACE and says so. Each tile also carries a
-           * line of its own explaining what it counts: "selected" and "not selected" are
-           * draw outcomes, not attendance, and that is not guessable from a four-word
-           * label by somebody opening this page for the first time on the morning.
-           */}
-          <div className="mt-5 grid gap-3 sm:grid-cols-4">
-            {(
-              [
-                ["Awaiting the draw", counts.applied, "applied, no decision yet"],
-                [
-                  "— of those, referred",
-                  counts.referredWaiting,
-                  "drawn first, ahead of the rest",
-                ],
-                [
-                  "Have a place",
-                  counts.selected + counts.checkedIn,
-                  counts.checkedIn > 0
-                    ? `${counts.selected} to arrive · ${counts.checkedIn} arrived`
-                    : "offered a place by the draw",
-                ],
-                ["Not selected", counts.notSelected, "drawn against, and told so"],
-              ] as [string, number, string][]
-            ).map(([label, n, hint]) => (
-              <div key={label} className="rounded-2xl border border-line bg-ink/30 p-4">
-                <p className="text-[11px] tracking-[0.16em] text-muted uppercase">{label}</p>
-                <p className="font-display mt-1.5 text-2xl text-body">{n}</p>
-                <p className="mt-1 text-xs text-muted">{hint}</p>
-              </div>
-            ))}
-          </div>
-          <p className="mt-2 text-xs text-muted">
-            {counts.applied + counts.selected + counts.checkedIn + counts.notSelected}{" "}
-            entries in total · {event.capacity} places ·{" "}
-            {Math.max(0, event.capacity - counts.selected - counts.checkedIn)} still to fill.
-            Nobody is told they missed out until you press{" "}
-            <span className="text-body">Tell the rest they were not selected</span>, so that
-            number stays at zero until then.
-          </p>
-
-          <DrawPanel
-            slug={event.slug}
-            capacity={event.capacity}
-            placesLeft={Math.max(0, event.capacity - counts.selected - counts.checkedIn)}
-            waiting={counts.applied}
-            latestDrawId={draws[0]?.id ?? null}
-          />
-
-          <ExternalDrawPanel slug={event.slug} ballot={ballot} />
-
-          <PublicNamePanel names={names} />
-
-          <EntryAdminPanel entries={entries} />
-
-          <BracketAdminPanel slug={event.slug} data={bracketData} />
-
-          {draws.length > 0 && (
-            <div className="mt-8">
-              <h3 className="font-display text-lg text-kesri">Draw history</h3>
-              <p className="mt-1 text-sm text-muted">
-                Each draw records the seed it used, so the same result can be recomputed and
-                shown to be honest.
+      {events.map(
+        ({
+          event,
+          counts,
+          draws,
+          names,
+          entries,
+          bracketData,
+          ballot,
+          reminders,
+          doNotPhotograph,
+        }) => (
+          <section
+            key={event.slug}
+            className="mt-10 rounded-3xl border border-line bg-surface/60 p-6"
+          >
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <h2 className="font-display text-2xl">{event.title}</h2>
+              <p className="text-sm text-muted">
+                {event.capacity} places
+                {event.applicationsCloseAt && (
+                  <>
+                    {" · "}applications close{" "}
+                    {new Date(event.applicationsCloseAt).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "long",
+                    })}
+                  </>
+                )}
               </p>
-              <ul className="mt-3 space-y-2">
-                {draws.map((d) => (
-                  <li
-                    key={d.id}
-                    className="rounded-xl border border-line bg-ink/20 p-3 text-sm"
-                  >
-                    <div className="flex flex-wrap gap-x-4 gap-y-1">
-                      <span className="text-body">
-                        {new Date(d.ran_at).toLocaleString("en-GB")}
-                      </span>
-                      <span className="text-muted">
-                        {d.places} places from {d.applicants} applicants
-                      </span>
-                      {/* An external draw has no seed — what makes it checkable is the
-                          service and the numbers, so show those instead of 'seed
-                          external', which would read as a missing value. */}
-                      {d.method === "external" ? (
-                        <>
-                          <span className="text-kesrisoft">
-                            drawn by {d.service ?? "an outside service"}
-                          </span>
-                          <span className="font-mono text-xs text-muted">
-                            winners {(d.winners ?? "").replace(/\s+/g, " ").trim().slice(0, 60)}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="font-mono text-xs text-muted">seed {d.seed}</span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
             </div>
-          )}
-        </section>
-      ))}
+
+            {/**
+             * FOUR NUMBERS THAT HAVE TO ADD UP, and for a while they did not.
+             *
+             * The third tile said "Selected" and counted `status = 'selected'` alone, so
+             * everybody who had already arrived — a third of the field on the day — dropped
+             * out of it. Meanwhile "places left" below was computed from selected AND
+             * checked-in, correctly. The result was a panel showing 17 selected, 64 places
+             * and 16 left, which is not arithmetic anybody can follow, and the honest
+             * reading of it ("we have barely filled a quarter") is wrong in the direction
+             * that matters.
+             *
+             * So the tile counts everyone WITH A PLACE and says so. Each tile also carries a
+             * line of its own explaining what it counts: "selected" and "not selected" are
+             * draw outcomes, not attendance, and that is not guessable from a four-word
+             * label by somebody opening this page for the first time on the morning.
+             */}
+            <div className="mt-5 grid gap-3 sm:grid-cols-4">
+              {(
+                [
+                  ["Awaiting the draw", counts.applied, "applied, no decision yet"],
+                  [
+                    "— of those, referred",
+                    counts.referredWaiting,
+                    "drawn first, ahead of the rest",
+                  ],
+                  [
+                    "Have a place",
+                    counts.selected + counts.checkedIn,
+                    counts.checkedIn > 0
+                      ? `${counts.selected} to arrive · ${counts.checkedIn} arrived`
+                      : "offered a place by the draw",
+                  ],
+                  ["Not selected", counts.notSelected, "drawn against, and told so"],
+                ] as [string, number, string][]
+              ).map(([label, n, hint]) => (
+                <div key={label} className="rounded-2xl border border-line bg-ink/30 p-4">
+                  <p className="text-[11px] tracking-[0.16em] text-muted uppercase">{label}</p>
+                  <p className="font-display mt-1.5 text-2xl text-body">{n}</p>
+                  <p className="mt-1 text-xs text-muted">{hint}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-muted">
+              {counts.applied + counts.selected + counts.checkedIn + counts.notSelected}{" "}
+              entries in total · {event.capacity} places ·{" "}
+              {Math.max(0, event.capacity - counts.selected - counts.checkedIn)} still to fill.
+              Nobody is told they missed out until you press{" "}
+              <span className="text-body">Tell the rest they were not selected</span>, so that
+              number stays at zero until then.
+            </p>
+
+            <DrawPanel
+              slug={event.slug}
+              capacity={event.capacity}
+              placesLeft={Math.max(0, event.capacity - counts.selected - counts.checkedIn)}
+              waiting={counts.applied}
+              latestDrawId={draws[0]?.id ?? null}
+            />
+
+            <ExternalDrawPanel slug={event.slug} ballot={ballot} />
+
+            <ReminderPanel
+              slug={event.slug}
+              withPlace={reminders.withPlace}
+              alreadySent={reminders.alreadySent}
+              guardiansSent={reminders.guardiansSent}
+              venueConfirmed={event.detailsConfirmed && event.venue !== null}
+            />
+
+            <PublicNamePanel names={names} />
+
+            {/* DO NOT PHOTOGRAPH.
+                Next to the public-name review because both are jobs done once, by a
+                person, before the doors open. Rendered only when the list is not empty:
+                an empty box headed "do not photograph" invites a glance and a shrug,
+                which is the wrong reflex to build for the day it has a name on it. */}
+            {doNotPhotograph.length > 0 && (
+              <div className="mt-8">
+                <h3 className="font-display text-lg text-kesri">Do not photograph</h3>
+                <p className="mt-1 text-sm text-muted">
+                  Read these names to whoever is holding a camera before the doors open.
+                  Photography is a condition of entering, so this is the only list that
+                  means anything — everybody not on it is fair game.
+                </p>
+                <ul className="mt-3 space-y-1.5">
+                  {doNotPhotograph.map((p) => (
+                    <li
+                      key={p.reference}
+                      className="rounded-xl border border-kesri/40 bg-kesri/[0.07] px-3 py-2 text-sm"
+                    >
+                      <span className="text-body">{p.fullName}</span>{" "}
+                      <span className="text-muted">
+                        — on the screen as {p.publicName}
+                      </span>
+                      {p.arrived && (
+                        <span className="ml-2 text-xs text-kesri">in the building</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-xs text-muted">
+                  Recorded from{" "}
+                  <span className="text-body">/admin/entries → a person → Photography</span>
+                  , which is where an objection arriving as a message gets written down.
+                </p>
+              </div>
+            )}
+
+            <EntryAdminPanel entries={entries} />
+
+            <BracketAdminPanel slug={event.slug} data={bracketData} />
+
+            {draws.length > 0 && (
+              <div className="mt-8">
+                <h3 className="font-display text-lg text-kesri">Draw history</h3>
+                <p className="mt-1 text-sm text-muted">
+                  Each draw records the seed it used, so the same result can be recomputed and
+                  shown to be honest.
+                </p>
+                <ul className="mt-3 space-y-2">
+                  {draws.map((d) => (
+                    <li
+                      key={d.id}
+                      className="rounded-xl border border-line bg-ink/20 p-3 text-sm"
+                    >
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                        <span className="text-body">
+                          {new Date(d.ran_at).toLocaleString("en-GB")}
+                        </span>
+                        <span className="text-muted">
+                          {d.places} places from {d.applicants} applicants
+                        </span>
+                        {/* An external draw has no seed — what makes it checkable is the
+                            service and the numbers, so show those instead of 'seed
+                            external', which would read as a missing value. */}
+                        {d.method === "external" ? (
+                          <>
+                            <span className="text-kesrisoft">
+                              drawn by {d.service ?? "an outside service"}
+                            </span>
+                            <span className="font-mono text-xs text-muted">
+                              winners {(d.winners ?? "").replace(/\s+/g, " ").trim().slice(0, 60)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="font-mono text-xs text-muted">seed {d.seed}</span>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        ),
+      )}
 
       {/* Retention.
           Deliberately the quiet corner at the bottom: nobody comes to this page for it,

@@ -44,19 +44,29 @@ Ordered by what it costs to leave undone.
       **To try it:** `node scripts/seed-local.mjs gameday` puts 48 invented players with
       places in the LOCAL database only, then build the bracket on /admin and watch the TV
       tab. `00_Docs/TESTING-LOCALLY.md` walks the whole flow.
-- [ ] **Stations on the bracket.** The `matches` table has a `station` column and nothing
-      sets it. "Report to your station within 5 minutes of being called" is rule 9, and
-      the screen is where somebody would read which station. Small, and the difference
-      between a bracket and a running order.
+- [x] **Stations on the bracket** — built 2026-09-05. `/admin` → The bracket now has a
+      "Working stations" box and a **Call the next matches** button: it fills whatever
+      consoles are free, lowest number first, in bracket order, marks those matches live,
+      and the number shows on the projector and the public bracket. A finished match frees
+      its station on its own, so pressing it again hands that console to the next match.
+      There is a select on each playable row for moving one by hand, because a console
+      breaks. The count of working stations is typed in on the day rather than stored on
+      the event: eight were promised, one has a dead HDMI port, so it is seven, and that
+      is discovered at 09:15.
+      `[NOT on the slips, and deliberately. The slips are printed the night before and a
+      station is decided on the day — a printed station number that has moved is worse
+      than none, and it would send a player to a console somebody else is sitting at.]`
 - [x] **Results have their own table** — `matches`, added 2026-09-02. Player ids and
       scores, no names and nothing personal, so it is safe to keep indefinitely and the
       trophy cabinet does not empty itself when registrations are purged.
-- [ ] **Record a photography objection against a registration.** New in round 47.
-      Photography is now a condition of entering, so `photo_consent` is true on every row
-      and the only useful list is the opposite one — the people who objected. There is
-      nowhere to write that down: it arrives as a support message. Needs a moderator
-      toggle on `/admin` → Entries and a "do not film" list for the day. DPIA risk 18, and
-      the thing that keeps the wording on the form honest.
+- [x] **Record a photography objection against a registration** — built 2026-09-05.
+      A moderator records it from `/admin/entries` → a person → Photography, and the names
+      appear as a **Do not photograph** list under the event on `/admin`, for reading out
+      before the doors open. Narrowed to people who actually have a place; the entries
+      table carries a "no photos" marker on anybody who objected, applicants included.
+      Deliberately no field for the reason or the scope — see invariant 20. DPIA risk 18
+      is closed; what is left is a person reading the list, which is on the on-the-day
+      checklist.
 - [x] **Check-in on the day** — built 2026-09-03. `/admin/checkin/slips` prints one slip
       per player (public name, reference, QR code, 18 to an A4 sheet); `/admin/checkin` is
       the desk: camera decodes with jsQR, and the same page carries a name-and-reference
@@ -65,13 +75,17 @@ Ordered by what it costs to leave undone.
       and `already` carries the time of the first scan. Migration 0012 records when somebody
       arrived and which volunteer said so. Undo is on the list, because scanning the wrong
       slip off a table is a silent mistake.
-      `[LEFT: stations on the slip. A slip could also say which console to go to, which
-      would replace a volunteer pointing — but the draw and the station allocation are not
-      the same decision and the slips get printed the night before.]`
-- [ ] **Reminder email** with the venue address and what to bring. **Unblocked in round
-      46** — the venue is confirmed, so `event.venue` is real and `detailsConfirmed` is
-      true. Day timings can be filled in when they are settled; the address no longer has
-      to wait for them.
+      `[SETTLED 2026-09-05: stations are on the bracket and NOT on the slip — see the
+      stations item above for why.]`
+- [x] **Reminder email** with the venue address and what to bring — built 2026-09-05.
+      `/admin` → The reminder email, which says how many have a place and how many have
+      already had it. Everybody with a place gets one; an under-18's guardian gets a
+      separate one with the collection rule on it. It is the only email that carries the
+      street address. Idempotent on the entry reference, so pressing it again after
+      backfilling drop-outs emails only the new people. Deliberately a button and not a
+      cron job: a schedule cannot be told the hall changed. **Nothing is sent under
+      `npm run dev`** — the whole text is printed in the terminal instead, which is the
+      only way to read the wording without emailing a child.
 - [x] **Give the desk volunteers access** — solved properly 2026-09-03 rather than by
       handing out moderator. There are now two roles: `desk` (the arrival desk and nothing
       else) and `moderator` (everything). Add people on `/admin/people` — any email
@@ -79,8 +93,16 @@ Ordered by what it costs to leave undone.
       link. Do it before the day, and check the page does not flag them "never signed in".
       `[DECIDE: how many people should hold FULL moderator. The technical control is now a
       button an existing moderator can press, so the real control is who you give it to.]`
-- [ ] **A real volunteer sign-up form.** `src/app/volunteer/page.tsx` still carries a TODO —
-      DBS status, availability and a reference.
+- [x] **A real volunteer sign-up form** — built 2026-09-05. `/volunteer` ends in a form
+      instead of a link to the support form, so an offer of help is no longer a paragraph
+      of prose somebody has to classify. It asks the three things that decide anything —
+      which jobs, when they can be there, and whether they hold a current enhanced DBS
+      (yes / no / not sure, and **never a certificate number**) — plus one person who will
+      vouch for them. `/admin/volunteers` is the queue, and it names the roles nobody
+      confirmed has taken, which is the actual gap in a rota of fifteen.
+      `[OWED BACK: how long a volunteer record is kept. Nothing deletes one — no duration
+      has been decided, so no purge is written (invariant 21). It is on the meeting list,
+      and the page says so where a moderator can see it.]`
 
 ## After the event
 

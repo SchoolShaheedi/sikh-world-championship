@@ -120,6 +120,14 @@ export interface EntryDetail {
   checkedInAt: string | null;
   dobVerifiedAt: string | null;
 
+  /**
+   * When somebody said they did not want to be photographed, or null.
+   *
+   * NOT a consent field — photography is a condition of entering, so consent is true on
+   * every row and says nothing. See src/lib/photo-objection.ts.
+   */
+  photoObjectedAt: string | null;
+
   /** True when there is something medical recorded, without saying what. */
   hasMedical: boolean;
   /** True when the medical fields have already been purged by the retention job. */
@@ -213,6 +221,7 @@ export async function entryDetail(
 
     checkedInAt: str(r.checked_in_at),
     dobVerifiedAt: str(r.dob_verified_at),
+    photoObjectedAt: str(r.photo_objected_at),
 
     hasMedical:
       realConditions.length > 0 || !!str(r.medical) || !!str(r.accessibility),

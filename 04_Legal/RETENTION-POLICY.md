@@ -37,6 +37,7 @@ parent how long you keep their child's data until you have decided.
 | Blocks | `blocks.json` | **Keep while both accounts exist** | A block must not quietly expire. Deleting it re-exposes someone to a person they blocked. |
 | **Who was granted or removed staff access, by whom** | `staff_grants` | **`[6]` years** | Added 2026-09-03 when access grants became clickable (`/admin/people`). Holds only the email addresses of STAFF acting in an official capacity — never a child's. Kept long deliberately: "who had access to children's data on 3 October 2026" is exactly the question a later investigation asks, and it must outlive both the event and the accounts. **No automatic purge is implemented** — see the not-enforced list below. |
 | **The numbered list for an outside draw** | `draw_ballots` | **Until the next list is locked, or with the event** | Added 2026-09-03. Registration ids and numbers only — no names and no contact details, and nothing at all is sent to the third-party service, which receives integers. A list that was actually used is referenced by a `draws` row which keeps the numbers pasted against it; that draw record is the audit and is kept with the event. |
+| **Volunteer sign-ups, including the referee they named** | `volunteers` | **`[NOT DECIDED]`. Proposed: 12 months after the event, the same clock as a registration — but nothing enforces it and nothing will until the team confirms a figure.** | Added 2026-09-05 with the sign-up form on `/volunteer`. Holds an adult volunteer's name, email, mobile, which jobs they offered, when they can be there, a three-word DBS answer (yes / no / not sure — **never a certificate number, a date, or anything a check found**), and the name, relationship and ONE contact route of a person who has agreed to vouch for them. That last part is the reason this row is here rather than being assumed: **it is a third party's contact detail, given by somebody else.** The 12-month proposal exists because a volunteer record answers the same questions a registration does — who was on the floor, was a check arranged — and giving it a second clock would be a second thing to remember. Until the brackets come off there is **no automatic purge**: `/admin/volunteers` says so on the page, and a moderator's Delete button (which asks for the reference to be typed) is the only thing that removes one. |
 | Rate-limit counters | In memory | Minutes | Never persisted. |
 | Photographs and video from the event | `[WHERE? Drive? A photographer's own drive?]` | `[3]` years, and **delete immediately on request** | Needs deciding — this is currently the biggest undocumented data store in the project, and it lives outside the app entirely. |
 | Backups | `[TBC]` | Must not outlive the data they contain by more than `[30]` days | A deletion that leaves the data in a backup for a year is not a deletion. |
@@ -93,9 +94,17 @@ holds no personal data, so the proof outlives the data it is about.
    exists.** Until they do, "we delete when we need to" is an intention rather than a
    control. Erasure on request is a button and is honoured properly, which is now the main
    protection rather than a backstop.
-2. **Expiry means deletion** for LFG posts and settled game requests. The code sets
+2. **Volunteer records have no period at all yet** (added 2026-09-05). Not a stated period
+   with no code, like `staff_grants` above — no figure has been decided, so the table
+   carries a bracketed proposal and the code enforces nothing. The right order is the one
+   this document exists to insist on: the team sets a duration, the brackets come off, and
+   only then does a purge get written. In the meantime `/admin/volunteers` states on the
+   page that nothing expires, and one click deletes a record. What makes it more than a
+   housekeeping gap: each row holds a third party's name and one contact route, given by
+   the volunteer rather than by them.
+3. **Expiry means deletion** for LFG posts and settled game requests. The code sets
    `expires_at` and keeps the row.
-3. **Backup lifecycle**, once there are backups.
+4. **Backup lifecycle**, once there are backups.
 
 ## Review
 

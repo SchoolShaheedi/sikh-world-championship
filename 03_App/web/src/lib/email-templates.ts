@@ -17,6 +17,7 @@
  * that strip HTML, and a safeguarding notice must not be the email that arrives blank.
  */
 import { GUARDIAN_TERMS } from "./guardian-types";
+import { ID_REQUIREMENT, ID_PHOTO_ALLOWED, ID_WE_KEEP_NOTHING } from "@/data/id-check";
 
 const BRAND = "Sikh World Championships";
 
@@ -662,6 +663,333 @@ export function guardianInterestNotice(n: {
      <p style="margin:0;font-size:14px;color:#55554f;">
        If you do not want them to take part, tell us and we will remove the registration.
        No account needed, and no reason required.
+     </p>`,
+  );
+  return { subject, text, html };
+}
+
+/* ---------- The week before ---------- */
+
+/**
+ * What to bring, said the same way in three places.
+ *
+ * Read from `src/data/id-check.ts` rather than retyped, because a requirement stated
+ * five slightly different ways is a requirement nobody can enforce — the comment at the
+ * top of that file, and the reason it exists.
+ */
+function bringLines(): string[] {
+  return [ID_REQUIREMENT, ID_PHOTO_ALLOWED, ID_WE_KEEP_NOTHING];
+}
+
+/** The supervision sentence for one player, or null for an adult. */
+function supervisionLine(n: {
+  under16: boolean;
+  under18: boolean;
+  mayLeaveUnaccompanied: boolean;
+}): string | null {
+  if (n.under16) {
+    return "A parent or guardian has to stay at the venue all day. Not sitting with you — there is seating, langar and the bracket on the big screen — but in the building.";
+  }
+  if (!n.under18) return null;
+  return n.mayLeaveUnaccompanied
+    ? "Your guardian agreed you may leave on your own at the end of the day."
+    : "An adult has to collect you at the end of the day — your guardian did not agree to you leaving on your own.";
+}
+
+/**
+ * The reminder, sent in the week before the event to everybody who has a place.
+ *
+ * PROMISED IN THE OFFER EMAIL. "We will email again with the venue address and what to
+ * bring" has been in `applicationOutcome` since it was written, and until now nothing
+ * sent it — a promise made to a child and their parent by a system that could not keep it.
+ *
+ * IT IS THE ONLY EMAIL THAT CARRIES THE STREET ADDRESS. Everywhere else says the town
+ * (`venueLocality`), because an address in an email sent to whatever address was typed
+ * into a form is a different thing from an address sent to somebody who has a place.
+ */
+export function eventReminder(n: {
+  displayName: string;
+  eventTitle: string;
+  eventDate: string | null;
+  times: string | null;
+  venueName: string | null;
+  venueAddress: string | null;
+  mapsUrl: string | null;
+  reference: string;
+  under16: boolean;
+  under18: boolean;
+  mayLeaveUnaccompanied: boolean;
+}): Rendered {
+  const when = n.eventDate ? longDate(n.eventDate) : "the event date";
+  const hours = n.times ? `We run ${n.times}.` : "";
+  const supervision = supervisionLine(n);
+
+  // `null` is an absent optional line and is dropped; "" is a deliberate blank and is
+  // kept. Filtering on `!== ""` collapsed every paragraph break in the plain-text version
+  // into one wall of prose, which is the half of the email some parents actually read.
+  const subject = `${n.eventTitle} — ${when}, and what to bring`;
+  const text = ([
+    `${BRAND}`,
+    ``,
+    `${n.displayName} — you are playing at ${n.eventTitle} on ${when}. ${hours}`,
+    ``,
+    `WHERE`,
+    n.venueName,
+    n.venueAddress,
+    n.mapsUrl ? `Map: ${n.mapsUrl}` : null,
+    ``,
+    `BRING`,
+    ...bringLines().map((l) => `  - ${l}`),
+    `  - Your own PS5 controller if you would rather use one. Consoles, screens and pads`,
+    `    are all provided, so you do not have to.`,
+    ``,
+    `Nothing else. Entry is free and langar is on all day.`,
+    ``,
+    `AT THE DOOR. Your name is on a card at the desk — you hold it up to the camera and`,
+    `you are checked in. If it cannot be found, just give your name. Your reference is`,
+    `${n.reference}.`,
+    ``,
+    ...(supervision ? [`GETTING HOME`, supervision, ``] : []),
+    `PHOTOS. Photographs and video are taken at the event and may be used on our website,`,
+    `our social media and in material promoting future events — not sold, and not used in`,
+    `sponsors' own advertising. If you would rather not be photographed, tell us before`,
+    `the day at https://sikhchampionships.com/support and the photographers are told. It`,
+    `has no effect on your place.`,
+    ``,
+    `CANNOT COME ANY MORE? Tell us as soon as you can and we can offer the place to`,
+    `somebody else: https://sikhchampionships.com/support`,
+  ] as (string | null)[])
+    .filter((l): l is string => l !== null)
+    .join("\n");
+
+  const html = wrap(
+    `Everything you need for Saturday`,
+    `<p style="margin:0 0 14px;">
+       ${esc(n.displayName)} — you are playing at <strong>${esc(n.eventTitle)}</strong> on
+       ${when}. ${esc(hours)}
+     </p>
+     <div style="margin:0 0 14px;padding:12px 14px;background:#fdf6e7;border-radius:8px;">
+       <p style="margin:0 0 4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#8a6d1f;">Where</p>
+       <p style="margin:0;font-size:15px;">
+         ${n.venueName ? `<strong>${esc(n.venueName)}</strong><br>` : ""}
+         ${n.venueAddress ? esc(n.venueAddress) : "Address to follow"}
+       </p>
+       ${
+         n.mapsUrl
+           ? `<p style="margin:8px 0 0;font-size:14px;"><a href="${esc(n.mapsUrl)}" style="color:#8a6d1f;">Open in maps</a></p>`
+           : ""
+       }
+     </div>
+     <p style="margin:0 0 6px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#8a6d1f;">Bring</p>
+     <ul style="margin:0 0 14px;padding-left:20px;font-size:14px;color:#55554f;">
+       ${bringLines().map((l) => `<li>${esc(l)}</li>`).join("")}
+       <li>Your own PS5 controller if you would rather use one — consoles, screens and
+           pads are provided, so you do not have to.</li>
+     </ul>
+     <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+       Nothing else. Entry is free and langar is on all day.
+     </p>
+     <p style="margin:0 0 14px;">
+       <strong>At the door.</strong> Your name is on a card at the desk — hold it up to the
+       camera and you are checked in. If it cannot be found, just give your name. Your
+       reference is <strong style="font-family:monospace;">${esc(n.reference)}</strong>.
+     </p>
+     ${
+       supervision
+         ? `<p style="margin:0 0 14px;padding:12px 14px;background:#f4f4f1;border-radius:8px;font-size:14px;">
+              <strong>Getting home.</strong> ${esc(supervision)}
+            </p>`
+         : ""
+     }
+     <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+       <strong>Photos.</strong> Photographs and video are taken at the event and may be
+       used on our website, our social media and in material promoting future events — not
+       sold, and not used in sponsors&rsquo; own advertising. If you would rather not be
+       photographed, tell us before the day and the photographers are told. It has no
+       effect on your place.
+     </p>
+     <p style="margin:0;font-size:14px;color:#55554f;">
+       Cannot come any more? Tell us as soon as you can so the place can go to somebody
+       else.
+     </p>`,
+  );
+  return { subject, text, html };
+}
+
+/**
+ * The same reminder, to the guardian of an under-18.
+ *
+ * A SEPARATE EMAIL RATHER THAN A CC, for the reason invariant 4 exists: the guardian
+ * address came from the registration record and the child's did not, and the two people
+ * need different sentences. A twelve-year-old does not need to be told they must be
+ * collected — the person collecting them does.
+ */
+export function guardianEventReminder(n: {
+  childName: string;
+  eventTitle: string;
+  eventDate: string | null;
+  times: string | null;
+  venueName: string | null;
+  venueAddress: string | null;
+  mapsUrl: string | null;
+  under16: boolean;
+  mayLeaveUnaccompanied: boolean;
+}): Rendered {
+  const when = n.eventDate ? longDate(n.eventDate) : "the event date";
+  const hours = n.times ? `The day runs ${n.times}.` : "";
+  const supervision = n.under16
+    ? "You (or another adult responsible for them) need to stay at the venue for the whole event. There is seating, langar and the bracket on the big screen — you do not have to sit with them, but we need you in the building."
+    : n.mayLeaveUnaccompanied
+      ? "You agreed they may leave on their own at the end of the day. If that has changed, tell us and we will hold them at the desk until you arrive."
+      : "They must be collected by an adult at the end of the day. Nobody under 18 leaves with anyone else unless you have told us.";
+
+  const subject = `${n.childName} is playing on ${when} — where and when`;
+  const text = ([
+    `${BRAND}`,
+    ``,
+    `${n.childName} has a place at ${n.eventTitle} on ${when}. ${hours}`,
+    ``,
+    `WHERE`,
+    n.venueName,
+    n.venueAddress,
+    n.mapsUrl ? `Map: ${n.mapsUrl}` : null,
+    ``,
+    `WHAT YOU NEED TO KNOW`,
+    supervision,
+    ``,
+    `PROOF OF DATE OF BIRTH IS CHECKED AT THE DOOR, for every player.`,
+    ...bringLines().map((l) => `  - ${l}`),
+    ``,
+    `Entry is free, langar is on all day, and consoles and controllers are provided.`,
+    ``,
+    `PHOTOS. Photographs and video are taken and may be used on our website, our social`,
+    `media and in material promoting future events — not sold, and not used in sponsors'`,
+    `own advertising. If you would rather ${n.childName} was not photographed, tell us`,
+    `before the day at https://sikhchampionships.com/support and the photographers are`,
+    `told. It has no effect on their place.`,
+    ``,
+    `Anything at all, including if they can no longer come:`,
+    `https://sikhchampionships.com/support`,
+  ] as (string | null)[])
+    .filter((l): l is string => l !== null)
+    .join("\n");
+
+  const html = wrap(
+    `${esc(n.childName)} is playing on Saturday`,
+    `<p style="margin:0 0 14px;">
+       ${esc(n.childName)} has a place at <strong>${esc(n.eventTitle)}</strong> on ${when}.
+       ${esc(hours)}
+     </p>
+     <div style="margin:0 0 14px;padding:12px 14px;background:#fdf6e7;border-radius:8px;">
+       <p style="margin:0 0 4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#8a6d1f;">Where</p>
+       <p style="margin:0;font-size:15px;">
+         ${n.venueName ? `<strong>${esc(n.venueName)}</strong><br>` : ""}
+         ${n.venueAddress ? esc(n.venueAddress) : "Address to follow"}
+       </p>
+       ${
+         n.mapsUrl
+           ? `<p style="margin:8px 0 0;font-size:14px;"><a href="${esc(n.mapsUrl)}" style="color:#8a6d1f;">Open in maps</a></p>`
+           : ""
+       }
+     </div>
+     <p style="margin:0 0 14px;padding:12px 14px;background:#f4f4f1;border-radius:8px;">
+       <strong>What you need to know.</strong> ${esc(supervision)}
+     </p>
+     <p style="margin:0 0 6px;font-size:14px;">
+       <strong>Proof of date of birth is checked at the door</strong>, for every player.
+     </p>
+     <ul style="margin:0 0 14px;padding-left:20px;font-size:14px;color:#55554f;">
+       ${bringLines().map((l) => `<li>${esc(l)}</li>`).join("")}
+     </ul>
+     <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+       Entry is free, langar is on all day, and consoles and controllers are provided.
+     </p>
+     <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+       <strong>Photos.</strong> Photographs and video are taken and may be used on our
+       website, our social media and in material promoting future events — not sold, and
+       not used in sponsors&rsquo; own advertising. If you would rather
+       ${esc(n.childName)} was not photographed, tell us before the day and the
+       photographers are told. It has no effect on their place.
+     </p>
+     <p style="margin:0;font-size:14px;color:#55554f;">
+       Anything at all, including if they can no longer come — get in touch.
+     </p>`,
+  );
+  return { subject, text, html };
+}
+
+/* ---------- Volunteers ---------- */
+
+/**
+ * Acknowledging somebody who offered to help.
+ *
+ * Short on purpose, and honest about the two things that will otherwise be a surprise: a
+ * person reads this before anything happens, and every role near the players needs a
+ * check. Told now, in the email they expect, rather than in a phone call a fortnight
+ * later that sounds like being turned down.
+ */
+export function volunteerReceived(n: {
+  fullName: string;
+  eventTitle: string;
+  eventDate: string | null;
+  reference: string;
+  roles: string[];
+  dbsAsked: boolean;
+}): Rendered {
+  const when = n.eventDate ? longDate(n.eventDate) : "the event";
+  const roles = n.roles.length > 0 ? n.roles.join(", ") : "wherever you are needed";
+
+  const subject = `Thanks for offering to help — ${n.eventTitle}`;
+  const text = [
+    `${BRAND}`,
+    ``,
+    `Thanks ${n.fullName}. We have your offer to help at ${n.eventTitle} on ${when}.`,
+    ``,
+    `You put yourself down for: ${roles}.`,
+    `Your reference is ${n.reference}.`,
+    ``,
+    `WHAT HAPPENS NOW. Somebody will be in touch to confirm which job and what time to`,
+    `arrive. We will speak to the person you named before the day — that is standard for`,
+    `anyone working at an event for under-18s, and it is not a comment on you.`,
+    ...(n.dbsAsked
+      ? [
+          ``,
+          `ABOUT THE DBS. You said you do not have a current check, or were not sure. That`,
+          `does not rule you out: most jobs on the day are alongside somebody who does hold`,
+          `one. We will tell you which roles that leaves open.`,
+        ]
+      : []),
+    ``,
+    `Changed your mind, or got a detail wrong? https://sikhchampionships.com/support`,
+  ].join("\n");
+
+  const html = wrap(
+    `Thanks for offering to help`,
+    `<p style="margin:0 0 14px;">
+       Thanks ${esc(n.fullName)}. We have your offer to help at
+       <strong>${esc(n.eventTitle)}</strong> on ${when}.
+     </p>
+     <p style="margin:0 0 14px;font-size:14px;color:#55554f;">
+       You put yourself down for: <strong>${esc(roles)}</strong>.<br>
+       Your reference is <strong style="font-family:monospace;">${esc(n.reference)}</strong>.
+     </p>
+     <p style="margin:0 0 14px;">
+       <strong>What happens now.</strong> Somebody will be in touch to confirm which job
+       and what time to arrive. We will speak to the person you named before the day —
+       that is standard for anyone working at an event for under-18s, and it is not a
+       comment on you.
+     </p>
+     ${
+       n.dbsAsked
+         ? `<p style="margin:0 0 14px;padding:12px 14px;background:#fdf6e7;border-radius:8px;font-size:14px;">
+              <strong>About the DBS.</strong> You said you do not have a current check, or
+              were not sure. That does not rule you out: most jobs on the day are alongside
+              somebody who does hold one, and we will tell you which roles that leaves open.
+            </p>`
+         : ""
+     }
+     <p style="margin:0;font-size:14px;color:#55554f;">
+       Changed your mind, or got a detail wrong? Just tell us.
      </p>`,
   );
   return { subject, text, html };

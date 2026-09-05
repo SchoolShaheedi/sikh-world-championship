@@ -85,4 +85,11 @@ export const LIMITS = {
    * links at an address they do not own.
    */
   signInLink: { limit: 8, windowMs: 15 * 60 * 1000 },
+
+  /**
+   * Volunteer sign-ups per IP. Two families on one connection, plus a retry each, and
+   * still room to spare. What this actually protects is a table holding a THIRD PARTY's
+   * contact details — the referee — which is the thing here worth spamming into.
+   */
+  volunteerSignup: { limit: 5, windowMs: 60 * 60 * 1000 },
 } as const;

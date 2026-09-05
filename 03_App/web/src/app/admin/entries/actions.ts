@@ -1,7 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { currentPlayer } from "@/lib/session";
 import { entryContact, type EntryContact } from "@/lib/entry-detail";
+import { setPhotoObjection } from "@/lib/photo-objection";
 
 /**
  * Uncover one entrant's contact and medical details.
@@ -28,4 +30,33 @@ export async function revealEntry(
   const contact = await entryContact(reference);
   if (!contact) return { error: "No entry with that reference." };
   return { ok: true, contact };
+}
+
+/**
+ * Record — or clear — that somebody does not want to be photographed.
+ *
+ * WHY A MODERATOR PRESSES THIS RATHER THAN THE PERSON TICKING A BOX. Photography is a
+ * condition of entering, and an objection is a conversation: somebody writes in, or a
+ * parent says it at the door, and it is often narrower than "no photos at all". The
+ * moderator answers them in words and records the one fact a photographer can act on.
+ * A self-service toggle would turn a stated condition back into a consent checkbox, which
+ * invariant 12 is specifically about not doing.
+ *
+ * Gated here as well as on the page: the page check is not a security boundary.
+ */
+export async function togglePhotoObjection(
+  reference: string,
+  objected: boolean,
+): Promise<{ ok: true } | { error: string }> {
+  const me = await currentPlayer();
+  if (!me?.isModerator) return { error: "Moderators only." };
+  if (!reference) return { error: "No reference." };
+
+  const done = await setPhotoObjection(reference, objected, me.id);
+  if (!done) return { error: "No entry with that reference." };
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/entries");
+  revalidatePath(`/admin/entries/${encodeURIComponent(reference)}`);
+  return { ok: true };
 }

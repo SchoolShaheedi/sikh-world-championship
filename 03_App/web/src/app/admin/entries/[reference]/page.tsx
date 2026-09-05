@@ -5,6 +5,7 @@ import { currentPlayer } from "@/lib/session";
 import { EVENTS, getEvent } from "@/data/events";
 import { entryDetail } from "@/lib/entry-detail";
 import { EntryReveal } from "@/components/EntryReveal";
+import { PhotoObjectionToggle } from "@/components/PhotoObjectionToggle";
 
 export const metadata: Metadata = {
   title: "Entry",
@@ -105,6 +106,8 @@ export default async function EntryPage({
           />
         </dl>
       </section>
+
+      <PhotoObjectionToggle reference={e.reference} objectedAt={e.photoObjectedAt} />
 
       <EntryReveal
         reference={e.reference}

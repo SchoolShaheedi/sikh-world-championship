@@ -38,8 +38,8 @@ export const ON_THE_DAY: OnTheDayItem[] = [
   {
     title: "Brief the photographers",
     detail:
-      "Photography is a condition of entering, so almost everyone is fair game. The exception is anyone who objected: that arrives as a message rather than a field, so the list has to be carried by hand. No photography in toilets, changing areas or prayer spaces.",
-    appHelps: null,
+      "Photography is a condition of entering, so almost everyone is fair game. The exception is anyone who objected — read them that list by name before the doors open. It is no longer carried by hand: an objection arriving as a message gets recorded against the entry, and the names appear under the event on this page. What is still a person's job is reading it out, and the rest of the brief: no photography in toilets, changing areas or prayer spaces.",
+    appHelps: "The “Do not photograph” list under the event, below",
   },
   {
     title: "Read the public names before the doors open",

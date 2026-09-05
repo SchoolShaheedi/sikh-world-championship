@@ -247,6 +247,91 @@ already correct. The seeded 48 gives a 64-slot bracket with 16 byes.
 | `/admin` → **Names on the screen** | The 48 people with places. First name plus last initial, built from the registration rather than typed by anybody. Correct one and watch it reach the TV and the slips. |
 | Wipe the bracket and rebuild it | Refuses to overwrite a bracket that already has a score in it |
 
+## Calling matches to stations
+
+`/admin` → **The bracket** → set **Working stations** and press *Call the next matches*.
+
+Rule 9 forfeits a player who does not reach their station within five minutes of being
+called, and until 2026-09-05 nothing in the app could say which station that was. The
+`station` column had existed since migration 0009 with nothing writing to it.
+
+| Do this | What should happen |
+|---|---|
+| Set stations to **4** and press it | The first four playable matches go live on 1, 2, 3 and 4, and the message says how many are still waiting |
+| Press it again straight away | Nothing is assigned — every console is busy. It never hands out a station twice |
+| Look at `/events/sikh-fc-27/tv` | The four live matches carry **Station 1**–**4** on the orange bar, at the right-hand end where somebody scanning the screen for their own name will find it |
+| Enter a score on one of them | Its station clears. Press *Call the next matches* again and the next match gets exactly that console back |
+| Change one row's dropdown to a different number | It moves. This is the answer to a console breaking, and it deliberately does **not** refuse a station already in use — the person pressing it can see the room |
+| Set a row's dropdown back to **—** | The match goes back to pending and rejoins the queue |
+| Try to move a finished match | Refused: clear the score first |
+
+The number of working stations is typed in each time and stored nowhere. Eight were
+promised, one has a dead HDMI port, so it is seven — and that is found out at 09:15, not
+at deploy time.
+
+**Stations are not on the printed slips, on purpose.** The slips are printed the night
+before; a station is decided on the day. A printed number that has since moved would send
+a player to a console somebody else is sitting at, which is worse than no number at all.
+
+## The reminder email
+
+`/admin` → **The reminder email**. This is the email every offer has promised since the
+offers were written — "we will email again with the venue address and what to bring" — and
+until 2026-09-05 nothing sent it.
+
+**Nothing leaves your laptop.** Under `npm run dev` every email is printed in full in the
+terminal running the dev server instead of being sent, which is the only way to read the
+wording without emailing a real child.
+
+| Do this | What should happen |
+|---|---|
+| Read the panel before pressing anything | "48 people have a place · 0 already had it" |
+| Press *Send the reminder*, then confirm | The terminal fills with the emails. The message says how many went, how many went to guardians, and how many already had it |
+| Read one in the terminal | The street address and the postcode — the only email that carries them — the times, what to bring (read from `src/data/id-check.ts`, so it cannot drift from the desk's list), the reference, and the photography line with the way out |
+| Find one addressed to a guardian | A **separate** email, not a copy. It names the child and states the collection rule: an under-16's guardian is told to stay at the venue; a 16–17-year-old's is told which way the leaving permission went |
+| Press it a second time | "0 sent · 48 already had it". Nobody is emailed twice |
+| Check somebody in, then press it again | Still nobody: arriving does not make a new person |
+
+## Volunteers
+
+`/volunteer` is public and needs no account. `/admin/volunteers` is the queue, and the
+`extras` seed stage puts five people in it.
+
+| Do this | What should happen |
+|---|---|
+| Submit the form without ticking **I am 18 or over** | Refused — and the refusal points at `/support` rather than just saying no, because a willing seventeen-year-old should be answered by a person |
+| Submit with no job ticked, or no mobile | Refused. The mobile is the number somebody rings at 08:40 when a desk is unstaffed |
+| Submit properly | A `VOL-` reference on screen, an acknowledgement printed in the terminal, and a new row at the top of `/admin/volunteers` |
+| Read `/admin/volunteers` | Five seeded people: one accepted, one declined, three unanswered. It says **Nobody confirmed for: Referees, Score entry, …** — which is the actual gap in a rota of fifteen |
+| Accept somebody, then look again | The list re-sorts: unanswered first, because it is a queue of work |
+| Press **Delete** | It asks for the reference to be typed. This removes the volunteer's details *and* the details of the person they named |
+
+The referee is the part of this form worth looking at closely: a name, how they know the
+volunteer, and one contact route for **somebody who has never visited the site**. The form
+says to tell them first and the acknowledgement email repeats that we will contact them.
+If nobody is actually going to make that call, the question should come off the form.
+
+**Nothing deletes a volunteer record automatically**, and the page says so. No retention
+period has been decided, and this app does not invent one (invariant 21).
+
+## Do not photograph
+
+Photography is a condition of entering, so consent is true on every row and useless to a
+photographer. The only list that means anything is the opposite one.
+
+| Do this | What should happen |
+|---|---|
+| `/admin` → scroll to **Do not photograph** | One name: the seeded objector who has a place. It is not shown at all when nobody has objected |
+| `/admin/entries` | Two rows carry a **no photos** marker — the one above and `LOCAL-060`, who is still waiting for a place. That difference is deliberate: the photographers' list is narrowed to people who will be in the hall |
+| Open `/admin/entries/LOCAL-000` → **Photography** | "They asked not to be photographed". Press it and the name appears on `/admin` |
+| Press *Recorded by mistake — clear it* | Gone completely, with no marker left behind. The likely reason to clear one is that it went against the wrong person |
+
+There is deliberately no box for the reason or the scope. A note about a child, written by
+a volunteer and read by whoever is holding a camera, would have no retention rule of its
+own — and "not on Instagram but the website is fine" is not something a photographer can
+apply at twenty metres. Anything narrower than "do not photograph this person" stays in
+the support ticket it arrived in.
+
 ## Two roles, and who can see what
 
 `/admin/people`. Three staff accounts are seeded:

@@ -101,11 +101,33 @@ What you tell us, plus your name and email if you give them (you can report anon
 and whether you told us you are a parent or guardian. Reports and support messages are
 seen only by our named moderators — **never by the person you reported**.
 
+### If you volunteer to help at an event
+
+Your name, email and mobile; which jobs you could do and when you can be there; and one of
+three answers about whether you hold a current enhanced DBS certificate — **yes, no, or not
+sure.** We never ask for a certificate number, its date, or anything a check found, and
+there is no box on the form for any of it.
+
+We also ask for **one person who will vouch for you**: their name, how they know you, and
+one way to reach them. Every job at this event is near young people, and this is the check
+that goes with that. Two things follow from it, and both are on the form itself. **Please
+tell them before you put them down** — they have not heard from us and have not agreed to
+anything. And **we will contact them** before the day; if they would rather we did not hold
+their details, either of you can tell us and we will delete them.
+
+You must be 18 or over to sign up this way. Only the organisers see any of it, and one
+click deletes the whole record — ask us any time.
+
+`[HOW LONG WE KEEP IT IS NOT DECIDED YET. Nothing deletes a volunteer record
+automatically, and this notice will say a period as soon as one is set. Until then, ask
+and it goes.]`
+
 ### Automatically
 
 Your IP address is used briefly to limit how many support messages one person can send in
-ten minutes, so the safeguarding queue cannot be flooded. It is not used to track you, is
-not linked to your registration, and is not stored beyond that check.
+ten minutes, so the safeguarding queue cannot be flooded, and how many volunteer sign-ups
+can arrive from one connection in an hour. It is not used to track you, is not linked to
+your registration, and is not stored beyond that check.
 
 `[CONFIRM: if you add analytics or error monitoring later, they must be listed here, and
 a cookie banner will be required. There are none today.]`
@@ -153,7 +175,12 @@ about our own future events is emailed on the strength of having registered rath
 separate opt-in. Both are set out plainly on the form, in the confirmation email and in
 the email the guardian gets before the day, and either can be stopped at any time with no
 effect on a place. A parent who would rather their child were not filmed says so and we
-tell the photographers.
+tell the photographers — and since 5 September 2026 that is written down against the entry
+the moment they say it, rather than being remembered. It produces a list of names read to
+whoever is holding a camera before the doors open. We record only that the objection was
+made, when, and which organiser recorded it: no reason and no scope, because a note about
+a child written by one volunteer and read by another is not something we want to hold, and
+what a photographer can actually act on is a name.
 
 **And the one we like least:** a profile is now kept until somebody deletes it. There is
 no automatic expiry — that was decided on 1 September 2026, and it is a deliberate choice
@@ -234,6 +261,10 @@ second event is checking details rather than typing them again. Those six are **
 soon as you have no entry left**, which is twelve months after the last event you entered.
 They are not kept for the life of the profile: they are the same details the twelve-month
 rule above deletes, and it would be no rule at all if a copy survived it.
+
+**A volunteer sign-up has no period yet** — nothing deletes one automatically while that
+is true, and saying so is better than implying a clock that does not exist. Ask and it is
+deleted, along with the details of the person you named.
 
 **If you want it gone, ask, and we will delete it** — you do not need a reason and you do
 not need an account. That request is the main protection here, so it is honoured properly:

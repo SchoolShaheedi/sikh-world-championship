@@ -6,6 +6,7 @@ import { registrationsFor } from "@/lib/store";
 import { entryStats, maskEmail, type Tally } from "@/lib/entry-detail";
 import { ageOnEventDay } from "@/lib/registration-schema";
 import { isReferred } from "@/data/referral-orgs";
+import { photoObjectionRefs } from "@/lib/photo-objection";
 
 export const metadata: Metadata = {
   title: "Entries",
@@ -71,9 +72,10 @@ export default async function EntriesPage() {
 
   const event = getEvent(EVENTS[0]?.slug ?? "");
   const slug = event?.slug ?? "";
-  const [rows, stats] = await Promise.all([
+  const [rows, stats, noPhotos] = await Promise.all([
     slug ? registrationsFor(slug) : Promise.resolve([]),
     slug ? entryStats(slug, event?.date ?? null) : Promise.resolve(null),
+    slug ? photoObjectionRefs(slug) : Promise.resolve(new Set<string>()),
   ]);
 
   return (
@@ -151,6 +153,15 @@ export default async function EntriesPage() {
                     >
                       {String(r.answers.fullName)}
                     </Link>
+                    {/* The only photography fact worth showing. Consent is true on every
+                        row — it is a condition of entering — so a "consented" marker
+                        would be noise on all 75 lines and this one is on the few that
+                        change what somebody does. */}
+                    {noPhotos.has(r.reference) && (
+                      <span className="ml-2 rounded bg-kesri/20 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-kesri uppercase">
+                        no photos
+                      </span>
+                    )}
                   </td>
                   <td className="py-2 pr-3 font-mono text-muted">{r.reference}</td>
                   <td className="py-2 pr-3 text-muted">{r.status}</td>

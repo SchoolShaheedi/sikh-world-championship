@@ -19,6 +19,7 @@ import en from "./en.json";
  *   src/data/referral-orgs.ts     the referral list — also the draw's input
  *   src/data/avatars.ts           avatar labels
  *   src/lib/support-types.ts      support categories        (const tuple, feeds validation)
+ *   src/lib/volunteer-types.ts    volunteer roles, hours, DBS answers  (feeds validation)
  *   src/lib/guardian-types.ts     GUARDIAN_TERMS
  *   src/lib/guardian-rules.ts     tier explanations, MEDICAL_CONDITIONS  (feeds validation)
  *   src/lib/play-types.ts         board options, report reasons          (const tuples)
